@@ -303,3 +303,19 @@ ns.On("PLAYER_EQUIPMENT_CHANGED", queueRefresh)
 ns.On("BANKFRAME_OPENED", function() bankOpen = true; queueRefresh() end)
 ns.On("BANKFRAME_CLOSED", function() bankOpen = false end)
 ns.On("PLAYERBANKSLOTS_CHANGED", function() if bankOpen then queueRefresh() end end)
+
+----------------------------------------------------------------------
+-- Slots ticked "done" in the browser, per character and spec
+----------------------------------------------------------------------
+function ns.GetDoneMarks(specKey)
+    ns.char.done = ns.char.done or {}
+    return ns.char.done[specKey] or {}
+end
+
+function ns.SetDoneMark(specKey, key, on)
+    if not specKey or not key then return end
+    ns.char.done = ns.char.done or {}
+    local t = ns.char.done[specKey]
+    if not t then t = {}; ns.char.done[specKey] = t end
+    t[key] = on or nil
+end

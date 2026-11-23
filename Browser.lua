@@ -16,7 +16,7 @@ end
 local function columnLayout(contentWidth)
     local sourceX = math.max(300, math.floor(contentWidth * 0.42))
     local nameW = sourceX - 50
-    local sourceW = math.max(180, contentWidth - sourceX - 170)
+    local sourceW = math.max(180, contentWidth - sourceX - 200)
     return sourceX, nameW, sourceW
 end
 
@@ -182,8 +182,31 @@ local function createRow(i)
     link:SetScript("OnLeave", function() GameTooltip:Hide() end)
     row.link = link
 
+    -- "done" tick: marks this slot finished for the spec, in every list
+    local done = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
+    done:SetSize(24, 24)
+    done:SetPoint("RIGHT", link, "LEFT", -4, 0)
+    done:SetScript("OnClick", function(self)
+        if row.doneKey then
+            ns.SetDoneMark(row.specKey, row.doneKey, self:GetChecked() and true or false)
+            ns.RefreshBrowser()
+        end
+    end)
+    done:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+        GameTooltip:AddLine("Done")
+        if row.autoDone then
+            GameTooltip:AddLine("You own a BiS or Realistic item for this slot.", 1, 1, 1, true)
+        else
+            GameTooltip:AddLine("Tick when this slot is finished, with this item or one from the other list. It counts in both the BiS and Realistic lists.", 1, 1, 1, true)
+        end
+        GameTooltip:Show()
+    end)
+    done:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    row.done = done
+
     row.owned = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    row.owned:SetPoint("RIGHT", link, "LEFT", -6, 0)
+    row.owned:SetPoint("RIGHT", done, "LEFT", -4, 0)
     row.owned:SetJustifyH("RIGHT")
 
     rows[i] = row
@@ -222,7 +245,18 @@ local function fillRow(row, data)
     if data.note then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
     row.source:SetText(src)
     row.also:SetText(otherSpecsText(data.id))
-    row.owned:SetText(OWNED_ICON[ns.Owned[data.id]] or "")
+    local ownedText = OWNED_ICON[ns.Owned[data.id]] or ""
+    if ownedText == "" and data.isDone then ownedText = "|cff33ff33Done|r" end
+    row.owned:SetText(ownedText)
+    row.doneKey, row.specKey, row.autoDone = data.doneKey, data.specKey, data.autoDone
+    if data.doneKey then
+        row.done:Show()
+        row.done:SetChecked(data.isDone and true or false)
+        if data.autoDone then row.done:Disable() else row.done:Enable() end
+    else
+        row.done:Hide()
+    end
+    row:SetAlpha(data.isDone and 0.6 or 1)
 
     ns.WithItem(data.id, function(item)
         if row.token ~= token then return end
@@ -276,19 +310,30 @@ function ns.RefreshBrowser()
         or mode == "consumables" and "List: Consumes" or "List: BiS")
     -- alternatives belong to the BiS list; "hide finished slots" to the gear lists
     if mode ~= "bis" then altCheck:Disable(); altLabel:SetAlpha(0.4) else altCheck:Enable(); altLabel:SetAlpha(1) end
-    if not gearList then doneCheck:Disable(); doneLabel:SetAlpha(0.4) else doneCheck:Enable(); doneLabel:SetAlpha(1) end
+    if mode == "consumables" then doneCheck:Disable(); doneLabel:SetAlpha(0.4) else doneCheck:Enable(); doneLabel:SetAlpha(1) end
     missingCheck:SetChecked(ns.char.missingOnly)
     altCheck:SetChecked(ns.char.showAlts ~= false)
     doneCheck:SetChecked(ns.char.hideDone)
 
-    -- A slot is finished once you own its BiS pick or its Realistic pick
-    -- (Finger / Trinket need as many as the list has).
-    local doneSlot = {}
-    if ns.char.hideDone and gearList then
-        local need, got, seen = {}, {}, {}
-        for _, r in ipairs(ns.GetGuideRows(guide, false, mode)) do
-            if not r.isAlt then need[r.slot] = (need[r.slot] or 0) + 1 end
+    -- Done slots. Each main row has a key ("Head#1", "Finger#2"...) that is the
+    -- same in the BiS and Realistic lists, so a slot can be done with a piece
+    -- from either list. A key is done when you tick it, or automatically when
+    -- you own enough of that slot's BiS / Realistic picks.
+    local specKey = (ns.char.selectedClass or "") .. ":" .. (ns.char.selectedSpec or "")
+    local canMark = gearList or mode == "enchants"
+    local marks = ns.GetDoneMarks(specKey)
+    local listRows = ns.GetGuideRows(guide, mode == "bis" and ns.char.showAlts ~= false, mode)
+    local seenSlot = {}
+    for _, r in ipairs(listRows) do
+        if not r.isAlt and canMark then
+            local n = r.slot == "Ammo" and 1 or ((seenSlot[r.slot] or 0) + 1)   -- one ammo slot
+            seenSlot[r.slot] = n
+            r.doneKey = (mode == "enchants" and "E:" or "") .. r.slot .. "#" .. n
         end
+    end
+    local auto = {}
+    if gearList then
+        local got, seen = {}, {}
         for _, m in ipairs({ "bis", "realistic" }) do
             for _, r in ipairs(ns.GetGuideRows(guide, false, m)) do
                 if not r.isAlt and ns.Owned[r.id] and not seen[r.id] then
@@ -297,23 +342,40 @@ function ns.RefreshBrowser()
                 end
             end
         end
-        need.Ammo = need.Ammo and 1   -- arrows or bullets, whichever your weapon uses
-        for slot, n in pairs(need) do
-            if (got[slot] or 0) >= n then doneSlot[slot] = true end
+        for slot, n in pairs(got) do
+            for k = 1, n do auto[slot .. "#" .. k] = true end
         end
+    end
+    local slotKeys, slotDone = {}, {}
+    for _, r in ipairs(listRows) do
+        if r.doneKey then
+            r.autoDone = auto[r.doneKey] or false
+            r.isDone = r.autoDone or marks[r.doneKey] or false
+            slotKeys[r.slot] = slotKeys[r.slot] or {}
+            table.insert(slotKeys[r.slot], r)
+        end
+    end
+    for slot, list in pairs(slotKeys) do
+        local all = true
+        for _, r in ipairs(list) do if not r.isDone then all = false end end
+        slotDone[slot] = all
     end
 
     local list = {}
-    local have = 0
-    local listRows = ns.GetGuideRows(guide, mode == "bis" and ns.char.showAlts ~= false, mode)
-    local total = 0
-    for _, r in ipairs(listRows) do if not r.isAlt then total = total + 1 end end
+    local have, total = 0, 0
+    for _, r in ipairs(listRows) do
+        if not r.isAlt then
+            total = total + 1
+            if (canMark and r.isDone) or (not canMark and ns.Owned[r.id]) then have = have + 1 end
+        end
+    end
     for _, r in ipairs(listRows) do
         local owned = ns.Owned[r.id] ~= nil
-        if owned and not r.isAlt then have = have + 1 end
         local slotOk = ns.char.selectedSlot == "All" or r.slot == ns.char.selectedSlot or mode == "consumables"
-        if slotOk and not doneSlot[r.slot] and not (ns.char.missingOnly and owned) then
+        local hidden = ns.char.hideDone and canMark and (r.doneKey and r.isDone or (not r.doneKey and slotDone[r.slot]))
+        if slotOk and not hidden and not (ns.char.missingOnly and owned) then
             r.isNew = mode == "bis" and (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
+            r.specKey = specKey
             table.insert(list, r)
         end
     end
@@ -324,9 +386,8 @@ function ns.RefreshBrowser()
     for i = #list + 1, #rows do rows[i]:Hide() end
     scrollChild:SetHeight(math.max(1, #list * ROW_HEIGHT))
 
-    countText:SetText(string.format(mode == "consumables" and "In bags %d / %d" or "You own %d / %d", have, total))
+    countText:SetText(string.format(mode == "consumables" and "In bags %d / %d" or "Done %d / %d", have, total))
     -- keep the raid check companion on the spec being viewed
-    local specKey = (ns.char.selectedClass or "") .. ":" .. (ns.char.selectedSpec or "")
     if specKey ~= lastRaidSpec then
         lastRaidSpec = specKey
         if ns.RefreshRaidCheck then ns.RefreshRaidCheck() end
@@ -534,7 +595,7 @@ local function createFrame()
     doneCheck:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
         GameTooltip:AddLine("Hide finished slots")
-        GameTooltip:AddLine("Hides a slot once you own its BiS item or its Realistic item.", 1, 1, 1, true)
+        GameTooltip:AddLine("Hides a slot once it's done: you own its BiS or Realistic item, or you ticked it done.", 1, 1, 1, true)
         GameTooltip:Show()
     end)
     doneCheck:SetScript("OnLeave", function() GameTooltip:Hide() end)

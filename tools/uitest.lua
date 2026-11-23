@@ -129,6 +129,20 @@ check("hide finished slots", function()
   print("   rows:", before, "->", after)
   ns.char.hideDone = false; ns.Owned[g.items[1][2]] = nil
 end)
+check("tick a slot done in BiS, hidden in Realistic too", function()
+  ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"
+  ns.char.listMode = "realistic"; ns.char.hideDone = true; ns.RefreshBrowser()
+  local before = visibleRows()
+  ns.SetDoneMark("HUNTER:Marksmanship", "Head#1", true)   -- as if ticked on the BiS head row
+  ns.char.listMode = "bis"; ns.RefreshBrowser()
+  local bisRows = visibleRows()
+  ns.char.listMode = "realistic"; ns.RefreshBrowser()
+  local after = visibleRows()
+  print("   realistic rows:", before, "->", after, " bis rows with head done:", bisRows)
+  if after >= before then error("ticked slot not hidden in Realistic") end
+  ns.SetDoneMark("HUNTER:Marksmanship", "Head#1", false)
+  ns.char.hideDone = false; ns.char.listMode = "bis"; ns.RefreshBrowser()
+end)
 check("consumables list for every class/spec", function()
   ns.char.listMode="consumables"
   for _, cls in ipairs(ns.ClassOrder) do for _, sp in ipairs(ns.GetSpecsForClass(cls)) do
