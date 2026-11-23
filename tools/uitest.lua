@@ -129,6 +129,20 @@ check("hide finished slots", function()
   print("   rows:", before, "->", after)
   ns.char.hideDone = false; ns.Owned[g.items[1][2]] = nil
 end)
+check("consumables list for every class/spec", function()
+  ns.char.listMode="consumables"
+  for _, cls in ipairs(ns.ClassOrder) do for _, sp in ipairs(ns.GetSpecsForClass(cls)) do
+    ns.char.selectedClass, ns.char.selectedSpec = cls, sp; ns.RefreshBrowser()
+    if visibleRows() == 0 then error("no consumables for " .. cls .. " " .. sp) end
+  end end
+  ns.char.selectedClass, ns.char.selectedSpec = "MAGE", "Fire"; ns.RefreshBrowser()
+  print("   Fire mage consumable rows:", (visibleRows()))
+  ns.char.listMode="bis"; ns.RefreshBrowser()
+end)
+check("raid companion docks with browser", function()
+  ns.db.raidCompanion = true
+  ns.UpdateRaidCompanion()
+end)
 check("raid check (every spec)", function()
   local _GetLink = GetInventoryItemLink
   GetInventoryItemLink = function(_, inv) if inv == 1 then return "|cff0070dd|Hitem:226887:0:0|h[Cap]|h|r" end end

@@ -1831,6 +1831,90 @@ local ENCHANTS = {
     },
 }
 
+
+-- Raid consumables per role (rankedboost.com WoW Forever consumables guide,
+-- checked 2026-11-10; IDs verified on kovarel.com). Flasks, elixirs for
+-- different stats, food and a weapon buff all stack; potions share one
+-- 2 minute cooldown, runes and healthstones another.
+local AH = "Auction House"
+local C = {
+    TITANS    = { "Flask",  13510,  "Alchemy / " .. AH, note = "Lasts through death" },
+    SUPREME   = { "Flask",  13512,  "Alchemy / " .. AH, note = "Lasts through death" },
+    WISDOM    = { "Flask",  13511,  "Alchemy / " .. AH, note = "Lasts through death" },
+    CHROMATIC = { "Flask",  13513,  "Alchemy / " .. AH, note = "Instead of Titans on magic-heavy fights" },
+    GRIZZLY   = { "Elixir", 250351, "Alchemy / " .. AH, note = "Or Elixir of the Mongoose, not both" },
+    MONGOOSE  = { "Elixir", 13452,  "Alchemy / " .. AH },
+    MONGOOSE_AGI = { "Elixir", 13452, "Alchemy / " .. AH, note = "Or Elixir of Ferocity, not both" },
+    MONGOOSE_HUNT = { "Elixir", 13452, "Alchemy / " .. AH, note = "Or Elixir of Cunning, not both" },
+    GAE       = { "Elixir", 13454,  "Alchemy / " .. AH },
+    SHADOWP   = { "Elixir", 9264,   "Alchemy / " .. AH, note = "Shadow spells" },
+    NATUREP   = { "Elixir", 250343, "Alchemy / " .. AH, note = "Nature spells" },
+    FROSTP    = { "Elixir", 17708,  "Alchemy / " .. AH, note = "Frost spells" },
+    FIREP     = { "Elixir", 6373,   "Alchemy / " .. AH, note = "Fire spells (+10 fire damage)" },
+    OWL       = { "Elixir", 250337, "Alchemy / " .. AH },
+    CLERIC    = { "Elixir", 250333, "Alchemy / " .. AH },
+    MAGEBLOOD = { "Elixir", 250341, "Alchemy / " .. AH },
+    PHALANX   = { "Elixir", 250329, "Alchemy / " .. AH, note = "Elixir of Greater Fortitude if you have none" },
+    TROLLS    = { "Elixir", 20004,  "Alchemy / " .. AH },
+    BRUTE     = { "Elixir", 13453,  "Alchemy / " .. AH },
+    DUMPLINGS = { "Food",   20452,  "Cooking / " .. AH },
+    STEAK     = { "Food",   250072, "Cooking / " .. AH },
+    LOBSTER   = { "Food",   13933,  "Cooking / " .. AH },
+    SAGE      = { "Food",   249870, "Cooking / " .. AH },
+    TURTLE    = { "Food",   250068, "Cooking / " .. AH },
+    FIREWATER = { "Other",  246948, AH },
+    STONE     = { "Weapon", 18262,  "Blacksmithing / " .. AH, note = "2% crit, 30 min, one per weapon" },
+    WIZARD    = { "Weapon", 20749,  "Enchanting / " .. AH, note = "30 min" },
+    MANAOIL   = { "Weapon", 20748,  "Enchanting / " .. AH, note = "30 min" },
+    FRENZY    = { "Potion", 250943, "Alchemy / " .. AH, note = "Burst" },
+    RAGE      = { "Potion", 13442,  "Alchemy / " .. AH, note = "Rage users" },
+    MANA      = { "Potion", 13444,  "Alchemy / " .. AH },
+    SPELLBLAST= { "Potion", 250937, "Alchemy / " .. AH, note = "Burst" },
+    MENDER    = { "Potion", 250949, "Alchemy / " .. AH, note = "Heaviest damage phase" },
+    STONESHIELD = { "Potion", 13455, "Alchemy / " .. AH, note = "Heavy hits" },
+    FIREPROT  = { "Potion", 13457,  "Alchemy / " .. AH, note = "Match the boss's damage school" },
+    DEMONIC   = { "Rune",   12662,  AH, note = "After a mana potion; costs health" },
+    DARK      = { "Rune",   20520,  AH, note = "Low mana; costs health" },
+}
+local CONSUME_PROFILE = {
+    strength = { C.TITANS, C.GRIZZLY, C.DUMPLINGS, C.FIREWATER, C.STONE, C.FRENZY },
+    agility  = { C.TITANS, C.MONGOOSE_AGI, C.STEAK, C.FIREWATER, C.STONE, C.FRENZY },
+    hunter   = { C.TITANS, C.MONGOOSE_HUNT, C.STEAK, C.FRENZY, C.MANA },
+    caster   = { C.SUPREME, C.GAE, C.OWL, C.LOBSTER, C.WIZARD, C.SPELLBLAST, C.MANA, C.DEMONIC },
+    healer   = { C.WISDOM, C.CLERIC, C.MAGEBLOOD, C.OWL, C.SAGE, C.MANAOIL, C.MENDER, C.MANA, C.DARK },
+    tank     = { C.TITANS, C.CHROMATIC, C.PHALANX, C.TROLLS, C.BRUTE, C.TURTLE, C.STONESHIELD, C.FIREPROT },
+}
+local CONSUME_SPEC = {
+    ["WARRIOR:Arms"] = "strength", ["WARRIOR:Fury"] = "strength", ["PALADIN:Retribution"] = "strength",
+    ["SHAMAN:Enhancement"] = "strength",
+    ["ROGUE:Assassination"] = "agility", ["ROGUE:Combat"] = "agility", ["ROGUE:Subtlety"] = "agility",
+    ["DRUID:Feral"] = "agility",
+    ["HUNTER:Beast Mastery"] = "hunter", ["HUNTER:Marksmanship"] = "hunter", ["HUNTER:Survival"] = "hunter",
+    ["PRIEST:Shadow"] = "caster", ["SHAMAN:Elemental"] = "caster", ["MAGE:Arcane"] = "caster",
+    ["MAGE:Fire"] = "caster", ["MAGE:Frost"] = "caster", ["WARLOCK:Affliction"] = "caster",
+    ["WARLOCK:Demonology"] = "caster", ["WARLOCK:Destruction"] = "caster", ["DRUID:Balance"] = "caster",
+    ["PALADIN:Holy"] = "healer", ["PRIEST:Discipline"] = "healer", ["PRIEST:Holy"] = "healer",
+    ["SHAMAN:Restoration"] = "healer", ["DRUID:Restoration"] = "healer",
+    ["WARRIOR:Protection"] = "tank", ["PALADIN:Protection"] = "tank", ["DRUID:Feral Tank"] = "tank",
+}
+-- school elixir for casters (goes after Greater Arcane Elixir)
+local CONSUME_SCHOOL = {
+    ["PRIEST:Shadow"] = C.SHADOWP, ["WARLOCK:Affliction"] = C.SHADOWP, ["WARLOCK:Demonology"] = C.SHADOWP,
+    ["WARLOCK:Destruction"] = C.SHADOWP, ["MAGE:Fire"] = C.FIREP, ["MAGE:Frost"] = C.FROSTP,
+    ["SHAMAN:Elemental"] = C.NATUREP, ["DRUID:Balance"] = C.NATUREP,
+}
+local function consumablesFor(g, key)
+    local profile = CONSUME_PROFILE[CONSUME_SPEC[key] or ""]
+    if not profile then return nil end
+    local list = {}
+    for _, row in ipairs(profile) do
+        table.insert(list, row)
+        if row == C.GAE and CONSUME_SCHOOL[key] then table.insert(list, CONSUME_SCHOOL[key]) end
+    end
+    if key == "WARRIOR:Arms" or key == "WARRIOR:Fury" then table.insert(list, C.RAGE) end
+    return list
+end
+
 local function weaponSlot(g)
     local twoHand, mainHand
     for _, row in ipairs(g.items) do
@@ -1862,6 +1946,8 @@ for _, g in ipairs(guides) do
         end
         g.enchantSource = "wowtbc.gg"
     end
+    g.consumables = consumablesFor(g, key)
+    if g.consumables then g.consumableSource = "rankedboost.com" end
     -- Tier 0 pieces needed for Tier 0.5 quest upgrades
     g.prequest = TIER0
 end

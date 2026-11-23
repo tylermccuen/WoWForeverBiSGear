@@ -28,7 +28,7 @@ local charDefaults = {
     selectedSlot  = "All",
     missingOnly   = false,
     showAlts      = true,
-    listMode      = "bis",          -- "bis", "realistic" or "enchants"
+    listMode      = "bis",          -- "bis", "realistic", "enchants" or "consumables"
     hideDone      = false,          -- hide slots where the BiS or Realistic item is owned
     bankItems     = {},
 }

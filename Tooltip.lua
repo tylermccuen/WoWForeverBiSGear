@@ -87,6 +87,17 @@ local function addVerdict(tooltip, itemID)
         end
     end
 
+    -- One of my raid consumables
+    if guide.consumables then
+        for _, r in ipairs(ns.GetGuideRows(guide, false, "consumables")) do
+            if r.id == itemID then
+                tooltip:AddLine(" ")
+                tooltip:AddLine(CHECK .. " Raid consumable for you: " .. spec .. " " .. r.slot, 0.2, 1, 0.2)
+                return true
+            end
+        end
+    end
+
     -- A Tier 0 piece my Tier 0.5 quest needs
     if guide.prequest then
         for _, mode in ipairs({ "bis", "realistic" }) do
@@ -183,11 +194,11 @@ local function addBisLines(tooltip, itemID, noSpacer)
                 local found
                 for _, l in ipairs(byClass[cls].labels) do
                     if l.spec == e.guide.spec and l.faction == faction and l.alt == e.alt and l.realistic == e.realistic
-                        and l.enchant == e.enchant and l.pre == e.pre then found = l end
+                        and l.enchant == e.enchant and l.pre == e.pre and l.consumable == e.consumable then found = l end
                 end
                 if not found then
                     found = { spec = e.guide.spec, faction = faction, alt = e.alt, realistic = e.realistic,
-                              enchant = e.enchant, pre = e.pre, phases = {} }
+                              enchant = e.enchant, pre = e.pre, consumable = e.consumable, phases = {} }
                     table.insert(byClass[cls].labels, found)
                 end
                 for id in pairs(active) do found.phases[id] = true end
@@ -213,8 +224,12 @@ local function addBisLines(tooltip, itemID, noSpacer)
         local labels = byClass[cls].labels
         -- drop "Spec (other faction)" when the same spec is already listed for the player's faction
         local plain = {}
-        for _, l in ipairs(labels) do if not l.faction and not l.alt and not l.realistic and not l.enchant and not l.pre then plain[l.spec] = true end end
+        for _, l in ipairs(labels) do if not l.faction and not l.alt and not l.realistic and not l.enchant and not l.pre and not l.consumable then plain[l.spec] = true end end
         local texts, tags, sameTag, anyFaction = {}, {}, true, false
+        local allConsumable = #labels > 0
+        for _, l in ipairs(labels) do
+            if not l.consumable or l.faction or l.alt or l.realistic or l.enchant or l.pre then allConsumable = false end
+        end
         for _, l in ipairs(labels) do
             if not (l.faction and plain[l.spec]) then
                 local list = {}
@@ -226,6 +241,7 @@ local function addBisLines(tooltip, itemID, noSpacer)
                 if l.realistic then t = t .. " (realistic)"; anyFaction = true end
                 if l.enchant then t = t .. " (enchant)"; anyFaction = true end
                 if l.pre then t = t .. " (T0.5 quest)"; anyFaction = true end
+                if l.consumable then t = t .. " (consumable)"; anyFaction = true end
                 if tag ~= "" then t = t .. " " .. tag end
                 table.insert(texts, t)
                 if tags[1] and tags[1] ~= tag then sameTag = false end
@@ -233,7 +249,9 @@ local function addBisLines(tooltip, itemID, noSpacer)
             end
         end
         local specText
-        if #texts >= #ns.GetSpecsForClass(cls) and sameTag and not anyFaction then
+        if allConsumable and #texts >= #ns.GetSpecsForClass(cls) and sameTag then
+            specText = "All specs (consumable)" .. ((tags[1] and tags[1] ~= "") and (" " .. tags[1]) or "")
+        elseif #texts >= #ns.GetSpecsForClass(cls) and sameTag and not anyFaction then
             specText = "All specs" .. ((tags[1] and tags[1] ~= "") and (" " .. tags[1]) or "")
         else
             specText = table.concat(texts, ", ")

@@ -337,28 +337,29 @@ function ns.RefreshRaidCheck()
     if panel and panel:IsShown() then ns.RunRaidCheck(render) end
 end
 
+-- The panel is a companion docked to the right edge of the browser window:
+-- it opens and closes with the browser and moves with it.
 local function createPanel()
     panel = CreateFrame("Frame", "ForeverBiSRaidFrame", UIParent, "BasicFrameTemplateWithInset")
-    panel:SetSize(460, 480)
-    panel:SetPoint("CENTER", 120, 0)
+    panel:SetWidth(380)
     panel:SetFrameStrata("HIGH")
-    panel:SetToplevel(true)
     panel:EnableMouse(true)
-    panel:SetMovable(true)
-    panel:SetClampedToScreen(true)
-    panel:RegisterForDrag("LeftButton")
-    panel:SetScript("OnDragStart", panel.StartMoving)
-    panel:SetScript("OnDragStop", panel.StopMovingOrSizing)
-    panel:SetScale(ns.db.windowScale or 1)
     panel:Hide()
-    tinsert(UISpecialFrames, "ForeverBiSRaidFrame")
+    -- the template's close button turns the companion off
+    if type(panel.CloseButton) == "table" then
+        panel.CloseButton:SetScript("OnClick", function()
+            ns.db.raidCompanion = false
+            panel:Hide()
+        end)
+    end
 
     local title = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", 0, -5)
     title:SetText("Raid check")
 
-    summary = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    summary:SetPoint("TOPLEFT", 16, -34)
+    summary = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    summary:SetPoint("TOPLEFT", 16, -36)
+    summary:SetPoint("RIGHT", -100, 0)
     summary:SetJustifyH("LEFT")
 
     local refresh = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
@@ -371,13 +372,13 @@ local function createPanel()
     scroll:SetPoint("TOPLEFT", 14, -62)
     scroll:SetPoint("BOTTOMRIGHT", -32, 34)
     local child = CreateFrame("Frame", nil, scroll)
-    child:SetSize(400, 400)
+    child:SetSize(330, 400)
     scroll:SetScrollChild(child)
     panel.scrollChild = child
 
     body = child:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     body:SetPoint("TOPLEFT", 2, -2)
-    body:SetWidth(396)
+    body:SetWidth(326)
     body:SetJustifyH("LEFT")
     body:SetJustifyV("TOP")
     body:SetSpacing(4)
@@ -386,14 +387,38 @@ local function createPanel()
     foot:SetPoint("BOTTOMLEFT", 16, 12)
     foot:SetPoint("BOTTOMRIGHT", -16, 12)
     foot:SetJustifyH("LEFT")
-    foot:SetText("Hit 8% melee/ranged, 17% spells (conquestcapped.com); 440 defense for tanks.")
+    foot:SetText("Hit: 8% melee/ranged, 17% spells (conquestcapped.com). Tanks: 440 defense.")
+    foot:SetWordWrap(true)
 
     panel:SetScript("OnShow", ns.RefreshRaidCheck)
 end
 
-function ns.ToggleRaidCheck()
+-- Dock to the browser and show / hide with it
+function ns.UpdateRaidCompanion()
+    local browser = _G.ForeverBiSFrame
+    if not browser then return end
     if not panel then createPanel() end
-    if panel:IsShown() then panel:Hide() else panel:Show() end
+    panel:SetScale(browser:GetScale())
+    panel:ClearAllPoints()
+    panel:SetPoint("TOPLEFT", browser, "TOPRIGHT", -3, 0)
+    panel:SetPoint("BOTTOMLEFT", browser, "BOTTOMRIGHT", -3, 0)
+    if browser:IsShown() and ns.db.raidCompanion ~= false then
+        if panel:IsShown() then ns.RefreshRaidCheck() else panel:Show() end
+    else
+        panel:Hide()
+    end
+end
+
+function ns.ToggleRaidCheck()
+    local browser = _G.ForeverBiSFrame
+    if not browser or not browser:IsShown() then
+        ns.db.raidCompanion = true
+        ns.ToggleBrowser()          -- opening the browser brings the companion with it
+        ns.UpdateRaidCompanion()
+        return
+    end
+    ns.db.raidCompanion = (ns.db.raidCompanion == false)
+    ns.UpdateRaidCompanion()
 end
 
 ns.On("PLAYER_EQUIPMENT_CHANGED", function()

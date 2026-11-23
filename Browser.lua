@@ -2,6 +2,7 @@ local _, ns = ...
 
 local ROW_HEIGHT = 40
 local frame, scrollChild, rows = nil, nil, {}
+local lastRaidSpec
 local WIDTH, HEIGHT = 900, 540          -- default size
 local MIN_W, MIN_H, MAX_W, MAX_H = 880, 320, 1500, 1100
 local headerSource                      -- "WHERE TO GET IT" column header
@@ -267,12 +268,15 @@ function ns.RefreshBrowser()
     slotButton:SetText("Slot: " .. (ns.char.selectedSlot or "All"))
     local mode = "bis"
     if ns.char.listMode == "realistic" and guide.realistic then mode = "realistic"
-    elseif ns.char.listMode == "enchants" and guide.enchants then mode = "enchants" end
+    elseif ns.char.listMode == "enchants" and guide.enchants then mode = "enchants"
+    elseif ns.char.listMode == "consumables" and guide.consumables then mode = "consumables" end
+    local gearList = mode == "bis" or mode == "realistic"
     local realistic = mode == "realistic"
-    listButton:SetText(mode == "realistic" and "List: Realistic" or mode == "enchants" and "List: Enchants" or "List: BiS")
+    listButton:SetText(mode == "realistic" and "List: Realistic" or mode == "enchants" and "List: Enchants"
+        or mode == "consumables" and "List: Consumes" or "List: BiS")
     -- alternatives belong to the BiS list; "hide finished slots" to the gear lists
     if mode ~= "bis" then altCheck:Disable(); altLabel:SetAlpha(0.4) else altCheck:Enable(); altLabel:SetAlpha(1) end
-    if mode == "enchants" then doneCheck:Disable(); doneLabel:SetAlpha(0.4) else doneCheck:Enable(); doneLabel:SetAlpha(1) end
+    if not gearList then doneCheck:Disable(); doneLabel:SetAlpha(0.4) else doneCheck:Enable(); doneLabel:SetAlpha(1) end
     missingCheck:SetChecked(ns.char.missingOnly)
     altCheck:SetChecked(ns.char.showAlts ~= false)
     doneCheck:SetChecked(ns.char.hideDone)
@@ -280,7 +284,7 @@ function ns.RefreshBrowser()
     -- A slot is finished once you own its BiS pick or its Realistic pick
     -- (Finger / Trinket need as many as the list has).
     local doneSlot = {}
-    if ns.char.hideDone and mode ~= "enchants" then
+    if ns.char.hideDone and gearList then
         local need, got, seen = {}, {}, {}
         for _, r in ipairs(ns.GetGuideRows(guide, false, mode)) do
             if not r.isAlt then need[r.slot] = (need[r.slot] or 0) + 1 end
@@ -306,7 +310,7 @@ function ns.RefreshBrowser()
     for _, r in ipairs(listRows) do
         local owned = ns.Owned[r.id] ~= nil
         if owned and not r.isAlt then have = have + 1 end
-        local slotOk = ns.char.selectedSlot == "All" or r.slot == ns.char.selectedSlot
+        local slotOk = ns.char.selectedSlot == "All" or r.slot == ns.char.selectedSlot or mode == "consumables"
         if slotOk and not doneSlot[r.slot] and not (ns.char.missingOnly and owned) then
             r.isNew = mode == "bis" and (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
             table.insert(list, r)
@@ -319,7 +323,13 @@ function ns.RefreshBrowser()
     for i = #list + 1, #rows do rows[i]:Hide() end
     scrollChild:SetHeight(math.max(1, #list * ROW_HEIGHT))
 
-    countText:SetText(string.format("You own %d / %d", have, total))
+    countText:SetText(string.format(mode == "consumables" and "In bags %d / %d" or "You own %d / %d", have, total))
+    -- keep the raid check companion on the spec being viewed
+    local specKey = (ns.char.selectedClass or "") .. ":" .. (ns.char.selectedSpec or "")
+    if specKey ~= lastRaidSpec then
+        lastRaidSpec = specKey
+        if ns.RefreshRaidCheck then ns.RefreshRaidCheck() end
+    end
     local info = ns.Phases[fromPhase]
     local text = ns.PhaseLabel(fromPhase) .. (info.subtitle and (" - " .. info.subtitle) or "")
         .. "  |  Data: " .. (info.source or "?") .. ", checked " .. (info.checked or "?")
@@ -327,6 +337,8 @@ function ns.RefreshBrowser()
         text = text .. "  |  Realistic set: " .. (guide.realisticSource or "community guides")
     elseif mode == "enchants" then
         text = text .. "  |  Enchants: " .. (guide.enchantSource or "community guides")
+    elseif mode == "consumables" then
+        text = text .. "  |  Consumables: " .. (guide.consumableSource or "community guides")
     elseif guide.alts and #guide.alts > 0 and ns.char.showAlts ~= false then
         text = text .. "  |  Alternatives: " .. (guide.altSource or info.altSource or "community guides")
     end
@@ -395,7 +407,7 @@ local function listMenu(owner)
     openMenu(owner, function(_, root)
         root:CreateTitle("Gear list")
         root:CreateRadio("BiS (best available)",
-            function() return ns.char.listMode ~= "realistic" and ns.char.listMode ~= "enchants" end,
+            function() return ns.char.listMode == nil or ns.char.listMode == "bis" end,
             function() ns.char.listMode = "bis"; ns.RefreshBrowser() end)
         root:CreateRadio("Realistic (quick to collect)",
             function() return ns.char.listMode == "realistic" end,
@@ -403,6 +415,9 @@ local function listMenu(owner)
         root:CreateRadio("Enchants",
             function() return ns.char.listMode == "enchants" end,
             function() ns.char.listMode = "enchants"; ns.RefreshBrowser() end)
+        root:CreateRadio("Consumables (raid shopping list)",
+            function() return ns.char.listMode == "consumables" end,
+            function() ns.char.listMode = "consumables"; ns.RefreshBrowser() end)
     end)
 end
 
@@ -444,6 +459,9 @@ local function createFrame()
     frame:Hide()
     tinsert(UISpecialFrames, "ForeverBiSFrame")
 
+    frame:HookScript("OnShow", function() if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end end)
+    frame:HookScript("OnHide", function() if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end end)
+
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", 0, -5)
     title:SetText(ns.title .. "  -  WoW Forever")
@@ -474,6 +492,7 @@ local function createFrame()
         GameTooltip:AddLine("BiS: the best pre-raid items.", 1, 1, 1, true)
         GameTooltip:AddLine("Realistic: a set most players can finish in a week or two from dungeons, quests and Tier 0.5.", 1, 1, 1, true)
         GameTooltip:AddLine("Enchants: the enchant, arcanum or armor kit for each slot.", 1, 1, 1, true)
+        GameTooltip:AddLine("Consumables: flask, elixirs, food, weapon oil or stone and potions to buy for raid.", 1, 1, 1, true)
         GameTooltip:Show()
     end)
     listButton:SetScript("OnLeave", function() GameTooltip:Hide() end)

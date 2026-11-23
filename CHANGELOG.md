@@ -1,13 +1,14 @@
 # Forever Best In Slot
 
 ## 1.7.0
-- **Raid check:** a new "Raid check" button in the browser (or `/bis raid`) checks whether your character is ready to raid, for the spec selected in the browser or your active spec:
+- **Consumables list:** pick "Consumables" from the list button for a raid shopping list for your spec: flask, elixirs, food, weapon oil or sharpening stone, potions and runes (from rankedboost.com's WoW Forever consumables guide). Casters get the elixir for their spell school. The counter shows how many you already have in your bags, and hovering a consumable tells you if it's on your list.
+- **Raid check:** a companion panel docked to the right side of the browser. It opens and moves with the browser; the "Raid check" button (or `/bis raid`) turns it on or off. It checks whether your character is ready to raid, for the spec selected in the browser or your active spec:
   - Hit chance against raid bosses: 8% for melee, hunters and tanks, 17% for casters (healers are skipped, heals can't miss). Dual wielders also see the auto-attack figure.
   - Defense 440 for tanks, so raid bosses can't crit you.
   - Empty gear slots, missing ammo for hunters, and slots on your enchant list that aren't enchanted.
   - How many BiS and Realistic items you have equipped.
   - Your gear's key stats for your role (for example healing and intellect for healers, spell damage for casters, agility and attack power for hunters) compared with the full pre-raid BiS set.
-  The check updates when you change gear.
+  The check updates when you change gear or spec.
 
 ## 1.6.0
 - **Enchants:** every spec now has an Enchants list (pick "Enchants" from the list button) with the enchant, arcanum, armor kit or scope for each slot, from wowtbc.gg. Hovering an enchant scroll, arcanum or kit tells you if it's your BiS enchant.

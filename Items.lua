@@ -49,6 +49,7 @@ function ns.BuildIndex()
                 { rows = g.alts or {},      flag = "alt" },
                 { rows = g.realistic or {}, flag = "realistic" },
                 { rows = g.enchants or {},  flag = "enchant" },
+                { rows = g.consumables or {}, flag = "consumable" },
             }
             for _, set in ipairs(extras) do
                 for _, row in ipairs(set.rows) do
@@ -186,6 +187,7 @@ function ns.GetGuideRows(guide, includeAlts, listMode)
     local faction = UnitFactionGroup("player")
     local rows = {}
     local set = (listMode == "realistic" and guide.realistic) or (listMode == "enchants" and guide.enchants)
+        or (listMode == "consumables" and guide.consumables)
     if set then
         for _, row in ipairs(set) do
             local r = resolveRow(row, faction, nil)
