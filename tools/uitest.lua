@@ -140,8 +140,22 @@ check("tick a slot done in BiS, hidden in Realistic too", function()
   local after = visibleRows()
   print("   realistic rows:", before, "->", after, " bis rows with head done:", bisRows)
   if after >= before then error("ticked slot not hidden in Realistic") end
-  ns.SetDoneMark("HUNTER:Marksmanship", "Head#1", false)
+  ns.SetDoneMark("HUNTER:Marksmanship", "Head#1", nil)
   ns.char.hideDone = false; ns.char.listMode = "bis"; ns.RefreshBrowser()
+end)
+check("untick a slot you own", function()
+  ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"
+  local g = ns.GetGuide("HUNTER","Marksmanship",1)
+  ns.Owned[g.items[1][2]] = "bag"
+  ns.char.listMode = "bis"; ns.char.hideDone = true; ns.RefreshBrowser()
+  local hidden = visibleRows()
+  ns.SetDoneMark("HUNTER:Marksmanship", "Head#1", false)   -- unticked although owned
+  ns.RefreshBrowser()
+  local shown = visibleRows()
+  print("   owned head: hidden rows", hidden, "-> after untick", shown)
+  if shown <= hidden then error("untick didn't bring the slot back") end
+  ns.SetDoneMark("HUNTER:Marksmanship", "Head#1", nil); ns.Owned[g.items[1][2]] = nil
+  ns.char.hideDone = false; ns.RefreshBrowser()
 end)
 check("consumables list for every class/spec", function()
   ns.char.listMode="consumables"

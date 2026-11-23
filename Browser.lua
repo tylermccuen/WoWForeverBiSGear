@@ -188,7 +188,10 @@ local function createRow(i)
     done:SetPoint("RIGHT", link, "LEFT", -4, 0)
     done:SetScript("OnClick", function(self)
         if row.doneKey then
-            ns.SetDoneMark(row.specKey, row.doneKey, self:GetChecked() and true or false)
+            local on = self:GetChecked() and true or false
+            -- back to automatic when the tick matches what ownership says
+            if on == (row.autoDone or false) then on = nil end
+            ns.SetDoneMark(row.specKey, row.doneKey, on)
             ns.RefreshBrowser()
         end
     end)
@@ -196,7 +199,7 @@ local function createRow(i)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
         GameTooltip:AddLine("Done")
         if row.autoDone then
-            GameTooltip:AddLine("You own a BiS or Realistic item for this slot.", 1, 1, 1, true)
+            GameTooltip:AddLine("Ticked because you own a BiS or Realistic item for this slot. Untick it if the slot isn't finished.", 1, 1, 1, true)
         else
             GameTooltip:AddLine("Tick when this slot is finished, with this item or one from the other list. It counts in both the BiS and Realistic lists.", 1, 1, 1, true)
         end
@@ -252,7 +255,6 @@ local function fillRow(row, data)
     if data.doneKey then
         row.done:Show()
         row.done:SetChecked(data.isDone and true or false)
-        if data.autoDone then row.done:Disable() else row.done:Enable() end
     else
         row.done:Hide()
     end
@@ -350,7 +352,8 @@ function ns.RefreshBrowser()
     for _, r in ipairs(listRows) do
         if r.doneKey then
             r.autoDone = auto[r.doneKey] or false
-            r.isDone = r.autoDone or marks[r.doneKey] or false
+            -- a tick (true) or untick (false) overrides the automatic state
+            if marks[r.doneKey] ~= nil then r.isDone = marks[r.doneKey] else r.isDone = r.autoDone end
             slotKeys[r.slot] = slotKeys[r.slot] or {}
             table.insert(slotKeys[r.slot], r)
         end

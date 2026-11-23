@@ -317,5 +317,5 @@ function ns.SetDoneMark(specKey, key, on)
     ns.char.done = ns.char.done or {}
     local t = ns.char.done[specKey]
     if not t then t = {}; ns.char.done[specKey] = t end
-    t[key] = on or nil
+    t[key] = on   -- true = done, false = not done, nil = automatic
 end
