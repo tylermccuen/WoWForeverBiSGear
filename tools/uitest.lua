@@ -200,4 +200,12 @@ check("raid check (every spec)", function()
   ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"
   ns.ToggleRaidCheck()
 end)
+check("avoid grouping column", function()
+  ns.char.selectedClass, ns.char.selectedSpec, ns.char.listMode = "HUNTER", "Marksmanship", "bis"
+  ns.RefreshBrowser()
+  local g = ns.GetGuide("HUNTER","Marksmanship",1)
+  local shown = 0
+  for _, e in ipairs(ns.ItemIndex[g.items[7][2]] or {}) do shown = shown + 1 end
+  print("   specs indexed for MM hands item:", shown)
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

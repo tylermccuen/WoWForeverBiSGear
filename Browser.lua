@@ -5,7 +5,7 @@ local frame, scrollChild, rows = nil, nil, {}
 local lastRaidSpec
 local WIDTH, HEIGHT = 900, 540          -- default size
 local MIN_W, MIN_H, MAX_W, MAX_H = 880, 320, 1500, 1100
-local headerSource                      -- "WHERE TO GET IT" column header
+local headerSource, headerAvoid        -- "WHERE TO GET IT" / "AVOID GROUPING WITH" headers
 
 -- saved window width, never narrower than the controls need
 local function savedWidth()
@@ -14,19 +14,25 @@ end
 
 -- Column positions follow the window width
 local function columnLayout(contentWidth)
-    local sourceX = math.max(300, math.floor(contentWidth * 0.42))
+    local sourceX = math.max(290, math.floor(contentWidth * 0.36))
     local nameW = sourceX - 50
-    local sourceW = math.max(180, contentWidth - sourceX - 200)
-    return sourceX, nameW, sourceW
+    local rest = math.max(300, contentWidth - sourceX - 200)   -- 200 = owned / done / link
+    local sourceW = math.floor(rest * 0.56)
+    local avoidX = sourceX + sourceW + 10
+    local avoidW = rest - sourceW - 10
+    return sourceX, nameW, sourceW, avoidX, avoidW
 end
 
 local function layoutRow(row)
-    local sourceX, nameW, sourceW = columnLayout(scrollChild:GetWidth())
+    local sourceX, nameW, sourceW, avoidX, avoidW = columnLayout(scrollChild:GetWidth())
     row.name:SetWidth(nameW - (row.isAlt and 18 or 0))
     row.slot:SetWidth(nameW)
     row.source:ClearAllPoints()
     row.source:SetPoint("LEFT", sourceX, 0)
     row.source:SetWidth(sourceW)
+    row.avoid:ClearAllPoints()
+    row.avoid:SetPoint("LEFT", avoidX, 0)
+    row.avoid:SetWidth(avoidW)
 end
 
 local classButton, specButton, phaseButton, listTabs, slotButton, missingCheck, altCheck, altLabel, doneCheck, doneLabel, countText
@@ -86,6 +92,26 @@ local function ensureSelection()
     end
 end
 
+-- Other specs with this item as a main BiS pick (they'd roll against you).
+-- Class-coloured spec names; alternatives, Realistic picks, enchants and
+-- consumables don't count.
+local function competitorsText(itemID, phase)
+    local entries = ns.ItemIndex[itemID]
+    if not entries then return "" end
+    local seen, parts = {}, {}
+    for _, e in ipairs(entries) do
+        local g = e.guide
+        local key = g.class .. ":" .. g.spec
+        if not (e.alt or e.realistic or e.enchant or e.consumable or e.pre)
+            and ns.EntryActiveIn(e, phase) and not seen[key]
+            and not (g.class == ns.char.selectedClass and g.spec == ns.char.selectedSpec) then
+            seen[key] = true
+            table.insert(parts, classColorHex(g.class) .. g.spec .. "|r")
+        end
+    end
+    return table.concat(parts, ", ")
+end
+
 ----------------------------------------------------------------------
 -- Rows
 ----------------------------------------------------------------------
@@ -137,6 +163,11 @@ local function createRow(i)
     row.source:SetWidth(250)
     row.source:SetJustifyH("LEFT")
     row.source:SetWordWrap(false)
+
+    row.avoid = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    row.avoid:SetJustifyH("LEFT")
+    row.avoid:SetWordWrap(true)
+    row.avoid:SetMaxLines(2)
 
 
     local link = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
@@ -220,6 +251,7 @@ local function fillRow(row, data)
     local src = data.source or ""
     if data.note then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
     row.source:SetText(src)
+    row.avoid:SetText(data.avoid or "")
     local ownedText = OWNED_ICON[ns.Owned[data.id]] or ""
     if ownedText == "" and data.isDone then ownedText = "|cff33ff33Done|r" end
     row.owned:SetText(ownedText)
@@ -350,6 +382,7 @@ function ns.RefreshBrowser()
         if slotOk and not hidden and not (ns.char.missingOnly and owned) then
             r.isNew = mode == "bis" and (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
             r.specKey = specKey
+            r.avoid = gearList and competitorsText(r.id, phase) or nil
             table.insert(list, r)
         end
     end
@@ -634,6 +667,9 @@ local function createFrame()
     h2:SetPoint("TOPLEFT", 314, -64)
     headerSource = h2
     h2:SetText("WHERE TO GET IT")
+    headerAvoid = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    headerAvoid:SetPoint("TOPLEFT", 560, -64)
+    headerAvoid:SetText("AVOID GROUPING WITH")
 
     local scroll = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", 12, -78)
@@ -669,8 +705,9 @@ local function createFrame()
     frame:SetScript("OnSizeChanged", function(self, w)
         scrollChild:SetWidth(w - 46)
         if self.sourceText then self.sourceText:SetWidth(w - 240) end
-        local sourceX = columnLayout(w - 46)
+        local sourceX, _, _, avoidX = columnLayout(w - 46)
         headerSource:SetPoint("TOPLEFT", sourceX + 14, -64)
+        headerAvoid:SetPoint("TOPLEFT", avoidX + 14, -64)
         for _, row in ipairs(rows) do
             if row:IsShown() then layoutRow(row) end
         end

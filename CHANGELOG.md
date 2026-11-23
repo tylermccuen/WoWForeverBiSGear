@@ -1,7 +1,7 @@
 # Forever Best In Slot
 
 ## 1.7.0
-- **Cleaner rows:** removed the "Also BiS" line under each item; the tooltip still lists every spec an item is BiS for.
+- **Avoid grouping with:** the "Also BiS" line under each item is now its own column on the BiS and Realistic tabs, listing the other specs (class-coloured) that have the item as a BiS pick, so you know who would roll against you.
 - **List tabs:** BiS, Realistic, Enchants and Consumables are now tabs along the bottom of the window instead of a dropdown.
 - **Tick slots done:** every row in the BiS, Realistic and Enchants lists has a "done" checkbox. Ticking a slot marks it finished in both the BiS and Realistic lists, so you can mix them: finish your head with the Realistic pick and it shows as done while you look at BiS. Slots where you own the BiS or Realistic item are ticked automatically, and you can untick any slot to mark it not done. The counter now shows how many slots are done, and **Hide finished** hides every done slot. Ticks are saved per character and spec.
 - **Consumables list:** open the Consumables tab for a raid shopping list for your spec: flask, elixirs, food, weapon oil or sharpening stone, potions and runes (from rankedboost.com's WoW Forever consumables guide). Casters get the elixir for their spell school. The counter shows how many you already have in your bags, and hovering a consumable tells you if it's on your list.
