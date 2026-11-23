@@ -7,7 +7,7 @@ Every phase is one file in `Data\` that registers itself. Nothing else in the ad
 2. Fill in the lists that changed. **Specs you leave out keep using their latest earlier list**, so a phase file can start with just a few specs and grow.
 3. Add the file to `ForeverBestInSlot.toc` under `Data\Phase1.lua` (there's a commented example line).
 4. Add a section for the new version at the top of `CHANGELOG.md`. CurseForge shows this text as the release notes; the version number itself comes from the release tag.
-5. Check the data: `lua tools/validate.lua` from the addon folder. It flags bad slots, missing IDs and duplicate specs, and shows how many items are new per spec.
+5. Check the data: `lua tools/validate.lua` from the addon folder, then `lua tools/uitest.lua` to open the browser against mocked game frames and catch Lua errors. It flags bad slots, missing IDs and duplicate specs, and shows how many items are new per spec.
 6. `/reload` in game.
 
 The newest phase automatically becomes the default in the browser and on tooltips. Players can still pick older phases from the **Phase** button. Items that weren't on a spec's previous list are marked **NEW**.

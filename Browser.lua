@@ -1,6 +1,7 @@
 local _, ns = ...
 
 local ROW_HEIGHT = 40
+local frame, scrollChild, rows = nil, nil, {}
 local WIDTH, HEIGHT = 720, 540          -- default size
 local MIN_W, MIN_H, MAX_W, MAX_H = 640, 320, 1400, 1100
 local headerSource                      -- "WHERE TO GET IT" column header
@@ -23,7 +24,6 @@ local function layoutRow(row)
     row.also:SetWidth(sourceW)
 end
 
-local frame, scrollChild, rows = nil, nil, {}
 local classButton, specButton, phaseButton, slotButton, missingCheck, altCheck, countText
 
 local OWNED_ICON = {
