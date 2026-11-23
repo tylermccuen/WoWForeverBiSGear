@@ -9,7 +9,8 @@
 - **Raid check:** a companion panel docked to the right side of the browser. It opens and moves with the browser; the "Raid check" button (or `/bis raid`) turns it on or off. It checks whether your character is ready to raid, for the spec selected in the browser or your active spec:
   - Hit chance against raid bosses: 8% for melee, hunters and tanks, 17% for casters (healers are skipped, heals can't miss). Dual wielders also see the auto-attack figure.
   - Defense 440 for tanks, so raid bosses can't crit you.
-  - Empty gear slots, and slots on your enchant list that aren't enchanted.
+  - Empty gear slots.
+  - Enchants, slot by slot: what's on each enchanted slot (for example "Head: +8 Agility"), and the recommended enchant for any slot that isn't enchanted.
   - How many BiS and Realistic items you have equipped.
   - Your gear's key stats for your role (for example healing and intellect for healers, spell damage for casters, agility and attack power for hunters) compared with the full pre-raid BiS set.
   The check updates when you change gear or spec.

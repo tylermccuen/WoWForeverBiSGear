@@ -187,6 +187,15 @@ check("raid check (every spec)", function()
   GetCritChance = function() return 12.5 end
   UnitDefense = function() return 300, 120 end
   C_Item.GetItemStats = function(link) return { ITEM_MOD_AGILITY_SHORT = 10, ITEM_MOD_STAMINA_SHORT = 8 } end
+  GetInventoryItemLink = function(_, inv)
+    if inv == 1 then return "|cff0070dd|Hitem:226887:0:0|h[Cap]|h|r" end
+    if inv == 2 then return "|cff0070dd|Hitem:18404:0:0|h[Neck]|h|r" end
+  end
+  C_TooltipInfo = { GetInventoryItem = function(_, inv)
+    if inv == 1 then return { lines = { { leftText = "Beastmaster's Cap" }, { leftText = "Enchanted: +8 Agility" } } } end
+    return { lines = { { leftText = "Some Neck" } } }
+  end }
+  C_Item.GetItemNameByID = function(id) return "Item " .. id end
   for _, cls in ipairs(ns.ClassOrder) do for _, sp in ipairs(ns.GetSpecsForClass(cls)) do
     ns.char.selectedClass, ns.char.selectedSpec = cls, sp
     UnitClass = function() return cls, cls end

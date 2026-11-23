@@ -138,6 +138,34 @@ local function enchantOf(link)
     return tonumber(e) or 0
 end
 
+-- What's enchanted on an equipped item. The tooltip's "Enchanted: ..." line
+-- is the most reliable source; the enchant ID in the item link is the backup.
+-- Returns text (or nil), enchanted (boolean).
+local ENCHANT_PREFIX = (ENCHANTED_TOOLTIP_LINE and ENCHANTED_TOOLTIP_LINE:match("^(.-)%%s")) or "Enchanted: "
+local function enchantText(inv, link)
+    if C_TooltipInfo and C_TooltipInfo.GetInventoryItem then
+        local ok, data = pcall(C_TooltipInfo.GetInventoryItem, "player", inv)
+        if ok and type(data) == "table" and type(data.lines) == "table" then
+            for _, l in ipairs(data.lines) do
+                local t = l.leftText
+                if type(t) == "string" and t:sub(1, #ENCHANT_PREFIX) == ENCHANT_PREFIX then
+                    return t:sub(#ENCHANT_PREFIX + 1), true
+                end
+            end
+        end
+    end
+    local id = enchantOf(link)
+    if id and id ~= 0 then return nil, true end
+    return nil, false
+end
+
+local function itemNameOf(id)
+    local name = C_Item.GetItemNameByID and C_Item.GetItemNameByID(id)
+    if not name and GetItemInfo then name = GetItemInfo(id) end
+    if not name and ns.WithItem then ns.WithItem(id, function() end) end   -- cache it for next time
+    return name or ("item " .. id)
+end
+
 local function isWeaponOffhand(link)
     if not link then return false end
     local _, _, _, loc = C_Item.GetItemInfoInstant(link)
@@ -215,19 +243,22 @@ function ns.RunRaidCheck(cb)
         end
     end
     line(#empty == 0 and "pass" or "fail", #empty == 0 and "No empty gear slots" or ("Empty slots: " .. table.concat(empty, ", ")))
-    -- Enchants
+    -- Enchants, one line per slot on the spec's enchant list
     if guide.enchants then
-        local missing, seen = {}, {}
+        line("head", "Enchants")
+        local seen = {}
         for _, row in ipairs(guide.enchants) do
-            local inv = INV[row[1]]
-            if inv and not seen[inv] then
+            local slot, inv = row[1], INV[row[1]]
+            if inv and not seen[inv] and equipped[inv] then
                 seen[inv] = true
-                local link = equipped[inv]
-                if link and enchantOf(link) == 0 then table.insert(missing, row[1]) end
+                local text, enchanted = enchantText(inv, equipped[inv])
+                if enchanted then
+                    line("pass", slot .. ": " .. (text or "enchanted"))
+                else
+                    line("fail", slot .. ": not enchanted  |cff999999(BiS: " .. itemNameOf(row[2]) .. ")|r")
+                end
             end
         end
-        line(#missing == 0 and "pass" or "fail",
-            #missing == 0 and "Every slot on your enchant list is enchanted" or ("Not enchanted: " .. table.concat(missing, ", ")))
     end
 
     -- BiS / Realistic pieces equipped
