@@ -24,10 +24,9 @@ local function layoutRow(row)
     local sourceX, nameW, sourceW = columnLayout(scrollChild:GetWidth())
     row.name:SetWidth(nameW - (row.isAlt and 18 or 0))
     row.slot:SetWidth(nameW)
-    row.source:SetPoint("TOPLEFT", sourceX, -5)
+    row.source:ClearAllPoints()
+    row.source:SetPoint("LEFT", sourceX, 0)
     row.source:SetWidth(sourceW)
-    row.also:SetPoint("BOTTOMLEFT", sourceX, 5)
-    row.also:SetWidth(sourceW)
 end
 
 local classButton, specButton, phaseButton, listTabs, slotButton, missingCheck, altCheck, altLabel, doneCheck, doneLabel, countText
@@ -90,27 +89,6 @@ end
 ----------------------------------------------------------------------
 -- Rows
 ----------------------------------------------------------------------
-local function otherSpecsText(itemID)
-    local entries = ns.ItemIndex[itemID]
-    if not entries then return "" end
-    local seen, parts = {}, {}
-    local phase = selectedPhase()
-    for _, e in ipairs(entries) do
-        local g = e.guide
-        local key = g.class .. g.spec
-        if ns.EntryActiveIn(e, phase) and not seen[key]
-            and not (g.class == ns.char.selectedClass and g.spec == ns.char.selectedSpec) then
-            seen[key] = true
-            table.insert(parts, classColorHex(g.class) .. g.spec .. " " .. className(g.class) .. "|r")
-        end
-    end
-    if #parts == 0 then return "" end
-    if #parts > 4 then
-        local n = #parts - 4
-        parts = { parts[1], parts[2], parts[3], parts[4], "+" .. n .. " more" }
-    end
-    return "Also BiS: " .. table.concat(parts, ", ")
-end
 
 local function createRow(i)
     local row = CreateFrame("Frame", nil, scrollChild)
@@ -160,11 +138,6 @@ local function createRow(i)
     row.source:SetJustifyH("LEFT")
     row.source:SetWordWrap(false)
 
-    row.also = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    row.also:SetPoint("BOTTOMLEFT", 300, 5)
-    row.also:SetWidth(250)
-    row.also:SetJustifyH("LEFT")
-    row.also:SetWordWrap(false)
 
     local link = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
     link:SetSize(64, 22)
@@ -247,7 +220,6 @@ local function fillRow(row, data)
     local src = data.source or ""
     if data.note then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
     row.source:SetText(src)
-    row.also:SetText(otherSpecsText(data.id))
     local ownedText = OWNED_ICON[ns.Owned[data.id]] or ""
     if ownedText == "" and data.isDone then ownedText = "|cff33ff33Done|r" end
     row.owned:SetText(ownedText)
