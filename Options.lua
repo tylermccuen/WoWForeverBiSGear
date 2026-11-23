@@ -56,9 +56,17 @@ local function buildPanel()
         "Off: tooltips only list specs the item is BiS for in the current phase. On: also list older phases, tagged P1, P2...",
         function() return ns.db.tooltipPhases == "all" end,
         function(v) ns.db.tooltipPhases = v and "all" or "current" end, c3)
+    local c3c = checkbox(panel, "Show \"BiS for you\" verdict for my spec",
+        "Adds a green line when an item is on your own spec's BiS list. Your spec is the one picked in the browser for your class, otherwise your active specialization.",
+        function() return ns.db.showVerdict end,
+        function(v) ns.db.showVerdict = v end, c3b)
+    local c3d = checkbox(panel, "Also show \"Not BiS\" and my BiS item on other gear",
+        "On gear that isn't on your list, shows what your BiS item for that slot is (uncommon quality and above).",
+        function() return ns.db.showNotBis end,
+        function(v) ns.db.showNotBis = v end, c3c)
     local c4 = checkbox(panel, "Show minimap button", nil,
         function() return not ns.db.minimap.hide end,
-        function(v) ns.db.minimap.hide = not v; ns.UpdateMinimap() end, c3b)
+        function(v) ns.db.minimap.hide = not v; ns.UpdateMinimap() end, c3d)
 
     -- Link site
     local linkHeader = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")

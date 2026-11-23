@@ -20,7 +20,7 @@ A Best-in-Slot browser and tooltip addon for **World of Warcraft: Forever** (int
 | Put an item in chat / preview it | Shift-click / Ctrl-click the item icon |
 | Toggle minimap button | `/bis minimap` |
 
-The browser opens on your own class and spec, shows the Alliance or Horde pick for your faction, marks items you have equipped, in bags, or in the bank (the bank is remembered after you visit it once), and has a slot filter and a "Missing only" filter. Item tooltips list every class/spec the item is BiS for.
+The browser opens on your own class and spec, shows the Alliance or Horde pick for your faction, marks items you have equipped, in bags, or in the bank (the bank is remembered after you visit it once), and has a slot filter and a "Missing only" filter. Item tooltips (when you hover an item or click an item link in chat) start with a verdict for your own spec: a green **BiS for you** line, or **Not BiS for you** followed by your BiS item for that slot and a tick if you already own it. Below that they list every class/spec the item is BiS for. Your spec is the one picked in the browser for your class, otherwise your active specialization; both verdict lines can be turned off in Settings.
 
 ## Link site
 Settings → **Copy-paste link** picks the site the Link button copies:

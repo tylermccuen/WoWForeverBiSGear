@@ -37,7 +37,69 @@ local function phaseTag(phases)
     return table.concat(parts, ", ")
 end
 
-local function addBisLines(tooltip, itemID)
+local CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:14:14|t"
+local CROSS = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:14:14|t"
+local OWNED_TEXT = { equipped = "equipped", bag = "in your bags", bank = "in your bank" }
+
+local function itemName(id)
+    local name = C_Item and C_Item.GetItemNameByID and C_Item.GetItemNameByID(id)
+    if not name and C_Item and C_Item.RequestLoadItemDataByID then
+        C_Item.RequestLoadItemDataByID(id)   -- name shows next time the tooltip refreshes
+    end
+    return name or ("item " .. id)
+end
+
+-- Verdict for the player's own spec: "BiS for you" or "Not BiS for you, your BiS is X"
+local function addVerdict(tooltip, itemID)
+    if not ns.db.showVerdict then return false end
+    local class, spec = ns.GetMySpec()
+    if not spec then return false end
+    local phase = ns.LatestPhase()
+    local guide = ns.GetGuide(class, spec, phase)
+    if not guide then return false end
+
+    local rows = ns.GetGuideRows(guide)
+    local mySlots = {}
+    for _, r in ipairs(rows) do
+        if r.id == itemID then table.insert(mySlots, r.slot) end
+    end
+
+    if #mySlots > 0 then
+        tooltip:AddLine(" ")
+        local text = CHECK .. " BiS for you: " .. spec .. " " .. mySlots[1] .. " (" .. ns.PhaseLabel(phase) .. ")"
+        local owned = ns.Owned[itemID]
+        if owned then text = text .. ", " .. OWNED_TEXT[owned] end
+        tooltip:AddLine(text, 0.2, 1, 0.2)
+        return true
+    end
+
+    -- Not on my list: only comment on equippable gear of reasonable quality
+    if not ns.db.showNotBis then return false end
+    local _, _, _, equipLoc = C_Item.GetItemInfoInstant(itemID)
+    local slots = equipLoc and ns.EquipLocSlots[equipLoc]
+    if not slots then return false end
+    local quality = C_Item.GetItemQualityByID and C_Item.GetItemQualityByID(itemID)
+    if quality and quality < 2 then return false end
+
+    local bis = {}
+    for _, r in ipairs(rows) do
+        for _, s in ipairs(slots) do
+            if r.slot == s then table.insert(bis, r) break end
+        end
+    end
+    if #bis == 0 then return false end
+
+    tooltip:AddLine(" ")
+    tooltip:AddLine(CROSS .. " Not BiS for you (" .. spec .. ")", 1, 0.5, 0.3)
+    for i, r in ipairs(bis) do
+        if i > 3 then break end
+        local mark = ns.Owned[r.id] and (" " .. CHECK) or ""
+        tooltip:AddDoubleLine("   Your " .. r.slot .. " BiS:", itemName(r.id) .. mark, 0.7, 0.7, 0.7, 1, 0.82, 0)
+    end
+    return true
+end
+
+local function addBisLines(tooltip, itemID, noSpacer)
     local entries = ns.ItemIndex[itemID]
     if not entries then return end
 
@@ -81,7 +143,7 @@ local function addBisLines(tooltip, itemID)
     table.sort(order, function(a, b) return (rank[a] or 99) < (rank[b] or 99) end)
 
     local showTags = allPhases and ns.MultiPhase()
-    tooltip:AddLine(" ")
+    if not noSpacer then tooltip:AddLine(" ") end
     if allPhases then
         tooltip:AddLine("Forever BiS:", 0.9, 0.8, 0.5)
     else
@@ -136,7 +198,9 @@ function ns.InitTooltip()
         if isSecret(id) then return end   -- Midnight-era restriction: some values are hidden in combat
         if type(id) ~= "number" then return end
 
-        local ok, err = pcall(addBisLines, tooltip, id)
+        local okV, added = pcall(addVerdict, tooltip, id)
+        if not okV and ns.debug then ns.Print(added) end
+        local ok, err = pcall(addBisLines, tooltip, id, okV and added)
         if not ok and ns.debug then ns.Print(err) end
     end)
 end

@@ -13,7 +13,9 @@ local accountDefaults = {
     showTooltip      = true,
     tooltipOwnClass  = false,
     tooltipInCombat  = false,
-    tooltipPhases    = "current",   -- "current" = latest phase only, "all" = every phase with tags
+    tooltipPhases    = "current",
+    showVerdict      = true,        -- "BiS for you" / "Not BiS for you" line for your own spec
+    showNotBis       = true,        -- also show "Not BiS" + your BiS item on other equippable gear   -- "current" = latest phase only, "all" = every phase with tags
     minimap          = { hide = false, angle = 200 },
     linkPreset       = "wowhead_forever",
     customTemplate   = "https://www.wowhead.com/forever/item={id}",

@@ -69,6 +69,48 @@ function ns.GetSpecsForClass(class)
     return ns.ClassSpecs[class] or {}
 end
 
+-- The spec whose list counts as "mine": the spec picked in the browser (if it is
+-- for the player's class, e.g. Feral Tank), otherwise the active specialization.
+function ns.GetMySpec()
+    local _, playerClass = UnitClass("player")
+    local specs = ns.GetSpecsForClass(playerClass)
+    if #specs == 0 then return playerClass, nil end
+
+    if ns.char and ns.char.selectedClass == playerClass and ns.char.selectedSpec then
+        for _, s in ipairs(specs) do
+            if s == ns.char.selectedSpec then return playerClass, s end
+        end
+    end
+
+    local ok, idx = pcall(GetSpecialization)
+    if ok and idx and GetSpecializationInfo then
+        local _, specName = GetSpecializationInfo(idx)
+        if specName then
+            for _, s in ipairs(specs) do
+                if s:lower() == specName:lower() then return playerClass, s end
+            end
+        end
+    end
+    return playerClass, specs[1]
+end
+
+-- Equip location -> slot names used in the guides
+ns.EquipLocSlots = {
+    INVTYPE_HEAD = { "Head" },         INVTYPE_NECK = { "Neck" },
+    INVTYPE_SHOULDER = { "Shoulder" }, INVTYPE_CLOAK = { "Back" },
+    INVTYPE_CHEST = { "Chest" },       INVTYPE_ROBE = { "Chest" },
+    INVTYPE_WRIST = { "Wrist" },       INVTYPE_HAND = { "Hands" },
+    INVTYPE_WAIST = { "Waist" },       INVTYPE_LEGS = { "Legs" },
+    INVTYPE_FEET = { "Feet" },         INVTYPE_FINGER = { "Finger" },
+    INVTYPE_TRINKET = { "Trinket" },   INVTYPE_2HWEAPON = { "Two Hand", "Main Hand" },
+    INVTYPE_WEAPON = { "Main Hand", "Off Hand", "Two Hand" },
+    INVTYPE_WEAPONMAINHAND = { "Main Hand", "Two Hand" },
+    INVTYPE_WEAPONOFFHAND = { "Off Hand" }, INVTYPE_SHIELD = { "Off Hand" },
+    INVTYPE_HOLDABLE = { "Off Hand" },
+    INVTYPE_RANGED = { "Ranged", "Wand" }, INVTYPE_RANGEDRIGHT = { "Ranged", "Wand" },
+    INVTYPE_THROWN = { "Ranged" },     INVTYPE_RELIC = { "Relic" },
+}
+
 -- Set of item IDs on a guide (both factions)
 function ns.GuideItemSet(guide)
     local set = {}
