@@ -297,6 +297,7 @@ function ns.RefreshBrowser()
                 end
             end
         end
+        need.Ammo = need.Ammo and 1   -- arrows or bullets, whichever your weapon uses
         for slot, n in pairs(need) do
             if (got[slot] or 0) >= n then doneSlot[slot] = true end
         end

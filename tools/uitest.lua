@@ -139,27 +139,6 @@ check("consumables list for every class/spec", function()
   print("   Fire mage consumable rows:", (visibleRows()))
   ns.char.listMode="bis"; ns.RefreshBrowser()
 end)
-check("ammo check: arrows in bags for a bow", function()
-  local saveInfo, saveCont = C_Item.GetItemInfoInstant, C_Container
-  C_Item.GetItemInfoInstant = function(item)
-    local id = tonumber(tostring(item):match("item:(%d+)")) or item
-    if id == 13023 then return id, "", "", "INVTYPE_RANGED", 0, 2, 2 end   -- bow
-    if id == 12654 then return id, "", "", "INVTYPE_AMMO", 0, 6, 2 end     -- arrows
-    if id == 13377 then return id, "", "", "INVTYPE_AMMO", 0, 6, 3 end     -- bullets
-    return id, "", "", "", 0, 4, 0
-  end
-  C_Container = { GetContainerNumSlots = function(bag) return bag == 0 and 2 or 0 end,
-                  GetContainerItemInfo = function(bag, slot) return { itemID = slot == 1 and 12654 or 13377, stackCount = 200 } end,
-                  GetContainerItemID = function() return nil end }
-  local ok, text = ns.CheckAmmo({ [18] = "|Hitem:13023:0|h" })
-  print("   bow + arrows:", ok, text)
-  if not ok then error("arrows not recognised") end
-  C_Container.GetContainerItemInfo = function() return { itemID = 13377, stackCount = 200 } end
-  ok, text = ns.CheckAmmo({ [18] = "|Hitem:13023:0|h" })
-  print("   bow + only bullets:", ok, text)
-  if ok then error("bullets accepted for a bow") end
-  C_Item.GetItemInfoInstant, C_Container = saveInfo, saveCont
-end)
 check("raid companion docks with browser", function()
   ns.db.raidCompanion = true
   ns.UpdateRaidCompanion()

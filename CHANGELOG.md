@@ -5,14 +5,14 @@
 - **Raid check:** a companion panel docked to the right side of the browser. It opens and moves with the browser; the "Raid check" button (or `/bis raid`) turns it on or off. It checks whether your character is ready to raid, for the spec selected in the browser or your active spec:
   - Hit chance against raid bosses: 8% for melee, hunters and tanks, 17% for casters (healers are skipped, heals can't miss). Dual wielders also see the auto-attack figure.
   - Defense 440 for tanks, so raid bosses can't crit you.
-  - Empty gear slots, missing ammo for hunters, and slots on your enchant list that aren't enchanted.
+  - Empty gear slots, and slots on your enchant list that aren't enchanted.
   - How many BiS and Realistic items you have equipped.
   - Your gear's key stats for your role (for example healing and intellect for healers, spell damage for casters, agility and attack power for hunters) compared with the full pre-raid BiS set.
   The check updates when you change gear or spec.
 
 ## 1.6.0
 - **Enchants:** every spec now has an Enchants list (pick "Enchants" from the list button) with the enchant, arcanum, armor kit or scope for each slot, from wowtbc.gg. Hovering an enchant scroll, arcanum or kit tells you if it's your BiS enchant.
-- **Quiver and ammo for hunters:** new Quiver and Ammo slots. Bows get Harpy Hide Quiver and Doomshot; the Realistic set's rifle gets Ribbly's Bandolier and Miniature Cannon Balls; alternatives cover the other options.
+- **Quiver and ammo for hunters:** new Quiver and Ammo slots. Every hunter list shows the best arrows (Doomshot) and the best bullets (Miniature Cannon Balls), so you can pick the one for your bow or gun. Bows get Harpy Hide Quiver; the Realistic set's rifle gets Ribbly's Bandolier; alternatives cover the other quivers and ammo pouches.
 - **Tier 0 pieces for Tier 0.5 quests:** wherever a list has a Tier 0.5 piece (like Beastmaster's Cap), the blue Tier 0 piece its quest needs (like Beaststalker's Cap) is listed right under it with where it drops. The row disappears once you own the Tier 0.5 piece. Tooltips on Tier 0 pieces say which Tier 0.5 piece they turn into.
 - **Hide finished:** a new checkbox hides a slot once you own either its BiS item or its Realistic item.
 

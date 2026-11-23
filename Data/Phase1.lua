@@ -1362,16 +1362,17 @@ local REALISTIC = {
 local HUNTER_AMMO = {
     items = {
         { "Quiver", 19319, "Alterac Valley: Revered with Stormpike Guard / Frostwolf Clan", note = "15% ranged attack speed" },
-        { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Arrows, +20 dps" },
+        { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Best arrows (bows, crossbows), +20 dps" },
+        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Best bullets (guns), +20.5 dps" },
     },
     alts = {
         { "Quiver", 2662,  "Blackrock Depths: Ribbly Screwspigot", note = "14% ranged attack speed" },
         { "Quiver", 19320, "Alterac Valley: Revered with Stormpike Guard / Frostwolf Clan", note = "Ammo pouch for guns, 15% attack speed" },
-        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Bullets for guns, +20.5 dps" },
     },
     realistic = {
         { "Quiver", 2663,  "Blackrock Depths: Ribbly Screwspigot", note = "Ammo pouch, 14% attack speed" },
-        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Bullets, +20.5 dps" },
+        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Best bullets (guns), +20.5 dps" },
+        { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Best arrows (bows, crossbows), +20 dps" },
     },
 }
 
