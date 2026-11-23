@@ -685,19 +685,36 @@ local function createFrame()
     grip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
     grip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
     grip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
-    grip:SetScript("OnMouseDown", function() frame:StartSizing("BOTTOMRIGHT") end)
-    grip:SetScript("OnMouseUp", function()
+    -- pin the top-left corner first so only the bottom-right edge follows the mouse
+    local function pinTopLeft()
+        local left, top = frame:GetLeft(), frame:GetTop()
+        if left and top then
+            frame:ClearAllPoints()
+            frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
+        end
+    end
+    grip:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    grip:SetScript("OnMouseDown", function(_, button)
+        if button ~= "LeftButton" then return end
+        pinTopLeft()
+        frame:StartSizing("BOTTOMRIGHT")
+    end)
+    grip:SetScript("OnMouseUp", function(_, button)
+        if button ~= "LeftButton" then return end
         frame:StopMovingOrSizing()
         ns.db.windowWidth, ns.db.windowHeight = math.floor(frame:GetWidth()), math.floor(frame:GetHeight())
+        if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end
     end)
     grip:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:AddLine("Drag to resize")
-        GameTooltip:AddLine("Double-click to reset size", 1, 1, 1)
+        GameTooltip:AddLine("Right-click to reset size", 1, 1, 1)
         GameTooltip:Show()
     end)
     grip:SetScript("OnLeave", function() GameTooltip:Hide() end)
-    grip:SetScript("OnDoubleClick", function()
+    grip:SetScript("OnClick", function(_, button)
+        if button ~= "RightButton" then return end
+        pinTopLeft()
         frame:SetSize(WIDTH, HEIGHT)
         ns.db.windowWidth, ns.db.windowHeight = nil, nil
     end)
