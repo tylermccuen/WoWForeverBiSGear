@@ -1,0 +1,23 @@
+## Interface: 16001
+## Title: Forever Best In Slot
+## Notes: Pre-raid Best-in-Slot browser and tooltips for World of Warcraft: Forever, with copy-paste item links.
+## Author: You
+## Version: @project-version@
+## SavedVariables: ForeverBiSDB
+## SavedVariablesPerCharacter: ForeverBiSCharDB
+## IconTexture: Interface\Icons\INV_Misc_Book_09
+## AddonCompartmentFunc: ForeverBiS_OnAddonCompartmentClick
+## AddonCompartmentFuncOnEnter: ForeverBiS_OnAddonCompartmentEnter
+## AddonCompartmentFuncOnLeave: ForeverBiS_OnAddonCompartmentLeave
+
+Core.lua
+Data\Phases.lua
+Data\Phase1.lua
+# Add new phases here, e.g.:
+# Data\Phase2.lua
+Items.lua
+LinkPopup.lua
+Tooltip.lua
+Browser.lua
+Minimap.lua
+Options.lua

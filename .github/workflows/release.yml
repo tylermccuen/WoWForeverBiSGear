@@ -1,0 +1,29 @@
+# Packages the addon and uploads it to CurseForge whenever a version tag is pushed.
+# One-time setup in GitHub (Settings > Secrets and variables > Actions):
+#   Secret   CF_API_KEY      - CurseForge API token (authors.curseforge.com/account/api-tokens)
+#   Variable CF_PROJECT_ID   - the Project ID shown on your CurseForge project page
+# Release:  git tag 1.2.0 && git push origin 1.2.0
+
+name: Release to CurseForge
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: BigWigsMods/packager@v2
+        with:
+          args: -p ${{ vars.CF_PROJECT_ID }}
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}

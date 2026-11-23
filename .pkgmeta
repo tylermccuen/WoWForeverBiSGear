@@ -1,0 +1,7 @@
+package-as: ForeverBestInSlot
+
+ignore:
+  - tools
+  - media
+  - UPDATING.md
+  - .github
