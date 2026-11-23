@@ -102,4 +102,31 @@ end)
 print("   MM hunter realistic rows:", (visibleRows()))
 check("back to BiS list", function() ns.char.listMode="bis"; ns.RefreshBrowser() end)
 print("   rows:", (visibleRows()))
+check("enchants list for every class/spec", function()
+  ns.char.listMode="enchants"
+  for _, cls in ipairs(ns.ClassOrder) do for _, sp in ipairs(ns.GetSpecsForClass(cls)) do
+    ns.char.selectedClass, ns.char.selectedSpec = cls, sp; ns.RefreshBrowser()
+    if visibleRows() == 0 then error("no enchant rows for " .. cls .. " " .. sp) end
+  end end
+  ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"; ns.RefreshBrowser()
+end)
+print("   MM hunter enchant rows:", (visibleRows()))
+check("realistic with Tier 0 quest rows", function()
+  ns.char.listMode="realistic"; ns.RefreshBrowser()
+  local g = ns.GetGuide("HUNTER","Marksmanship",1)
+  local pre = 0
+  for _, r in ipairs(ns.GetGuideRows(g, false, "realistic")) do if r.isPre then pre = pre + 1 end end
+  if pre == 0 then error("no Tier 0 rows in MM realistic") end
+  print("   Tier 0 rows:", pre, " total rows:", (visibleRows()))
+end)
+check("hide finished slots", function()
+  local before = visibleRows()
+  local g = ns.GetGuide("HUNTER","Marksmanship",1)
+  ns.Owned[g.items[1][2]] = "bag"     -- own the BiS head: realistic head row should hide
+  ns.char.hideDone = true; ns.RefreshBrowser()
+  local after = visibleRows()
+  if after >= before then error("nothing hidden: " .. before .. " -> " .. after) end
+  print("   rows:", before, "->", after)
+  ns.char.hideDone = false; ns.Owned[g.items[1][2]] = nil
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

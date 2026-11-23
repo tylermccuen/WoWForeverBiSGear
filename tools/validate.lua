@@ -67,6 +67,15 @@ for _, p in ipairs(ns.PhaseList) do
             local weaponSwap = (row[1] == "Main Hand" or row[1] == "Off Hand") and slotCount["Two Hand"]
             if not slotCount[row[1]] and not weaponSwap then warn(where .. ": no main pick for slot " .. row[1]) end
         end
+        for i, row in ipairs(g.enchants or {}) do
+            local where = p.label .. " " .. name .. " enchant " .. i
+            if not validSlot[row[1]] then err(where .. ": unknown slot '" .. tostring(row[1]) .. "'") end
+            if type(row[2]) ~= "number" or row[2] <= 0 then err(where .. ": item ID must be a positive number") end
+            if type(row[3]) ~= "string" or row[3] == "" then err(where .. ": missing source text") end
+        end
+        for t05, pre in pairs(g.prequest or {}) do
+            if type(pre[1]) ~= "number" or type(pre[2]) ~= "string" then err(name .. ": bad Tier 0 entry for " .. t05) end
+        end
         local realCount = {}
         for i, row in ipairs(g.realistic or {}) do
             local where = p.label .. " " .. name .. " realistic " .. i
@@ -97,7 +106,8 @@ for _, p in ipairs(ns.PhaseList) do
         end
         print(string.format("   %-8s %-14s %2d rows%s%s", g.class, g.spec, #g.items,
             (g.alts and string.format(", %d alternatives", #g.alts) or "")
-                .. (g.realistic and string.format(", %d realistic", #g.realistic) or ""),
+                .. (g.realistic and string.format(", %d realistic", #g.realistic) or "")
+                .. (g.enchants and string.format(", %d enchants", #g.enchants) or ""),
             prev and string.format(", %d new vs %s", newCount, ns.PhaseLabel(prev.phase)) or ""))
     end
     -- specs carried over from earlier phases

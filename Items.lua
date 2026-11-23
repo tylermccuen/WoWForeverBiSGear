@@ -48,6 +48,7 @@ function ns.BuildIndex()
             local extras = {
                 { rows = g.alts or {},      flag = "alt" },
                 { rows = g.realistic or {}, flag = "realistic" },
+                { rows = g.enchants or {},  flag = "enchant" },
             }
             for _, set in ipairs(extras) do
                 for _, row in ipairs(set.rows) do
@@ -57,6 +58,17 @@ function ns.BuildIndex()
                         addIndex(hId, { guide = g, phase = phase.id, slot = slot, faction = "Horde",    source = hSrc, [set.flag] = true })
                     else
                         addIndex(id,  { guide = g, phase = phase.id, slot = slot, source = src, [set.flag] = true })
+                    end
+                end
+            end
+            -- Tier 0 pieces turned in for a Tier 0.5 piece on any of this spec's lists
+            if g.prequest then
+                for _, set in ipairs({ g.items, g.alts or {}, g.realistic or {} }) do
+                    for _, row in ipairs(set) do
+                        local pre = g.prequest[row[2]]
+                        if pre then
+                            addIndex(pre[1], { guide = g, phase = phase.id, slot = row[1], source = pre[2], pre = true, upgrade = row[2] })
+                        end
                     end
                 end
             end
@@ -127,6 +139,7 @@ ns.EquipLocSlots = {
     INVTYPE_HOLDABLE = { "Off Hand" },
     INVTYPE_RANGED = { "Ranged", "Wand" }, INVTYPE_RANGEDRIGHT = { "Ranged", "Wand" },
     INVTYPE_THROWN = { "Ranged" },     INVTYPE_RELIC = { "Relic" },
+    INVTYPE_QUIVER = { "Quiver" },     INVTYPE_AMMO = { "Ammo" },
 }
 
 -- Set of item IDs on a guide (both factions)
@@ -153,15 +166,33 @@ end
 -- listMode "realistic" returns the Realistic set (when the spec has one) instead
 -- of the BiS list. With includeAlts (BiS list only), each alternative is placed
 -- right after the last main pick for its slot.
+-- After each Tier 0.5 row, add the Tier 0 piece its quest needs (unless the
+-- Tier 0.5 piece is already owned).
+local function addPrequest(guide, rows)
+    if not guide.prequest then return rows end
+    local out = {}
+    for _, r in ipairs(rows) do
+        table.insert(out, r)
+        local pre = guide.prequest[r.id]
+        if pre and not ns.Owned[r.id] then
+            table.insert(out, { slot = r.slot, id = pre[1], source = pre[2], isAlt = true, isPre = true,
+                                upgrade = r.id, note = "Turn in for the Tier 0.5 piece above" })
+        end
+    end
+    return out
+end
+
 function ns.GetGuideRows(guide, includeAlts, listMode)
     local faction = UnitFactionGroup("player")
     local rows = {}
-    if listMode == "realistic" and guide.realistic then
-        for _, row in ipairs(guide.realistic) do
+    local set = (listMode == "realistic" and guide.realistic) or (listMode == "enchants" and guide.enchants)
+    if set then
+        for _, row in ipairs(set) do
             local r = resolveRow(row, faction, nil)
             if row[4] == row[2] then r.faction = nil end   -- same item for both factions
             table.insert(rows, r)
         end
+        if listMode == "realistic" then rows = addPrequest(guide, rows) end
         return rows
     end
     for _, row in ipairs(guide.items) do
@@ -181,7 +212,7 @@ function ns.GetGuideRows(guide, includeAlts, listMode)
             end
         end
     end
-    return rows
+    return addPrequest(guide, rows)
 end
 
 -- Asynchronous item data load. cb(itemMixin or nil)
@@ -245,8 +276,10 @@ function ns.RefreshOwned()
     for bag = 0, lastBag do scanContainer(bag, bags) end
     for id in pairs(bags) do ns.Owned[id] = "bag" end
 
-    for invSlot = 1, 19 do
-        local id = GetInventoryItemID("player", invSlot)
+    -- 0 = ammo, 1-19 = gear, 20-23 = equipped bags (quiver / ammo pouch)
+    for invSlot = 0, 23 do
+        local ok, id = pcall(GetInventoryItemID, "player", invSlot)
+        if not ok then id = nil end
         if id then ns.Owned[id] = "equipped" end
     end
 

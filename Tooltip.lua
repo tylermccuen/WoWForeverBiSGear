@@ -62,7 +62,7 @@ local function addVerdict(tooltip, itemID)
     local rows = ns.GetGuideRows(guide)
     local mySlots = {}
     for _, r in ipairs(rows) do
-        if r.id == itemID then table.insert(mySlots, r.slot) end
+        if r.id == itemID and not r.isAlt then table.insert(mySlots, r.slot) end
     end
 
     if #mySlots > 0 then
@@ -74,16 +74,44 @@ local function addVerdict(tooltip, itemID)
         return true
     end
 
+    -- One of my enchants
+    if guide.enchants then
+        local slots = {}
+        for _, r in ipairs(ns.GetGuideRows(guide, false, "enchants")) do
+            if r.id == itemID then table.insert(slots, r.slot) end
+        end
+        if #slots > 0 then
+            tooltip:AddLine(" ")
+            tooltip:AddLine(CHECK .. " BiS enchant for you: " .. spec .. " " .. table.concat(slots, ", "), 0.2, 1, 0.2)
+            return true
+        end
+    end
+
+    -- A Tier 0 piece my Tier 0.5 quest needs
+    if guide.prequest then
+        for _, mode in ipairs({ "bis", "realistic" }) do
+            for _, r in ipairs(ns.GetGuideRows(guide, true, mode)) do
+                if r.isPre and r.id == itemID then
+                    tooltip:AddLine(" ")
+                    tooltip:AddLine(ALT .. " Quest item for you: turn in for", 1, 0.82, 0)
+                    local mark = ns.Owned[r.upgrade] and (" " .. CHECK) or ""
+                    tooltip:AddDoubleLine("   Tier 0.5 " .. r.slot .. ":", itemName(r.upgrade) .. mark, 0.7, 0.7, 0.7, 1, 0.82, 0)
+                    return true
+                end
+            end
+        end
+    end
+
     -- In my Realistic set or one of my alternatives: say so and name the main pick
     local altSlot, label
     if guide.realistic then
         for _, r in ipairs(ns.GetGuideRows(guide, false, "realistic")) do
-            if r.id == itemID then altSlot, label = r.slot, "Realistic pick for you" break end
+            if r.id == itemID and not r.isPre then altSlot, label = r.slot, "Realistic pick for you" break end
         end
     end
     if not altSlot then
         for _, r in ipairs(ns.GetGuideRows(guide, true)) do
-            if r.isAlt and r.id == itemID then altSlot, label = r.slot, "Alternative for you" break end
+            if r.isAlt and not r.isPre and r.id == itemID then altSlot, label = r.slot, "Alternative for you" break end
         end
     end
     if altSlot then
@@ -93,7 +121,7 @@ local function addVerdict(tooltip, itemID)
         if owned then text = text .. ", " .. OWNED_TEXT[owned] end
         tooltip:AddLine(text, 0.56, 0.72, 1)
         for _, r in ipairs(rows) do
-            if r.slot == altSlot then
+            if r.slot == altSlot and not r.isAlt then
                 local mark = ns.Owned[r.id] and (" " .. CHECK) or ""
                 tooltip:AddDoubleLine("   Main " .. r.slot .. " BiS:", itemName(r.id) .. mark, 0.7, 0.7, 0.7, 1, 0.82, 0)
             end
@@ -112,7 +140,7 @@ local function addVerdict(tooltip, itemID)
     local bis = {}
     for _, r in ipairs(rows) do
         for _, s in ipairs(slots) do
-            if r.slot == s then table.insert(bis, r) break end
+            if r.slot == s and not r.isAlt then table.insert(bis, r) break end
         end
     end
     if #bis == 0 then return false end
@@ -154,10 +182,12 @@ local function addBisLines(tooltip, itemID, noSpacer)
                 local faction = (e.faction and e.faction ~= playerFaction) and e.faction or nil
                 local found
                 for _, l in ipairs(byClass[cls].labels) do
-                    if l.spec == e.guide.spec and l.faction == faction and l.alt == e.alt and l.realistic == e.realistic then found = l end
+                    if l.spec == e.guide.spec and l.faction == faction and l.alt == e.alt and l.realistic == e.realistic
+                        and l.enchant == e.enchant and l.pre == e.pre then found = l end
                 end
                 if not found then
-                    found = { spec = e.guide.spec, faction = faction, alt = e.alt, realistic = e.realistic, phases = {} }
+                    found = { spec = e.guide.spec, faction = faction, alt = e.alt, realistic = e.realistic,
+                              enchant = e.enchant, pre = e.pre, phases = {} }
                     table.insert(byClass[cls].labels, found)
                 end
                 for id in pairs(active) do found.phases[id] = true end
@@ -183,7 +213,7 @@ local function addBisLines(tooltip, itemID, noSpacer)
         local labels = byClass[cls].labels
         -- drop "Spec (other faction)" when the same spec is already listed for the player's faction
         local plain = {}
-        for _, l in ipairs(labels) do if not l.faction and not l.alt and not l.realistic then plain[l.spec] = true end end
+        for _, l in ipairs(labels) do if not l.faction and not l.alt and not l.realistic and not l.enchant and not l.pre then plain[l.spec] = true end end
         local texts, tags, sameTag, anyFaction = {}, {}, true, false
         for _, l in ipairs(labels) do
             if not (l.faction and plain[l.spec]) then
@@ -194,6 +224,8 @@ local function addBisLines(tooltip, itemID, noSpacer)
                 if l.faction then t = t .. " (" .. l.faction .. ")"; anyFaction = true end
                 if l.alt then t = t .. " (alt)"; anyFaction = true end
                 if l.realistic then t = t .. " (realistic)"; anyFaction = true end
+                if l.enchant then t = t .. " (enchant)"; anyFaction = true end
+                if l.pre then t = t .. " (T0.5 quest)"; anyFaction = true end
                 if tag ~= "" then t = t .. " " .. tag end
                 table.insert(texts, t)
                 if tags[1] and tags[1] ~= tag then sameTag = false end

@@ -1356,12 +1356,514 @@ local REALISTIC = {
     },
 }
 
+-- Hunter quiver / ammo (conquestcapped.com). The BiS bows use a quiver and
+-- arrows; the Realistic set's Deep Jungle Rifle is a gun, so it gets an ammo
+-- pouch and bullets.
+local HUNTER_AMMO = {
+    items = {
+        { "Quiver", 19319, "Alterac Valley: Revered with Stormpike Guard / Frostwolf Clan", note = "15% ranged attack speed" },
+        { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Arrows, +20 dps" },
+    },
+    alts = {
+        { "Quiver", 2662,  "Blackrock Depths: Ribbly Screwspigot", note = "14% ranged attack speed" },
+        { "Quiver", 19320, "Alterac Valley: Revered with Stormpike Guard / Frostwolf Clan", note = "Ammo pouch for guns, 15% attack speed" },
+        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Bullets for guns, +20.5 dps" },
+    },
+    realistic = {
+        { "Quiver", 2663,  "Blackrock Depths: Ribbly Screwspigot", note = "Ammo pouch, 14% attack speed" },
+        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Bullets, +20.5 dps" },
+    },
+}
+
+-- Tier 0.5 piece -> the Tier 0 piece its quest needs (kovarel.com)
+local TIER0 = {
+    [226773] = { 16720, "Scholomance: Darkmaster Gandling" },            -- Feralheart Cowl -> Wildheart Cowl
+    [226774] = { 16715, "Lower Blackrock Spire: Mother Smolderweb" },    -- Feralheart Galoshes -> Wildheart Boots
+    [226775] = { 16714, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Feralheart Wraps -> Wildheart Bracers
+    [226776] = { 16706, "Upper Blackrock Spire: General Drakkisath" },   -- Feralheart Vest -> Wildheart Vest
+    [226777] = { 16717, "Stratholme: The Unforgiven" },                  -- Feralheart Hands -> Wildheart Gloves
+    [226778] = { 16718, "Lower Blackrock Spire: Gizrul the Slavener" },  -- Feralheart Spaulders -> Wildheart Spaulders
+    [226780] = { 16716, "Scholomance: The Ravenian" },                   -- Feralheart Cord -> Wildheart Belt
+    [226781] = { 16715, "Lower Blackrock Spire: Mother Smolderweb" },    -- Feralheart Sandals -> Wildheart Boots
+    [226782] = { 16714, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Feralheart Bindings -> Wildheart Bracers
+    [226784] = { 16717, "Stratholme: The Unforgiven" },                  -- Feralheart Gauntlets -> Wildheart Gloves
+    [226785] = { 16718, "Lower Blackrock Spire: Gizrul the Slavener" },  -- Feralheart Mantle -> Wildheart Spaulders
+    [226786] = { 16720, "Scholomance: Darkmaster Gandling" },            -- Feralheart Headdress -> Wildheart Cowl
+    [226789] = { 16716, "Scholomance: The Ravenian" },                   -- Feralheart Girdle -> Wildheart Belt
+    [226791] = { 16719, "Stratholme: Baron Rivendare" },                 -- Feralheart Trousers -> Wildheart Kilt
+    [226792] = { 16720, "Scholomance: Darkmaster Gandling" },            -- Feralheart Cap -> Wildheart Cowl
+    [226793] = { 16717, "Stratholme: The Unforgiven" },                  -- Feralheart Fists -> Wildheart Gloves
+    [226794] = { 16715, "Lower Blackrock Spire: Mother Smolderweb" },    -- Feralheart Walkers -> Wildheart Boots
+    [226795] = { 16706, "Upper Blackrock Spire: General Drakkisath" },   -- Feralheart Tunic -> Wildheart Vest
+    [226796] = { 16714, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Feralheart Wristguards -> Wildheart Bracers
+    [226797] = { 16716, "Scholomance: The Ravenian" },                   -- Feralheart Waistguard -> Wildheart Belt
+    [226798] = { 16718, "Lower Blackrock Spire: Gizrul the Slavener" },  -- Feralheart Pauldrons -> Wildheart Spaulders
+    [226799] = { 16719, "Stratholme: Baron Rivendare" },                 -- Feralheart Legguards -> Wildheart Kilt
+    [226801] = { 16720, "Scholomance: Darkmaster Gandling" },            -- Feralheart Faceguard -> Wildheart Cowl
+    [226802] = { 16717, "Stratholme: The Unforgiven" },                  -- Feralheart Grips -> Wildheart Gloves
+    [226803] = { 16715, "Lower Blackrock Spire: Mother Smolderweb" },    -- Feralheart Treads -> Wildheart Boots
+    [226804] = { 16706, "Upper Blackrock Spire: General Drakkisath" },   -- Feralheart Armor -> Wildheart Vest
+    [226825] = { 16721, "Upper Blackrock Spire: General Drakkisath" },   -- Darkmantle Tunic -> Shadowcraft Tunic
+    [226826] = { 16708, "Stratholme: Cannon Master Willey" },            -- Darkmantle Spaulders -> Shadowcraft Spaulders
+    [226827] = { 16709, "Stratholme: Baron Rivendare (or Madam Swyndle, vendor)" }, -- Darkmantle Pants -> Shadowcraft Pants
+    [226828] = { 16712, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin" }, -- Darkmantle Grips -> Shadowcraft Gloves
+    [226829] = { 16707, "Scholomance: Darkmaster Gandling" },            -- Darkmantle Cap -> Shadowcraft Cap
+    [226830] = { 16710, "Scholomance: Instructor Malicia" },             -- Darkmantle Bracers -> Shadowcraft Bracers
+    [226831] = { 16711, "Scholomance: Rattlegore" },                     -- Darkmantle Footpads -> Shadowcraft Boots
+    [226832] = { 16713, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Darkmantle Belt -> Shadowcraft Belt
+    [226857] = { 16734, "Scholomance: Kirtonos the Herald" },            -- Battleboots of Heroism -> Boots of Valor
+    [226858] = { 16733, "Upper Blackrock Spire: Warchief Rend Blackhand (or Madam Swyndle, vendor)" }, -- Spaulders of Heroism -> Spaulders of Valor
+    [226859] = { 16732, "Stratholme: Baron Rivendare" },                 -- Legplates of Heroism -> Legplates of Valor
+    [226861] = { 16737, "Stratholme: Ramstein the Gorger" },             -- Gauntlets of Heroism -> Gauntlets of Valor
+    [226862] = { 16730, "Upper Blackrock Spire: General Drakkisath" },   -- Breastplate of Heroism -> Breastplate of Valor
+    [226864] = { 16736, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Belt of Heroism -> Belt of Valor
+    [226865] = { 16735, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Wristguards of Heroism -> Bracers of Valor
+    [226866] = { 16736, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Waistguard of Heroism -> Belt of Valor
+    [226867] = { 16733, "Upper Blackrock Spire: Warchief Rend Blackhand (or Madam Swyndle, vendor)" }, -- Pauldrons of Heroism -> Spaulders of Valor
+    [226868] = { 16732, "Stratholme: Baron Rivendare" },                 -- Legguards of Heroism -> Legplates of Valor
+    [226869] = { 16731, "Scholomance: Darkmaster Gandling" },            -- Faceguard of Heroism -> Helm of Valor
+    [226870] = { 16737, "Stratholme: Ramstein the Gorger" },             -- Handguards of Heroism -> Gauntlets of Valor
+    [226871] = { 16734, "Scholomance: Kirtonos the Herald" },            -- Sabatons of Heroism -> Boots of Valor
+    [226872] = { 16730, "Upper Blackrock Spire: General Drakkisath" },   -- Chestguard of Heroism -> Breastplate of Valor
+    [226881] = { 16675, "Stratholme: Nerub'enkan" },                     -- Beastmaster's Treads -> Beaststalker's Boots
+    [226882] = { 16678, "Stratholme: Baron Rivendare" },                 -- Beastmaster's Pants -> Beaststalker's Pants
+    [226883] = { 16676, "Lower Blackrock Spire: War Master Voone" },     -- Beastmaster's Gauntlets -> Beaststalker's Gloves
+    [226884] = { 16679, "Lower Blackrock Spire: Overlord Wyrmthalak" },  -- Beastmaster's Mantle -> Beaststalker's Mantle
+    [226885] = { 16681, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Beastmaster's Bindings -> Beaststalker's Bindings
+    [226886] = { 16674, "Upper Blackrock Spire: General Drakkisath (or Madam Swyndle, vendor)" }, -- Beastmaster's Tunic -> Beaststalker's Tunic
+    [226887] = { 16677, "Scholomance: Darkmaster Gandling" },            -- Beastmaster's Cap -> Beaststalker's Cap
+    [226905] = { 16702, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Deathmist Belt -> Dreadmist Belt
+    [226907] = { 16703, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Deathmist Bracers -> Dreadmist Bracers
+    [226908] = { 16704, "Stratholme: Baroness Anastari" },               -- Deathmist Sandals -> Dreadmist Sandals
+    [226909] = { 16698, "Scholomance: Darkmaster Gandling" },            -- Deathmist Mask -> Dreadmist Mask
+    [226910] = { 16699, "Stratholme: Baron Rivendare" },                 -- Deathmist Leggings -> Dreadmist Leggings
+    [226911] = { 16705, "Scholomance: Lorekeeper Polkelt" },             -- Deathmist Wraps -> Dreadmist Wraps
+    [226912] = { 16701, "Scholomance: Jandice Barov (or Madam Swyndle, vendor)" }, -- Deathmist Mantle -> Dreadmist Mantle
+    [226929] = { 16683, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Sorcerer's Bindings -> Magister's Bindings
+    [226930] = { 16684, "Scholomance: Doctor Theolen Krastinov" },       -- Sorcerer's Gauntlets -> Magister's Gloves
+    [226931] = { 16682, "Stratholme: Hearthsinger Forresten" },          -- Sorcerer's Sandals -> Magister's Boots
+    [226932] = { 16688, "Upper Blackrock Spire: General Drakkisath (or Madam Swyndle, vendor)" }, -- Sorcerer's Robes -> Magister's Robes
+    [226933] = { 16687, "Stratholme: Baron Rivendare" },                 -- Sorcerer's Leggings -> Magister's Leggings
+    [226934] = { 16685, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Sorcerer's Belt -> Magister's Belt
+    [226935] = { 16686, "Scholomance: Darkmaster Gandling (or Madam Swyndle, vendor)" }, -- Sorcerer's Crown -> Magister's Crown
+    [226936] = { 16689, "Scholomance: Ras Frostwhisper" },               -- Sorcerer's Mantle -> Magister's Mantle
+    [226945] = { 16690, "Upper Blackrock Spire: General Drakkisath" },   -- Virtuous Robe -> Devout Robe
+    [226946] = { 16694, "Stratholme: Baron Rivendare" },                 -- Virtuous Skirt -> Devout Skirt
+    [226947] = { 16693, "Scholomance: Darkmaster Gandling" },            -- Virtuous Crown -> Devout Crown
+    [226949] = { 16697, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Virtuous Bracers -> Devout Bracers
+    [226950] = { 16692, "Stratholme: Archivist Galford" },               -- Virtuous Mitts -> Devout Gloves
+    [226951] = { 16695, "Upper Blackrock Spire: Solakar Flamewreath" },  -- Virtuous Mantle -> Devout Mantle
+    [226952] = { 16691, "Stratholme: Maleki the Pallid" },               -- Virtuous Sandals -> Devout Sandals
+    [226953] = { 16697, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Virtuous Wraps -> Devout Bracers
+    [226954] = { 16696, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Virtuous Cord -> Devout Belt
+    [226955] = { 16695, "Upper Blackrock Spire: Solakar Flamewreath" },  -- Virtuous Epaulets -> Devout Mantle
+    [226956] = { 16694, "Stratholme: Baron Rivendare" },                 -- Virtuous Leggings -> Devout Skirt
+    [226958] = { 16692, "Stratholme: Archivist Galford" },               -- Virtuous Hands -> Devout Gloves
+    [226959] = { 16691, "Stratholme: Maleki the Pallid" },               -- Virtuous Slippers -> Devout Sandals
+    [226969] = { 16729, "Upper Blackrock Spire: The Beast" },            -- Soulforge Spaulders -> Lightforge Spaulders
+    [226970] = { 16722, "Scholomance: Lord Alexei Barov" },              -- Soulforge Bracers -> Lightforge Bracers
+    [226971] = { 16723, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Soulforge Belt -> Lightforge Belt
+    [226972] = { 16728, "Stratholme: Baron Rivendare" },                 -- Soulforge Legplates -> Lightforge Legplates
+    [226973] = { 16726, "Upper Blackrock Spire: General Drakkisath" },   -- Soulforge Breastplate -> Lightforge Breastplate
+    [226974] = { 16725, "Stratholme: Grand Crusader Dathrohan" },        -- Soulforge Warboots -> Lightforge Boots
+    [226975] = { 16724, "Stratholme: Timmy the Cruel" },                 -- Soulforge Gauntlets -> Lightforge Gauntlets
+    [226976] = { 16727, "Scholomance: Darkmaster Gandling" },            -- Soulforge Greathelm -> Lightforge Helm
+    [226977] = { 16722, "Scholomance: Lord Alexei Barov" },              -- Soulforge Bindings -> Lightforge Bracers
+    [226978] = { 16723, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Soulforge Cord -> Lightforge Belt
+    [226979] = { 16729, "Upper Blackrock Spire: The Beast" },            -- Soulforge Epaulets -> Lightforge Spaulders
+    [226980] = { 16728, "Stratholme: Baron Rivendare" },                 -- Soulforge Leggings -> Lightforge Legplates
+    [226981] = { 16727, "Scholomance: Darkmaster Gandling" },            -- Soulforge Crown -> Lightforge Helm
+    [226982] = { 16724, "Stratholme: Timmy the Cruel" },                 -- Soulforge Fists -> Lightforge Gauntlets
+    [226983] = { 16725, "Stratholme: Grand Crusader Dathrohan" },        -- Soulforge Treads -> Lightforge Boots
+    [226984] = { 16726, "Upper Blackrock Spire: General Drakkisath" },   -- Soulforge Embrace -> Lightforge Breastplate
+    [226985] = { 16722, "Scholomance: Lord Alexei Barov" },              -- Soulforge Wristguards -> Lightforge Bracers
+    [226986] = { 16723, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Soulforge Waistguard -> Lightforge Belt
+    [226987] = { 16729, "Upper Blackrock Spire: The Beast" },            -- Soulforge Pauldrons -> Lightforge Spaulders
+    [226988] = { 16728, "Stratholme: Baron Rivendare" },                 -- Soulforge Legguards -> Lightforge Legplates
+    [226989] = { 16727, "Scholomance: Darkmaster Gandling" },            -- Soulforge Faceguard -> Lightforge Helm
+    [226990] = { 16724, "Stratholme: Timmy the Cruel" },                 -- Soulforge Handguards -> Lightforge Gauntlets
+    [226991] = { 16725, "Stratholme: Grand Crusader Dathrohan" },        -- Soulforge Sabatons -> Lightforge Boots
+    [226992] = { 16726, "Upper Blackrock Spire: General Drakkisath" },   -- Soulforge Chestguards -> Lightforge Breastplate
+    [227001] = { 16671, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Bindings of The Five Thunders -> Bindings of Elements
+    [227002] = { 16667, "Scholomance: Darkmaster Gandling" },            -- Coif of The Five Thunders -> Coif of Elements
+    [227003] = { 16669, "Upper Blackrock Spire: Gyth" },                 -- Pauldrons of The Five Thunders -> Pauldrons of Elements
+    [227004] = { 16666, "Upper Blackrock Spire: General Drakkisath" },   -- Vest of The Five Thunders -> Vest of Elements
+    [227005] = { 16668, "Stratholme: Baron Rivendare" },                 -- Kilt of The Five Thunders -> Kilt of Elements
+    [227006] = { 16672, "Upper Blackrock Spire: Pyroguard Emberseer" },  -- Gauntlets of The Five Thunders -> Gauntlets of Elements
+    [227007] = { 16670, "Lower Blackrock Spire: Highlord Omokk (or Madam Swyndle, vendor)" }, -- Slippers of The Five Thunders -> Boots of Elements
+    [227008] = { 16673, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Cord of The Five Thunders -> Cord of Elements
+    [227009] = { 16671, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Bracers of The Five Thunders -> Bindings of Elements
+    [227010] = { 16673, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Sash of The Five Thunders -> Cord of Elements
+    [227011] = { 16669, "Upper Blackrock Spire: Gyth" },                 -- Mantle of The Five Thunders -> Pauldrons of Elements
+    [227012] = { 16668, "Stratholme: Baron Rivendare" },                 -- Leggings of The Five Thunders -> Kilt of Elements
+    [227013] = { 16667, "Scholomance: Darkmaster Gandling" },            -- Crown of The Five Thunders -> Coif of Elements
+    [227014] = { 16672, "Upper Blackrock Spire: Pyroguard Emberseer" },  -- Grasp of The Five Thunders -> Gauntlets of Elements
+    [227015] = { 16670, "Lower Blackrock Spire: Highlord Omokk (or Madam Swyndle, vendor)" }, -- Greaves of The Five Thunders -> Boots of Elements
+    [227016] = { 16666, "Upper Blackrock Spire: General Drakkisath" },   -- Tunic of The Five Thunders -> Vest of Elements
+    [227017] = { 16671, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Bands of The Five Thunders -> Bindings of Elements
+    [227018] = { 16673, "Random trash drop (Stratholme, Scholomance, Blackrock Spire)" }, -- Girdle of The Five Thunders -> Cord of Elements
+    [227019] = { 16669, "Upper Blackrock Spire: Gyth" },                 -- Spaulders of The Five Thunders -> Pauldrons of Elements
+    [227021] = { 16667, "Scholomance: Darkmaster Gandling" },            -- Face of The Five Thunders -> Coif of Elements
+    [227022] = { 16672, "Upper Blackrock Spire: Pyroguard Emberseer" },  -- Fists of The Five Thunders -> Gauntlets of Elements
+    [227024] = { 16666, "Upper Blackrock Spire: General Drakkisath" },   -- Chain of The Five Thunders -> Vest of Elements
+}
+
+-- Enchants per spec (wowtbc.gg), as the Forever enchant scroll / arcanum /
+-- kit item. "Weapon" becomes Two Hand or Main Hand to match the spec's weapon.
+local ENCHANTS = {
+    ["WARLOCK:Affliction"] = {
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Neck", 273631, "Enchanting", note = "+6 spell power" },
+        { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Weapon", 273629, "Enchanting", note = "Revelation" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["MAGE:Arcane"] = {
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Neck", 273631, "Enchanting", note = "+6 spell power" },
+        { "Chest", 273560, "Enchanting", note = "Intellect +10" },
+        { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Weapon", 273629, "Enchanting", note = "Revelation" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["WARRIOR:Arms"] = {
+        { "Head", 11645, "Quest: Libram of Voracity (Burning Steppes)", note = "Strength +8" },
+        { "Neck", 273630, "Enchanting", note = "Strength +5" },
+        { "Back", 273604, "Enchanting", note = "Agility +5" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273547, "Enchanting", note = "Strength +9" },
+        { "Hands", 273550, "Enchanting", note = "Strength +10" },
+        { "Legs", 11645, "Quest: Libram of Voracity (Burning Steppes)", note = "Strength +8" },
+        { "Feet", 273556, "Enchanting", note = "Agility +7" },
+        { "Weapon", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
+    },
+    ["ROGUE:Assassination"] = {
+        { "Head", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Neck", 273633, "Enchanting", note = "Agility +5" },
+        { "Back", 273604, "Enchanting", note = "Agility +5" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273620, "Enchanting", note = "Agility +9" },
+        { "Hands", 273549, "Enchanting", note = "Agility +10" },
+        { "Legs", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Feet", 273556, "Enchanting", note = "Agility +7" },
+        { "Weapon", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
+        { "Off Hand", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
+    },
+    ["DRUID:Balance"] = {
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Neck", 273631, "Enchanting", note = "+6 spell power" },
+        { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Weapon", 273629, "Enchanting", note = "Revelation" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["HUNTER:Beast Mastery"] = {
+        { "Head", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Neck", 273633, "Enchanting", note = "Agility +5" },
+        { "Back", 273604, "Enchanting", note = "Agility +5" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273620, "Enchanting", note = "Agility +9" },
+        { "Hands", 273549, "Enchanting", note = "Agility +10" },
+        { "Legs", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Feet", 273556, "Enchanting", note = "Agility +7" },
+        { "Weapon", 273589, "Enchanting", note = "Agility +25" },
+        { "Ranged", 279272, "Crafted: Engineering", note = "+2% ranged crit" },
+    },
+    ["ROGUE:Combat"] = {
+        { "Head", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Neck", 273633, "Enchanting", note = "Agility +5" },
+        { "Back", 273604, "Enchanting", note = "Agility +5" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273620, "Enchanting", note = "Agility +9" },
+        { "Hands", 273549, "Enchanting", note = "Agility +10" },
+        { "Legs", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Feet", 273556, "Enchanting", note = "Agility +7" },
+        { "Weapon", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
+        { "Off Hand", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
+    },
+    ["WARLOCK:Demonology"] = {
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Neck", 273631, "Enchanting", note = "+6 spell power" },
+        { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Weapon", 273629, "Enchanting", note = "Revelation" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["WARLOCK:Destruction"] = {
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Neck", 273631, "Enchanting", note = "+6 spell power" },
+        { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Weapon", 273629, "Enchanting", note = "Revelation" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["PRIEST:Discipline"] = {
+        { "Head", 11649, "Quest: Libram of Voracity (Burning Steppes)", note = "Spirit +8" },
+        { "Neck", 273632, "Enchanting", note = "Healing +11, spell damage +4" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273575, "Enchanting", note = "Healing +24" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 11649, "Quest: Libram of Voracity (Burning Steppes)", note = "Spirit +8" },
+        { "Feet", 273557, "Enchanting", note = "Spirit +5" },
+        { "Weapon", 273627, "Enchanting", note = "Insight" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["SHAMAN:Elemental"] = {
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Neck", 273631, "Enchanting", note = "+6 spell power" },
+        { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Weapon", 273629, "Enchanting", note = "Revelation" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["SHAMAN:Enhancement"] = {
+        { "Head", 11645, "Quest: Libram of Voracity (Burning Steppes)", note = "Strength +8" },
+        { "Neck", 273630, "Enchanting", note = "Strength +5" },
+        { "Back", 273604, "Enchanting", note = "Agility +5" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273547, "Enchanting", note = "Strength +9" },
+        { "Hands", 273550, "Enchanting", note = "Strength +10" },
+        { "Legs", 11645, "Quest: Libram of Voracity (Burning Steppes)", note = "Strength +8" },
+        { "Feet", 273556, "Enchanting", note = "Agility +7" },
+        { "Weapon", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
+    },
+    ["DRUID:Feral"] = {
+        { "Head", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Neck", 273633, "Enchanting", note = "Agility +5" },
+        { "Back", 273604, "Enchanting", note = "Agility +5" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273620, "Enchanting", note = "Agility +9" },
+        { "Hands", 273549, "Enchanting", note = "Agility +10" },
+        { "Legs", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Feet", 273556, "Enchanting", note = "Agility +7" },
+        { "Weapon", 273589, "Enchanting", note = "Agility +25" },
+    },
+    ["DRUID:Feral Tank"] = {
+        { "Head", 11646, "Quest: Libram of Voracity (Burning Steppes)", note = "Stamina +8" },
+        { "Neck", 273630, "Enchanting", note = "Strength +5" },
+        { "Back", 273552, "Enchanting", note = "Armor +70" },
+        { "Chest", 279258, "Crafted: Leatherworking", note = "Defense +4, stamina +10" },
+        { "Wrist", 273548, "Enchanting", note = "Stamina +9" },
+        { "Hands", 279258, "Crafted: Leatherworking", note = "Defense +4, stamina +10" },
+        { "Legs", 279258, "Crafted: Leatherworking", note = "Defense +4, stamina +10" },
+        { "Feet", 279258, "Crafted: Leatherworking", note = "Defense +4, stamina +10" },
+        { "Weapon", 273589, "Enchanting", note = "Agility +25" },
+    },
+    ["MAGE:Fire"] = {
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Neck", 273631, "Enchanting", note = "+6 spell power" },
+        { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Weapon", 273629, "Enchanting", note = "Revelation" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["MAGE:Frost"] = {
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Neck", 273631, "Enchanting", note = "+6 spell power" },
+        { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Weapon", 273629, "Enchanting", note = "Revelation" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["WARRIOR:Fury"] = {
+        { "Head", 11645, "Quest: Libram of Voracity (Burning Steppes)", note = "Strength +8" },
+        { "Neck", 273630, "Enchanting", note = "Strength +5" },
+        { "Back", 273604, "Enchanting", note = "Agility +5" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273547, "Enchanting", note = "Strength +9" },
+        { "Hands", 273550, "Enchanting", note = "Strength +10" },
+        { "Legs", 11645, "Quest: Libram of Voracity (Burning Steppes)", note = "Strength +8" },
+        { "Feet", 273556, "Enchanting", note = "Agility +7" },
+        { "Weapon", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
+        { "Off Hand", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
+    },
+    ["PALADIN:Holy"] = {
+        { "Head", 11648, "Quest: Libram of Voracity (Burning Steppes)", note = "Intellect +8" },
+        { "Neck", 273632, "Enchanting", note = "Healing +11, spell damage +4" },
+        { "Chest", 273560, "Enchanting", note = "Intellect +10" },
+        { "Wrist", 273575, "Enchanting", note = "Healing +24" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 11648, "Quest: Libram of Voracity (Burning Steppes)", note = "Intellect +8" },
+        { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Weapon", 273627, "Enchanting", note = "Insight" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["PRIEST:Holy"] = {
+        { "Head", 11649, "Quest: Libram of Voracity (Burning Steppes)", note = "Spirit +8" },
+        { "Neck", 273632, "Enchanting", note = "Healing +11, spell damage +4" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273575, "Enchanting", note = "Healing +24" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 11649, "Quest: Libram of Voracity (Burning Steppes)", note = "Spirit +8" },
+        { "Feet", 273557, "Enchanting", note = "Spirit +5" },
+        { "Weapon", 273627, "Enchanting", note = "Insight" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["HUNTER:Marksmanship"] = {
+        { "Head", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Neck", 273633, "Enchanting", note = "Agility +5" },
+        { "Back", 273604, "Enchanting", note = "Agility +5" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273620, "Enchanting", note = "Agility +9" },
+        { "Hands", 273549, "Enchanting", note = "Agility +10" },
+        { "Legs", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Feet", 273556, "Enchanting", note = "Agility +7" },
+        { "Weapon", 273573, "Enchanting", note = "Agility +15" },
+        { "Off Hand", 273573, "Enchanting", note = "Agility +15" },
+        { "Ranged", 279272, "Crafted: Engineering", note = "+2% ranged crit" },
+    },
+    ["PALADIN:Protection"] = {
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Neck", 273631, "Enchanting", note = "+6 spell power" },
+        { "Back", 273604, "Enchanting", note = "Agility +5" },
+        { "Chest", 279258, "Crafted: Leatherworking", note = "Defense +4, stamina +10" },
+        { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
+        { "Hands", 279258, "Crafted: Leatherworking", note = "Defense +4, stamina +10" },
+        { "Legs", 279258, "Crafted: Leatherworking", note = "Defense +4, stamina +10" },
+        { "Feet", 279258, "Crafted: Leatherworking", note = "Defense +4, stamina +10" },
+        { "Weapon", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
+        { "Off Hand", 273602, "Enchanting", note = "Stamina +12" },
+    },
+    ["WARRIOR:Protection"] = {
+        { "Head", 11646, "Quest: Libram of Voracity (Burning Steppes)", note = "Stamina +8" },
+        { "Neck", 273633, "Enchanting", note = "Agility +5" },
+        { "Back", 273552, "Enchanting", note = "Armor +70" },
+        { "Chest", 279258, "Crafted: Leatherworking", note = "Defense +4, stamina +10" },
+        { "Wrist", 273548, "Enchanting", note = "Stamina +9" },
+        { "Hands", 279258, "Crafted: Leatherworking", note = "Defense +4, stamina +10" },
+        { "Legs", 279258, "Crafted: Leatherworking", note = "Defense +4, stamina +10" },
+        { "Feet", 279258, "Crafted: Leatherworking", note = "Defense +4, stamina +10" },
+        { "Weapon", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
+        { "Off Hand", 273602, "Enchanting", note = "Stamina +12" },
+    },
+    ["DRUID:Restoration"] = {
+        { "Head", 11649, "Quest: Libram of Voracity (Burning Steppes)", note = "Spirit +8" },
+        { "Neck", 273632, "Enchanting", note = "Healing +11, spell damage +4" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273546, "Enchanting", note = "Spirit +9" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 11649, "Quest: Libram of Voracity (Burning Steppes)", note = "Spirit +8" },
+        { "Feet", 273557, "Enchanting", note = "Spirit +5" },
+        { "Weapon", 273576, "Enchanting", note = "Spirit +22" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["SHAMAN:Restoration"] = {
+        { "Head", 11648, "Quest: Libram of Voracity (Burning Steppes)", note = "Intellect +8" },
+        { "Neck", 273632, "Enchanting", note = "Healing +11, spell damage +4" },
+        { "Chest", 273560, "Enchanting", note = "Intellect +10" },
+        { "Wrist", 273575, "Enchanting", note = "Healing +24" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 11648, "Quest: Libram of Voracity (Burning Steppes)", note = "Intellect +8" },
+        { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Weapon", 273627, "Enchanting", note = "Insight" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["PALADIN:Retribution"] = {
+        { "Head", 11645, "Quest: Libram of Voracity (Burning Steppes)", note = "Strength +8" },
+        { "Neck", 273631, "Enchanting", note = "+6 spell power" },
+        { "Back", 273604, "Enchanting", note = "Agility +5" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
+        { "Hands", 273550, "Enchanting", note = "Strength +10" },
+        { "Legs", 11645, "Quest: Libram of Voracity (Burning Steppes)", note = "Strength +8" },
+        { "Feet", 273556, "Enchanting", note = "Agility +7" },
+        { "Weapon", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
+    },
+    ["PRIEST:Shadow"] = {
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Neck", 273631, "Enchanting", note = "+6 spell power" },
+        { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
+        { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
+        { "Weapon", 273629, "Enchanting", note = "Revelation" },
+        { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
+    },
+    ["ROGUE:Subtlety"] = {
+        { "Head", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Neck", 273633, "Enchanting", note = "Agility +5" },
+        { "Back", 273604, "Enchanting", note = "Agility +5" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273620, "Enchanting", note = "Agility +9" },
+        { "Hands", 273549, "Enchanting", note = "Agility +10" },
+        { "Legs", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Feet", 273556, "Enchanting", note = "Agility +7" },
+        { "Weapon", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
+        { "Off Hand", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
+    },
+    ["HUNTER:Survival"] = {
+        { "Head", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Neck", 273633, "Enchanting", note = "Agility +5" },
+        { "Back", 273604, "Enchanting", note = "Agility +5" },
+        { "Chest", 273558, "Enchanting", note = "All stats +4" },
+        { "Wrist", 273620, "Enchanting", note = "Agility +9" },
+        { "Hands", 273549, "Enchanting", note = "Agility +10" },
+        { "Legs", 11647, "Quest: Libram of Voracity (Burning Steppes)", note = "Agility +8" },
+        { "Feet", 273556, "Enchanting", note = "Agility +7" },
+        { "Weapon", 273589, "Enchanting", note = "Agility +25" },
+        { "Ranged", 279272, "Crafted: Engineering", note = "+2% ranged crit" },
+    },
+}
+
+local function weaponSlot(g)
+    local twoHand, mainHand
+    for _, row in ipairs(g.items) do
+        if row[1] == "Two Hand" then twoHand = true elseif row[1] == "Main Hand" then mainHand = true end
+    end
+    return (twoHand and not mainHand) and "Two Hand" or "Main Hand"
+end
+
 for _, g in ipairs(guides) do
     local key = g.class .. ":" .. g.spec
     g.alts = ALTS[key]
     if g.alts then g.altSource = "conquestcapped.com" end
     g.realistic = REALISTIC[key]
     if g.realistic then g.realisticSource = "conquestcapped.com" end
+    if g.class == "HUNTER" then
+        for _, row in ipairs(HUNTER_AMMO.items) do table.insert(g.items, row) end
+        g.alts = g.alts or {}
+        for _, row in ipairs(HUNTER_AMMO.alts) do table.insert(g.alts, row) end
+        if g.realistic then
+            for _, row in ipairs(HUNTER_AMMO.realistic) do table.insert(g.realistic, row) end
+        end
+    end
+    local ench = ENCHANTS[key]
+    if ench then
+        g.enchants = {}
+        for _, row in ipairs(ench) do
+            local slot = row[1] == "Weapon" and weaponSlot(g) or row[1]
+            table.insert(g.enchants, { slot, row[2], row[3], note = row.note })
+        end
+        g.enchantSource = "wowtbc.gg"
+    end
+    -- Tier 0 pieces needed for Tier 0.5 quest upgrades
+    g.prequest = TIER0
 end
 
 ns.RegisterPhase({

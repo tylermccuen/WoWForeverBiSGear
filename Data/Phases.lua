@@ -12,7 +12,7 @@ ns.PhaseList = {}   -- phases sorted by id
 
 ns.ClassOrder = { "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "SHAMAN", "MAGE", "WARLOCK", "DRUID" }
 ns.SlotOrder = { "Head", "Neck", "Shoulder", "Back", "Chest", "Wrist", "Hands", "Waist", "Legs", "Feet",
-                 "Finger", "Trinket", "Two Hand", "Main Hand", "Off Hand", "Ranged", "Wand", "Relic" }
+                 "Finger", "Trinket", "Two Hand", "Main Hand", "Off Hand", "Ranged", "Wand", "Relic", "Quiver", "Ammo" }
 
 function ns.RegisterPhase(p)
     assert(type(p.id) == "number", "RegisterPhase: id must be a number")

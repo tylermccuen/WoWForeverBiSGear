@@ -2,8 +2,8 @@ local _, ns = ...
 
 local ROW_HEIGHT = 40
 local frame, scrollChild, rows = nil, nil, {}
-local WIDTH, HEIGHT = 800, 540          -- default size
-local MIN_W, MIN_H, MAX_W, MAX_H = 780, 320, 1500, 1100
+local WIDTH, HEIGHT = 900, 540          -- default size
+local MIN_W, MIN_H, MAX_W, MAX_H = 880, 320, 1500, 1100
 local headerSource                      -- "WHERE TO GET IT" column header
 
 -- saved window width, never narrower than the controls need
@@ -29,7 +29,7 @@ local function layoutRow(row)
     row.also:SetWidth(sourceW)
 end
 
-local classButton, specButton, phaseButton, listButton, slotButton, missingCheck, altCheck, altLabel, countText
+local classButton, specButton, phaseButton, listButton, slotButton, missingCheck, altCheck, altLabel, doneCheck, doneLabel, countText
 
 local OWNED_ICON = {
     equipped = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16:16|t Equipped",
@@ -198,6 +198,7 @@ local function fillRow(row, data)
 
     -- alternatives are indented and tinted under the main pick for their slot
     row.isAlt = data.isAlt
+    row.isPre = data.isPre
     row.icon:ClearAllPoints()
     row.icon:SetPoint("LEFT", data.isAlt and 22 or 4, 0)
     row.icon:SetSize(data.isAlt and 26 or 32, data.isAlt and 26 or 32)
@@ -211,7 +212,8 @@ local function fillRow(row, data)
     row.icon.tex:SetTexture(C_Item.GetItemIconByID(data.id) or 134400)
     row.name:SetText("|cff888888Loading item " .. data.id .. "...|r")
     local slotText = data.slot
-    if data.isAlt then slotText = "|cff8fb8ffAlternative|r  " .. slotText end
+    if data.isPre then slotText = "|cffffd100For T0.5 quest|r  " .. slotText
+    elseif data.isAlt then slotText = "|cff8fb8ffAlternative|r  " .. slotText end
     if data.isNew then slotText = "|cff1eff00NEW|r  " .. slotText end
     if data.faction then slotText = slotText .. "  |cffffd100(" .. data.faction .. ")|r" end
     row.slot:SetText(slotText)
@@ -231,7 +233,8 @@ local function fillRow(row, data)
         row.itemName = item:GetItemName()
         row.icon.tex:SetTexture(item:GetItemIcon())
         local text = (row.itemLink or row.itemName or ""):gsub("[%[%]]", "")
-        if row.isAlt then text = "|cff8fb8ffAlt:|r " .. text end
+        if row.isPre then text = "|cffffd100Needs:|r " .. text
+        elseif row.isAlt then text = "|cff8fb8ffAlt:|r " .. text end
         row.name:SetText(text)
     end)
     row:Show()
@@ -262,25 +265,50 @@ function ns.RefreshBrowser()
     classButton:SetText(classColorHex(ns.char.selectedClass) .. className(ns.char.selectedClass) .. "|r")
     specButton:SetText(ns.char.selectedSpec or "")
     slotButton:SetText("Slot: " .. (ns.char.selectedSlot or "All"))
-    local realistic = ns.char.listMode == "realistic" and guide.realistic ~= nil
-    listButton:SetText(realistic and "List: Realistic" or "List: BiS")
-    -- alternatives belong to the BiS list
-    if realistic then altCheck:Disable(); altLabel:SetAlpha(0.4) else altCheck:Enable(); altLabel:SetAlpha(1) end
+    local mode = "bis"
+    if ns.char.listMode == "realistic" and guide.realistic then mode = "realistic"
+    elseif ns.char.listMode == "enchants" and guide.enchants then mode = "enchants" end
+    local realistic = mode == "realistic"
+    listButton:SetText(mode == "realistic" and "List: Realistic" or mode == "enchants" and "List: Enchants" or "List: BiS")
+    -- alternatives belong to the BiS list; "hide finished slots" to the gear lists
+    if mode ~= "bis" then altCheck:Disable(); altLabel:SetAlpha(0.4) else altCheck:Enable(); altLabel:SetAlpha(1) end
+    if mode == "enchants" then doneCheck:Disable(); doneLabel:SetAlpha(0.4) else doneCheck:Enable(); doneLabel:SetAlpha(1) end
     missingCheck:SetChecked(ns.char.missingOnly)
     altCheck:SetChecked(ns.char.showAlts ~= false)
+    doneCheck:SetChecked(ns.char.hideDone)
+
+    -- A slot is finished once you own its BiS pick or its Realistic pick
+    -- (Finger / Trinket need as many as the list has).
+    local doneSlot = {}
+    if ns.char.hideDone and mode ~= "enchants" then
+        local need, got, seen = {}, {}, {}
+        for _, r in ipairs(ns.GetGuideRows(guide, false, mode)) do
+            if not r.isAlt then need[r.slot] = (need[r.slot] or 0) + 1 end
+        end
+        for _, m in ipairs({ "bis", "realistic" }) do
+            for _, r in ipairs(ns.GetGuideRows(guide, false, m)) do
+                if not r.isAlt and ns.Owned[r.id] and not seen[r.id] then
+                    seen[r.id] = true
+                    got[r.slot] = (got[r.slot] or 0) + 1
+                end
+            end
+        end
+        for slot, n in pairs(need) do
+            if (got[slot] or 0) >= n then doneSlot[slot] = true end
+        end
+    end
 
     local list = {}
     local have = 0
-    local mode = realistic and "realistic" or "bis"
-    local listRows = ns.GetGuideRows(guide, (not realistic) and ns.char.showAlts ~= false, mode)
+    local listRows = ns.GetGuideRows(guide, mode == "bis" and ns.char.showAlts ~= false, mode)
     local total = 0
     for _, r in ipairs(listRows) do if not r.isAlt then total = total + 1 end end
     for _, r in ipairs(listRows) do
         local owned = ns.Owned[r.id] ~= nil
         if owned and not r.isAlt then have = have + 1 end
         local slotOk = ns.char.selectedSlot == "All" or r.slot == ns.char.selectedSlot
-        if slotOk and not (ns.char.missingOnly and owned) then
-            r.isNew = (not realistic) and (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
+        if slotOk and not doneSlot[r.slot] and not (ns.char.missingOnly and owned) then
+            r.isNew = mode == "bis" and (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
             table.insert(list, r)
         end
     end
@@ -297,6 +325,8 @@ function ns.RefreshBrowser()
         .. "  |  Data: " .. (info.source or "?") .. ", checked " .. (info.checked or "?")
     if realistic then
         text = text .. "  |  Realistic set: " .. (guide.realisticSource or "community guides")
+    elseif mode == "enchants" then
+        text = text .. "  |  Enchants: " .. (guide.enchantSource or "community guides")
     elseif guide.alts and #guide.alts > 0 and ns.char.showAlts ~= false then
         text = text .. "  |  Alternatives: " .. (guide.altSource or info.altSource or "community guides")
     end
@@ -365,11 +395,14 @@ local function listMenu(owner)
     openMenu(owner, function(_, root)
         root:CreateTitle("Gear list")
         root:CreateRadio("BiS (best available)",
-            function() return ns.char.listMode ~= "realistic" end,
+            function() return ns.char.listMode ~= "realistic" and ns.char.listMode ~= "enchants" end,
             function() ns.char.listMode = "bis"; ns.RefreshBrowser() end)
         root:CreateRadio("Realistic (quick to collect)",
             function() return ns.char.listMode == "realistic" end,
             function() ns.char.listMode = "realistic"; ns.RefreshBrowser() end)
+        root:CreateRadio("Enchants",
+            function() return ns.char.listMode == "enchants" end,
+            function() ns.char.listMode = "enchants"; ns.RefreshBrowser() end)
     end)
 end
 
@@ -440,6 +473,7 @@ local function createFrame()
         GameTooltip:AddLine("Gear list")
         GameTooltip:AddLine("BiS: the best pre-raid items.", 1, 1, 1, true)
         GameTooltip:AddLine("Realistic: a set most players can finish in a week or two from dungeons, quests and Tier 0.5.", 1, 1, 1, true)
+        GameTooltip:AddLine("Enchants: the enchant, arcanum or armor kit for each slot.", 1, 1, 1, true)
         GameTooltip:Show()
     end)
     listButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -469,6 +503,24 @@ local function createFrame()
     altLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     altLabel:SetPoint("LEFT", altCheck, "RIGHT", 2, 0)
     altLabel:SetText("Alternatives")
+
+    doneCheck = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+    doneCheck:SetSize(24, 24)
+    doneCheck:SetPoint("LEFT", altLabel, "RIGHT", 10, 0)
+    doneCheck:SetScript("OnClick", function(self)
+        ns.char.hideDone = self:GetChecked() and true or false
+        ns.RefreshBrowser()
+    end)
+    doneCheck:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:AddLine("Hide finished slots")
+        GameTooltip:AddLine("Hides a slot once you own its BiS item or its Realistic item.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    doneCheck:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    doneLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    doneLabel:SetPoint("LEFT", doneCheck, "RIGHT", 2, 0)
+    doneLabel:SetText("Hide finished")
 
     countText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     countText:SetPoint("TOPRIGHT", -40, -62)
