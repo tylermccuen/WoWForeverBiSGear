@@ -124,11 +124,13 @@ SlashCmdList["FOREVERBIS"] = function(msg)
             return
         end
         ns.ShowLinkPopupForItem(id)
+    elseif cmd == "raid" or cmd == "check" then
+        ns.ToggleRaidCheck()
     elseif cmd == "minimap" then
         ns.db.minimap.hide = not ns.db.minimap.hide
         ns.UpdateMinimap()
     else
-        ns.Print("Commands: /bis, /bis settings, /bis link <item>, /bis minimap")
+        ns.Print("Commands: /bis, /bis raid, /bis settings, /bis link <item>, /bis minimap")
     end
 end
 

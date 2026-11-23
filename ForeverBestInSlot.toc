@@ -19,5 +19,6 @@ Items.lua
 LinkPopup.lua
 Tooltip.lua
 Browser.lua
+Raid.lua
 Minimap.lua
 Options.lua

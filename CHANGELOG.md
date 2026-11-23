@@ -1,5 +1,14 @@
 # Forever Best In Slot
 
+## 1.7.0
+- **Raid check:** a new "Raid check" button in the browser (or `/bis raid`) checks whether your character is ready to raid, for the spec selected in the browser or your active spec:
+  - Hit chance against raid bosses: 8% for melee, hunters and tanks, 17% for casters (healers are skipped, heals can't miss). Dual wielders also see the auto-attack figure.
+  - Defense 440 for tanks, so raid bosses can't crit you.
+  - Empty gear slots, missing ammo for hunters, and slots on your enchant list that aren't enchanted.
+  - How many BiS and Realistic items you have equipped.
+  - Your gear's key stats for your role (for example healing and intellect for healers, spell damage for casters, agility and attack power for hunters) compared with the full pre-raid BiS set.
+  The check updates when you change gear.
+
 ## 1.6.0
 - **Enchants:** every spec now has an Enchants list (pick "Enchants" from the list button) with the enchant, arcanum, armor kit or scope for each slot, from wowtbc.gg. Hovering an enchant scroll, arcanum or kit tells you if it's your BiS enchant.
 - **Quiver and ammo for hunters:** new Quiver and Ammo slots. Bows get Harpy Hide Quiver and Doomshot; the Realistic set's rifle gets Ribbly's Bandolier and Miniature Cannon Balls; alternatives cover the other options.

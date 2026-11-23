@@ -522,8 +522,21 @@ local function createFrame()
     doneLabel:SetPoint("LEFT", doneCheck, "RIGHT", 2, 0)
     doneLabel:SetText("Hide finished")
 
+    local raidButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    raidButton:SetSize(96, 20)
+    raidButton:SetPoint("TOPRIGHT", -14, -60)
+    raidButton:SetText("Raid check")
+    raidButton:SetScript("OnClick", function() ns.ToggleRaidCheck() end)
+    raidButton:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:AddLine("Raid check")
+        GameTooltip:AddLine("Checks hit, defense, empty slots and enchants for your spec, and compares your gear's stats with the pre-raid BiS set.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    raidButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
     countText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    countText:SetPoint("TOPRIGHT", -40, -62)
+    countText:SetPoint("RIGHT", raidButton, "LEFT", -10, 0)
 
     -- column headers
     local h1 = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")

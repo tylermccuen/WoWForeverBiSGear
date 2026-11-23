@@ -51,7 +51,7 @@ CreateAtlasMarkup = function() return "" end
 
 local ns = {}
 local events = {}
-local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Minimap.lua","Options.lua"}
+local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Minimap.lua","Options.lua"}
 for _,f in ipairs(files) do assert(loadfile(f))("ForeverBestInSlot", ns) end
 local function fire(ev, ...)
   for _, f in ipairs(ALLFRAMES) do
@@ -128,5 +128,25 @@ check("hide finished slots", function()
   if after >= before then error("nothing hidden: " .. before .. " -> " .. after) end
   print("   rows:", before, "->", after)
   ns.char.hideDone = false; ns.Owned[g.items[1][2]] = nil
+end)
+check("raid check (every spec)", function()
+  local _GetLink = GetInventoryItemLink
+  GetInventoryItemLink = function(_, inv) if inv == 1 then return "|cff0070dd|Hitem:226887:0:0|h[Cap]|h|r" end end
+  GetHitModifier = function() return 6 end
+  GetCritChance = function() return 12.5 end
+  UnitDefense = function() return 300, 120 end
+  C_Item.GetItemStats = function(link) return { ITEM_MOD_AGILITY_SHORT = 10, ITEM_MOD_STAMINA_SHORT = 8 } end
+  for _, cls in ipairs(ns.ClassOrder) do for _, sp in ipairs(ns.GetSpecsForClass(cls)) do
+    ns.char.selectedClass, ns.char.selectedSpec = cls, sp
+    UnitClass = function() return cls, cls end
+    local got
+    ns.RunRaidCheck(function(r) got = r end)
+    if not got then error("no report for " .. cls .. " " .. sp) end
+    if cls == "HUNTER" and sp == "Marksmanship" then
+      for _, l in ipairs(got.lines) do print("   [" .. l.status .. "] " .. l.text) end
+    end
+  end end
+  ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"
+  ns.ToggleRaidCheck()
 end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
