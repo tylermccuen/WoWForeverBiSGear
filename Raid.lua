@@ -150,6 +150,61 @@ local function twoHanded(link)
     return loc == "INVTYPE_2HWEAPON"
 end
 
+-- Item class / subclass IDs (same in every client): projectiles are class 6
+-- (2 = arrow, 3 = bullet); ranged weapons are class 2 (2 = bow, 3 = gun,
+-- 18 = crossbow).
+local AMMO_FOR = { [2] = 2, [18] = 2, [3] = 3 }   -- weapon subclass -> projectile subclass
+local AMMO_NAME = { [2] = "arrows", [3] = "bullets" }
+
+local function classOf(item)
+    if not item then return nil end
+    local _, _, _, _, _, classID, subclassID = C_Item.GetItemInfoInstant(item)
+    return classID, subclassID
+end
+
+-- Ammo can sit in the ammo slot (if the client has one) or just in your bags.
+-- Returns ok, text.
+function ns.CheckAmmo(equipped)
+    local rangedClass, rangedSub = classOf(equipped[18])
+    local need = rangedClass == 2 and AMMO_FOR[rangedSub] or nil
+    if rangedClass == 2 and not need then return true, "No ammo needed for your ranged weapon" end
+
+    local found = {}   -- [projectile subclass] = count
+    local slotItem = equipped[INVSLOT_AMMO or 0]
+    if slotItem then
+        local c, sc = classOf(slotItem)
+        if c == 6 and sc then found[sc] = (found[sc] or 0) + 1 end
+    end
+    local lastBag = NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4
+    for bag = 0, lastBag do
+        local okN, n = pcall(C_Container.GetContainerNumSlots, bag)
+        for slot = 1, (okN and n or 0) do
+            local okI, info = pcall(C_Container.GetContainerItemInfo, bag, slot)
+            local id = okI and type(info) == "table" and info.itemID
+            if id then
+                local c, sc = classOf(id)
+                if c == 6 and sc then found[sc] = (found[sc] or 0) + (info.stackCount or 1) end
+            end
+        end
+    end
+
+    if need then
+        if found[need] then
+            return true, string.format("Ammo: %d %s for your %s", found[need], AMMO_NAME[need],
+                need == 3 and "gun" or "bow")
+        end
+        local other = need == 2 and 3 or 2
+        if found[other] then
+            return false, string.format("You have %s, but your %s needs %s", AMMO_NAME[other],
+                need == 3 and "gun" or "bow", AMMO_NAME[need])
+        end
+        return false, "No " .. AMMO_NAME[need] .. " for your " .. (need == 3 and "gun" or "bow")
+    end
+    -- no ranged weapon equipped (or unknown): any ammo will do
+    if found[2] or found[3] then return true, "Ammo in your bags" end
+    return false, "No ammo found"
+end
+
 --[[
     Run the check. cb(report) is called once the BiS items' data is loaded.
     report = { spec, class, role, lines = { {status = "pass"|"fail"|"info"|"head", text = ...}, ... },
@@ -216,7 +271,8 @@ function ns.RunRaidCheck(cb)
     end
     line(#empty == 0 and "pass" or "fail", #empty == 0 and "No empty gear slots" or ("Empty slots: " .. table.concat(empty, ", ")))
     if class == "HUNTER" then
-        line(equipped[0] and "pass" or "fail", equipped[0] and "Ammo equipped" or "No ammo equipped")
+        local ok, text = ns.CheckAmmo(equipped)
+        line(ok and "pass" or "fail", text)
     end
     -- Enchants
     if guide.enchants then
