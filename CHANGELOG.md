@@ -1,6 +1,8 @@
 # Forever Best In Slot
 
 ## 1.7.0
+- **Beside the character window:** opening your character window shrinks the browser and moves it right next to it so you can compare your gear; closing the character window puts it back. Turn it off in Settings.
+- **Guild announcements (optional):** turn on "Announce new BiS items in guild chat" in Settings and the addon posts in guild chat, with the item link, when you get an item from your spec's BiS list for the first time. Items you already had are never announced.
 - **Avoid grouping with:** the "Also BiS" line under each item is now its own column on the BiS and Realistic tabs, listing the other specs (class-coloured) that have the item as a BiS pick, so you know who would roll against you.
 - **Smoother resizing:** dragging the bottom-right corner no longer makes the window jump; it now grows from its top-left corner. Right-click the corner to reset the size (it used to be a double-click, which was easy to trigger by accident).
 - **List tabs:** BiS, Realistic, Enchants and Consumables are now tabs along the bottom of the window instead of a dropdown.
@@ -12,7 +14,7 @@
   - Empty gear slots.
   - Enchants, slot by slot: what's on each enchanted slot (for example "Head: +8 Agility"), and the recommended enchant for any slot that isn't enchanted.
   - How many BiS and Realistic items you have equipped.
-  - Your gear's key stats for your role (for example healing and intellect for healers, spell damage for casters, agility and attack power for hunters) compared with the full pre-raid BiS set.
+  - Your gear's key stats for your role (for example healing and intellect for healers, spell damage for casters, agility and attack power for hunters) compared with the full pre-raid BiS set. Hit and crit are shown as your real percentages instead, since they come from "Equip: +1%" effects.
   The check updates when you change gear or spec.
 
 ## 1.6.0

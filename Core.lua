@@ -20,6 +20,8 @@ local accountDefaults = {
     linkPreset       = "wowhead_forever",
     customTemplate   = "https://www.wowhead.com/forever/item={id}",
     windowScale      = 1,
+    compactWithCharacter = true,    -- shrink the browser next to the character window
+    announceGuild    = false,       -- post new BiS items in guild chat
 }
 
 local charDefaults = {
@@ -82,11 +84,13 @@ function ns.On(event, fn)
     end
     table.insert(handlers[event], fn)
 end
-events:SetScript("OnEvent", function(_, event, ...)
+local function dispatch(event, ...)
     local list = handlers[event]
     if not list then return end
     for _, fn in ipairs(list) do fn(event, ...) end
-end)
+end
+events:SetScript("OnEvent", function(_, event, ...) dispatch(event, ...) end)
+ns.FireEvent = dispatch   -- used by tools/uitest.lua
 
 ns.On("ADDON_LOADED", function(_, name)
     if name ~= ADDON then return end

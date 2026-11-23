@@ -13,7 +13,14 @@ local function savedWidth()
 end
 
 -- Column positions follow the window width
+local COMPACT_W = 600   -- width beside the character window
+
 local function columnLayout(contentWidth)
+    if frame and frame.compact then
+        -- compact: no source / avoid columns; the source goes under the item name
+        local nameW = math.max(200, contentWidth - 250)
+        return nameW + 50, nameW, 0, nameW + 50, 0
+    end
     local sourceX = math.max(290, math.floor(contentWidth * 0.36))
     local nameW = sourceX - 50
     local rest = math.max(300, contentWidth - sourceX - 200)   -- 200 = owned / done / link
@@ -33,6 +40,8 @@ local function layoutRow(row)
     row.avoid:ClearAllPoints()
     row.avoid:SetPoint("LEFT", avoidX, 0)
     row.avoid:SetWidth(avoidW)
+    row.source:SetShown(not frame.compact)
+    row.avoid:SetShown(not frame.compact)
 end
 
 local classButton, specButton, phaseButton, listTabs, slotButton, missingCheck, altCheck, altLabel, doneCheck, doneLabel, countText
@@ -247,6 +256,7 @@ local function fillRow(row, data)
     elseif data.isAlt then slotText = "|cff8fb8ffAlternative|r  " .. slotText end
     if data.isNew then slotText = "|cff1eff00NEW|r  " .. slotText end
     if data.faction then slotText = slotText .. "  |cffffd100(" .. data.faction .. ")|r" end
+    if frame.compact and data.source then slotText = slotText .. "  |cff999999" .. data.source .. "|r" end
     row.slot:SetText(slotText)
     local src = data.source or ""
     if data.note then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
@@ -574,8 +584,14 @@ local function createFrame()
     frame:Hide()
     tinsert(UISpecialFrames, "ForeverBiSFrame")
 
-    frame:HookScript("OnShow", function() if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end end)
-    frame:HookScript("OnHide", function() if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end end)
+    frame:HookScript("OnShow", function()
+        ns.UpdateCompact()
+        if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end
+    end)
+    frame:HookScript("OnHide", function()
+        ns.UpdateCompact()      -- leave compact mode so the next open is normal size
+        if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end
+    end)
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", 0, -5)
@@ -642,6 +658,7 @@ local function createFrame()
     doneLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     doneLabel:SetPoint("LEFT", doneCheck, "RIGHT", 2, 0)
     doneLabel:SetText("Hide finished")
+    frame.wideOnly = { missingCheck, mcLabel, altCheck, altLabel, doneCheck, doneLabel }
 
     local raidButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     raidButton:SetSize(96, 20)
@@ -670,6 +687,8 @@ local function createFrame()
     headerAvoid = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     headerAvoid:SetPoint("TOPLEFT", 560, -64)
     headerAvoid:SetText("AVOID GROUPING WITH")
+    table.insert(frame.wideOnly, headerSource)
+    table.insert(frame.wideOnly, headerAvoid)
 
     local scroll = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", 12, -78)
@@ -702,7 +721,9 @@ local function createFrame()
     grip:SetScript("OnMouseUp", function(_, button)
         if button ~= "LeftButton" then return end
         frame:StopMovingOrSizing()
-        ns.db.windowWidth, ns.db.windowHeight = math.floor(frame:GetWidth()), math.floor(frame:GetHeight())
+        if not frame.compact then
+            ns.db.windowWidth, ns.db.windowHeight = math.floor(frame:GetWidth()), math.floor(frame:GetHeight())
+        end
         if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end
     end)
     grip:SetScript("OnEnter", function(self)
@@ -769,3 +790,48 @@ end
 function ns.SetBrowserScale(scale)
     if frame then frame:SetScale(scale) end
 end
+
+----------------------------------------------------------------------
+-- Compact mode: narrower window beside the character window
+----------------------------------------------------------------------
+local function setCompact(on)
+    if not frame or (frame.compact or false) == on then return end
+    if on then
+        frame.savedPoints = {}
+        for i = 1, (frame:GetNumPoints() or 0) do frame.savedPoints[i] = { frame:GetPoint(i) } end
+        frame.savedWidth = frame:GetWidth()
+        frame.compact = true
+        if frame.SetResizeBounds then frame:SetResizeBounds(COMPACT_W - 60, MIN_H, MAX_W, MAX_H) end
+        for _, w in ipairs(frame.wideOnly or {}) do w:Hide() end
+        frame:ClearAllPoints()
+        frame:SetPoint("TOPLEFT", CharacterFrame, "TOPRIGHT", 6, 0)
+        frame:SetWidth(COMPACT_W)
+    else
+        frame.compact = false
+        if frame.SetResizeBounds then frame:SetResizeBounds(MIN_W, MIN_H, MAX_W, MAX_H) end
+        for _, w in ipairs(frame.wideOnly or {}) do w:Show() end
+        frame:ClearAllPoints()
+        for _, p in ipairs(frame.savedPoints or {}) do frame:SetPoint(unpack(p)) end
+        if not frame.savedPoints or #frame.savedPoints == 0 then frame:SetPoint("CENTER") end
+        frame:SetWidth(frame.savedWidth or savedWidth())
+    end
+    -- re-run the layout for the new mode
+    local onSize = frame:GetScript("OnSizeChanged")
+    if onSize then onSize(frame, frame:GetWidth(), frame:GetHeight()) end
+    ns.RefreshBrowser()
+    if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end
+end
+
+-- Compact while both windows are open (and the setting is on)
+function ns.UpdateCompact()
+    if not frame then return end
+    local charOpen = CharacterFrame and CharacterFrame:IsShown()
+    setCompact((frame:IsShown() and charOpen and ns.db.compactWithCharacter) and true or false)
+end
+
+ns.On("PLAYER_LOGIN", function()
+    if CharacterFrame and CharacterFrame.HookScript then
+        CharacterFrame:HookScript("OnShow", ns.UpdateCompact)
+        CharacterFrame:HookScript("OnHide", ns.UpdateCompact)
+    end
+end)

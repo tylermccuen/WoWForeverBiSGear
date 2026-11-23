@@ -51,12 +51,14 @@ local STAT_GROUPS = {
     { key = "mp5",   label = "Mana per 5",       match = { "MANA_REGENERATION", "POWER_REGEN0" } },
     { key = "def",   label = "Defense",          match = { "DEFENSE" } },
 }
+-- Hit and crit come from "Equip: +1%" effects, not plain item stats, so they're
+-- left out here; the live hit / crit percentages at the top cover them.
 local ROLE_STATS = {
-    tank   = { "stam", "def", "str", "agi", "hit" },
-    healer = { "heal", "int", "mp5", "spi", "crit" },
-    caster = { "spell", "hit", "crit", "int" },
-    melee  = { "str", "agi", "ap", "hit", "crit" },
-    ranged = { "agi", "ap", "hit", "crit", "int" },
+    tank   = { "stam", "def", "str", "agi" },
+    healer = { "heal", "int", "mp5", "spi" },
+    caster = { "spell", "int", "stam" },
+    melee  = { "str", "agi", "ap", "stam" },
+    ranged = { "agi", "ap", "int", "stam" },
 }
 
 local INV = { Head = 1, Neck = 2, Shoulder = 3, Back = 15, Chest = 5, Wrist = 9, Hands = 10, Waist = 6,
@@ -459,7 +461,13 @@ function ns.UpdateRaidCompanion()
     local bs, us = browser:GetEffectiveScale(), UIParent:GetEffectiveScale()
     local scale = (bs and us and us > 0) and bs / us or 1
     local width = panel:GetWidth() or 380
-    if right and screen and (right + width) * scale > screen then
+    local noRoomRight = right and screen and (right + width) * scale > screen
+    if noRoomRight and browser.compact then
+        -- the left side is the character window: no room, so hide for now
+        panel:Hide()
+        return
+    end
+    if noRoomRight then
         panel:SetPoint("TOPRIGHT", browser, "TOPLEFT", 3, 0)
         panel:SetPoint("BOTTOMRIGHT", browser, "BOTTOMLEFT", 3, 0)
     else

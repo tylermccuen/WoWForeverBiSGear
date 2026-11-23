@@ -67,10 +67,18 @@ local function buildPanel()
     local c4 = checkbox(panel, "Show minimap button", nil,
         function() return not ns.db.minimap.hide end,
         function(v) ns.db.minimap.hide = not v; ns.UpdateMinimap() end, c3d)
+    local c5 = checkbox(panel, "Shrink the browser next to the character window",
+        "When you open your character window, the browser gets narrower and moves beside it so you can compare your gear. It goes back to normal when you close the character window.",
+        function() return ns.db.compactWithCharacter end,
+        function(v) ns.db.compactWithCharacter = v; if ns.UpdateCompact then ns.UpdateCompact() end end, c4)
+    local c6 = checkbox(panel, "Announce new BiS items in guild chat",
+        "When you loot or receive an item that's on your spec's BiS list for the first time, posts it with the item link in guild chat.",
+        function() return ns.db.announceGuild end,
+        function(v) ns.db.announceGuild = v end, c5)
 
     -- Link site
     local linkHeader = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    linkHeader:SetPoint("TOPLEFT", c4, "BOTTOMLEFT", 0, -18)
+    linkHeader:SetPoint("TOPLEFT", c6, "BOTTOMLEFT", 0, -18)
     linkHeader:SetText("Copy-paste link")
 
     local siteButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
