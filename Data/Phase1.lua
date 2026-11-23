@@ -79,8 +79,8 @@ local TIMBER_MANT = { "Shoulder", 19050, TAILOR }
 local NETHERPEARL = { "Wrist",   254067, TAILOR }
 local LIBRAM_FERV = { "Relic",   23203,  "World drop" }
 local STORM_TOTEM = { "Relic",   272432, PIX50 }
--- Songstone of Ironforge comes from an Alliance-only quest; Horde gets Rune Band of Wizardry
-local SONGSTONE   = { "Finger",  12543,  "Quest: The Princess's Surprise (Alliance only)", 22339, "Upper Blackrock Spire: Lord Valthalak" }
+-- Songstone of Ironforge (Alliance) and Eye of Orgrimmar (Horde) have the same stats
+local SONGSTONE   = { "Finger",  12543,  "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }
 
 local guides = {
     -- WARRIOR
@@ -634,21 +634,194 @@ local guides = {
     Source: conquestcapped.com WoW Forever BiS guides (updated 22 Nov 2026).
     Same row format as above, plus an optional note = "..." shown next to the source.
 ]]
-local CC = "https://conquestcapped.com/guides/wow-forever/"
+-- Faction reputation items (Theramore Expeditionary Force / Darkspear Raiders, Exalted)
+local REP = "Theramore Expeditionary Force (Exalted)"
+local REP_H = "Darkspear Raiders (Exalted)"
+local EPAULETS  = { "Shoulder", 271956, REP, 272106, REP_H }
+local SPAULDERS = { "Shoulder", 271959, REP, 272108, REP_H }
+local SHGUARDS  = { "Shoulder", 272957, REP, 272958, REP_H }
+local MANTLE    = { "Shoulder", 271957, REP, 272107, REP_H }
+local PAULDRONS = { "Shoulder", 271955, REP, 272105, REP_H }
+local GAUNTLETS = { "Hands",    271940, REP, 272095, REP_H }
+local HANDWRAPS = { "Hands",    271945, REP, 272097, REP_H }
+local GLOVES    = { "Hands",    271948, REP, 272099, REP_H }
+
+local HOWLERS     = { "Back",    272414, PIX75, note = "1% hit" }
+local ELVEN_RING  = { "Finger",  18500,  "Dire Maul North: Mizzle the Crafty (tribute)", note = "1% hit" }
+local LODESTONE   = { "Trinket", 18537,  "Dire Maul North: Mizzle the Crafty (tribute)" }
+local BEHEMOTH    = { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" }
+local CHOSEN      = { "Trinket", 17774,  "Quest: The Pariah's Instructions (Maraudon)" }
+local RIPHOOK     = { "Ranged",  12653,  "Lower Blackrock Spire: Shadow Hunter Vosh'gajin" }
+local NIGHTFALL   = { "Two Hand", 19169, "Crafted: Blacksmithing (Axesmith)" }
+local PAINWEAVER  = { "Finger",  13098,  "Upper Blackrock Spire: General Drakkisath" }
+local OBSIDIAN    = { "Off Hand", 18316, "Dire Maul East: Pusillin" }
+local AQUEMENTAS  = { "Off Hand", 11904, "Quest: It's Dangerous to Go Alone (Un'Goro Crater)" }
+local AEGIS       = { "Off Hand", 22336, "Upper Blackrock Spire: Lord Valthalak" }
+local AWARENESS   = { "Finger",  272409, PIX75, note = "9 defense" }
+local LIBRAM_LAW  = { "Relic",   272435, PIX50 }
+local PENELOPE_A  = { "Off Hand", 15805, "Quest: Kirtonos the Herald (Scholomance)" }
+
 local ALTS = {
-    ["HUNTER:Marksmanship"] = {
-        { "Back",  272414, PIX75, note = "1% hit" },
-        { "Wrist", 18375,  "Dire Maul West: Prince Tortheldrin" },
-    },
-    ["HUNTER:Survival"] = {
-        { "Back",  272414, PIX75, note = "1% hit" },
-        { "Feet",  13967,  "Scholomance: Kirtonos the Herald", note = "1% hit" },
+    ["WARRIOR:Arms"] = {
+        SPAULDERS, HOWLERS, GAUNTLETS,
+        { "Finger", 260219, "Quest: Blackmaw Reclamation (Blackmaw Hold)" },
+        LODESTONE, NIGHTFALL,
+        { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },
     },
     ["WARRIOR:Fury"] = {
-        CUTTHROAT,
+        SPAULDERS, GAUNTLETS,
+        { "Waist", 20041, "Arathi Basin: League of Arathor", 20204, "Arathi Basin: The Defilers" },
+        CUTTHROAT, LODESTONE,
         { "Main Hand", 11684, "Blackrock Depths: Emperor Dagran Thaurissan" },
         { "Ranged",    18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },
     },
+    ["WARRIOR:Protection"] = {
+        SPAULDERS,
+        { "Chest",  226872, D2_HEAD,  note = "Protection version" },
+        { "Wrist",  226865, D2_WRIST, note = "Protection version" },
+        GAUNTLETS,
+        { "Waist",  226866, D2_HANDS, note = "Protection version" },
+        { "Feet",   226871, D2_LEGS,  note = "Protection version" },
+        AWARENESS,
+        { "Finger", 22331,  "Scholomance: Kormok" },
+        CHOSEN,
+        { "Main Hand", 12590, "Upper Blackrock Spire: Warchief Rend Blackhand" },
+        { "Off Hand",  12602, "Upper Blackrock Spire: General Drakkisath" },
+        { "Ranged",    16996, "Quest: The Scarlet Oracle, Demetria (Eastern Plaguelands)" },
+    },
+    ["PALADIN:Holy"] = {
+        SHGUARDS,
+        { "Chest", 250601, BS },
+        HANDWRAPS,
+        PENELOPE_A,
+    },
+    ["PALADIN:Protection"] = {
+        { "Head",  226989, D2_HEAD, note = "Protection version" },
+        { "Neck",  281636, "Quest: Greater Friend of the Library" },
+        MANTLE,
+        { "Back",  18495,  "Dire Maul North: Mizzle the Crafty (tribute)", note = "7 defense" },
+        { "Waist", 250573, BS, note = "10 defense" },
+        AWARENESS,
+        { "Finger", 17045, "Quest: Aurius' Reckoning (Stratholme)" },
+        CHOSEN,
+        AEGIS,
+        LIBRAM_LAW,
+    },
+    ["PALADIN:Retribution"] = {
+        { "Chest", 226973, D2_HEAD },
+        { "Waist", 226971, D2_HANDS, note = "1% hit" },
+        { "Finger", 272406, PIX75, note = "1% hit" },
+        WYRMTHALAK,
+        NIGHTFALL,
+        LIBRAM_LAW,
+    },
+    ["HUNTER:Beast Mastery"] = {
+        EPAULETS,
+        { "Wrist", 13211, "Lower Blackrock Spire: Halycon", note = "1% hit" },
+        ELVEN_RING,
+        BEHEMOTH,
+        RIPHOOK,
+    },
+    ["HUNTER:Marksmanship"] = {
+        EPAULETS,
+        HOWLERS,
+        { "Wrist", 18375, "Dire Maul West: Prince Tortheldrin" },
+        ELVEN_RING,
+        { "Trinket", 280071, "Blackmaw Hold: Unbound Spirit" },
+        { "Off Hand", 12783, "Crafted: Blacksmithing (Weaponsmith)" },
+        { "Ranged",   18680, "Scholomance: random drop", note = "rare" },
+    },
+    ["HUNTER:Survival"] = {
+        EPAULETS,
+        HOWLERS,
+        { "Hands", 13255, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "3% ranged hit" },
+        { "Waist", 22207, "Blackrock Depths: Emperor Dagran Thaurissan", note = "1% ranged hit" },
+        { "Legs",  17754, "Maraudon: Lord Vyletongue", note = "1% ranged hit" },
+        { "Feet",  13967, "Scholomance: Kirtonos the Herald", note = "1% hit" },
+        ELVEN_RING,
+        { "Main Hand", 12940, "Upper Blackrock Spire: Warchief Rend Blackhand", note = "dual-wield option" },
+        { "Off Hand",  18392, "Dire Maul West: Prince Tortheldrin", note = "dual-wield option" },
+        RIPHOOK,
+    },
+    ["ROGUE:Assassination"] = {
+        { "Shoulder", 226826, D2_LEGS },
+        { "Chest",    15056,  LW },
+        PAINWEAVER,
+        LODESTONE,
+    },
+    ["ROGUE:Combat"] = {
+        { "Shoulder", 15058,  LW },
+        { "Chest",    226825, D2_HEAD, note = "1.5% hit" },
+        { "Hands",    21278,  LW, note = "1% hit" },
+        { "Legs",     15057,  LW },
+        PAINWEAVER,
+        LODESTONE,
+        { "Main Hand", 10847, "Sunken Temple: Shade of Eranikus" },
+        { "Off Hand",  18392, "Dire Maul West: Prince Tortheldrin" },
+    },
+    ["ROGUE:Subtlety"] = {
+        { "Shoulder", 15058,  LW },
+        { "Chest",    226825, D2_HEAD, note = "1.5% hit" },
+        { "Hands",    21278,  LW, note = "1% hit" },
+        { "Legs",     15057,  LW },
+        PAINWEAVER,
+        LODESTONE,
+        BEHEMOTH,
+    },
+    ["PRIEST:Discipline"] = { PENELOPE_A },
+    ["PRIEST:Holy"]       = { PENELOPE_A },
+    ["PRIEST:Shadow"] = {
+        { "Wrist",   226953, D2_WRIST, note = "if you are not a Tailor" },
+        { "Trinket", 12930,  "Upper Blackrock Spire: Jed Runewatcher" },
+        OBSIDIAN,
+    },
+    ["SHAMAN:Elemental"] = {
+        { "Chest", 227004, D2_HEAD },
+        ARCHMAGE_BT,
+        AEGIS,
+        { "Relic", 272433, PIX50 },
+    },
+    ["SHAMAN:Enhancement"] = {
+        BDH,
+        EPAULETS,
+        HOWLERS,
+        TIMBER_TUN,
+        { "Wrist",  279256, LW },
+        { "Hands",  14615,  "Scholomance: drop" },
+        { "Legs",   22748,  "Warsong Gulch: Silverwing Sentinels (Exalted)", 22673, "Warsong Gulch: Warsong Outriders (Exalted)", note = "1% hit" },
+        { "Finger", 275981, "The Watchers (Exalted)", note = "1% hit" },
+        BEHEMOTH,
+        LODESTONE,
+        { "Two Hand", 279260, BS },
+        { "Relic",    22395,  "Blackrock Depths: Magmus" },
+    },
+    ["SHAMAN:Restoration"] = { SHGUARDS, HANDWRAPS },
+    ["MAGE:Arcane"] = { WEAKNESS, OBSIDIAN },
+    ["MAGE:Fire"]   = { OBSIDIAN },
+    ["MAGE:Frost"]  = { AQUEMENTAS },
+    ["WARLOCK:Affliction"] = {
+        { "Finger", 22433, "Scholomance: Darkmaster Gandling" },
+        OBSIDIAN,
+    },
+    ["WARLOCK:Demonology"]  = { WEAKNESS, AQUEMENTAS },
+    ["WARLOCK:Destruction"] = { EYE_BEAST, OBSIDIAN },
+    ["DRUID:Balance"] = { OBSIDIAN },
+    ["DRUID:Feral"] = {
+        PAULDRONS,
+        { "Wrist", 270124, "Quest: Lethtendris's Web (Dire Maul)" },
+        GLOVES,
+        { "Feet",  12553,  "Blackrock Depths: Princess Moira Bronzebeard" },
+        { "Finger", 22255, "Blackrock Depths: Secret Safe" },
+        LODESTONE,
+        { "Two Hand", 18420, "Quest: The Treasure of the Shen'dralar (Dire Maul)" },
+    },
+    ["DRUID:Feral Tank"] = {
+        { "Head",  226801, D2_HEAD, note = "tank version" },
+        { "Hands", 235044, "Source not confirmed in Forever yet" },
+        { "Waist", 226797, D2_HANDS, note = "tank version" },
+        CHOSEN,
+    },
+    -- Restoration Druid: both guides agree on every slot, so no alternatives
 }
 for _, g in ipairs(guides) do
     g.alts = ALTS[g.class .. ":" .. g.spec]

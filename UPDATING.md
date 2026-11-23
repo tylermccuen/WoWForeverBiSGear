@@ -6,7 +6,7 @@ Every phase is one file in `Data\` that registers itself. Nothing else in the ad
 1. Copy the template below to `Data\Phase2.lua` (or 3, 4, ...).
 2. Fill in the lists that changed. **Specs you leave out keep using their latest earlier list**, so a phase file can start with just a few specs and grow.
 3. Add the file to `ForeverBestInSlot.toc` under `Data\Phase1.lua` (there's a commented example line).
-4. Bump `## Version:` in the TOC.
+4. Add a section for the new version at the top of `CHANGELOG.md`. CurseForge shows this text as the release notes; the version number itself comes from the release tag.
 5. Check the data: `lua tools/validate.lua` from the addon folder. It flags bad slots, missing IDs and duplicate specs, and shows how many items are new per spec.
 6. `/reload` in game.
 
