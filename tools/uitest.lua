@@ -90,4 +90,16 @@ check("switch to every class/spec", function()
     ns.char.selectedClass, ns.char.selectedSpec = cls, sp; ns.RefreshBrowser()
   end end
 end)
+check("realistic list for every class/spec", function()
+  ns.char.listMode="realistic"
+  for _, cls in ipairs(ns.ClassOrder) do for _, sp in ipairs(ns.GetSpecsForClass(cls)) do
+    ns.char.selectedClass, ns.char.selectedSpec = cls, sp; ns.RefreshBrowser()
+    local n = visibleRows()
+    if n == 0 then error("no realistic rows for " .. cls .. " " .. sp) end
+  end end
+  ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"; ns.RefreshBrowser()
+end)
+print("   MM hunter realistic rows:", (visibleRows()))
+check("back to BiS list", function() ns.char.listMode="bis"; ns.RefreshBrowser() end)
+print("   rows:", (visibleRows()))
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

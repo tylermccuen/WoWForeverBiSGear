@@ -1,5 +1,9 @@
 # Forever Best In Slot
 
+## 1.5.0
+- **Realistic pre-raid sets:** every spec now has a second list of gear that's quicker to collect, from conquestcapped.com. Switch between "BiS (best available)" and "Realistic (quick to collect)" with the new list button in the browser.
+- Tooltips say "Realistic pick for you" for items in your realistic set, show your main BiS pick for that slot, and label realistic specs with "(realistic)".
+
 ## 1.4.0
 - **Gear alternatives:** every spec now lists alternative items per slot under the main BiS pick. Toggle them with the "Alternatives" checkbox in the browser. Tooltips say "Alternative for you" and name your main pick for that slot.
 - **Resizable window:** drag the bottom-right corner to resize the browser; columns stretch to fit and the size is remembered. Double-click the corner to reset it.

@@ -2,9 +2,14 @@ local _, ns = ...
 
 local ROW_HEIGHT = 40
 local frame, scrollChild, rows = nil, nil, {}
-local WIDTH, HEIGHT = 720, 540          -- default size
-local MIN_W, MIN_H, MAX_W, MAX_H = 640, 320, 1400, 1100
+local WIDTH, HEIGHT = 800, 540          -- default size
+local MIN_W, MIN_H, MAX_W, MAX_H = 780, 320, 1500, 1100
 local headerSource                      -- "WHERE TO GET IT" column header
+
+-- saved window width, never narrower than the controls need
+local function savedWidth()
+    return math.max(MIN_W, ns.db.windowWidth or WIDTH)
+end
 
 -- Column positions follow the window width
 local function columnLayout(contentWidth)
@@ -24,7 +29,7 @@ local function layoutRow(row)
     row.also:SetWidth(sourceW)
 end
 
-local classButton, specButton, phaseButton, slotButton, missingCheck, altCheck, countText
+local classButton, specButton, phaseButton, listButton, slotButton, missingCheck, altCheck, altLabel, countText
 
 local OWNED_ICON = {
     equipped = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16:16|t Equipped",
@@ -257,21 +262,28 @@ function ns.RefreshBrowser()
     classButton:SetText(classColorHex(ns.char.selectedClass) .. className(ns.char.selectedClass) .. "|r")
     specButton:SetText(ns.char.selectedSpec or "")
     slotButton:SetText("Slot: " .. (ns.char.selectedSlot or "All"))
+    local realistic = ns.char.listMode == "realistic" and guide.realistic ~= nil
+    listButton:SetText(realistic and "List: Realistic" or "List: BiS")
+    -- alternatives belong to the BiS list
+    if realistic then altCheck:Disable(); altLabel:SetAlpha(0.4) else altCheck:Enable(); altLabel:SetAlpha(1) end
     missingCheck:SetChecked(ns.char.missingOnly)
     altCheck:SetChecked(ns.char.showAlts ~= false)
 
     local list = {}
     local have = 0
-    for _, r in ipairs(ns.GetGuideRows(guide, ns.char.showAlts ~= false)) do
+    local mode = realistic and "realistic" or "bis"
+    local listRows = ns.GetGuideRows(guide, (not realistic) and ns.char.showAlts ~= false, mode)
+    local total = 0
+    for _, r in ipairs(listRows) do if not r.isAlt then total = total + 1 end end
+    for _, r in ipairs(listRows) do
         local owned = ns.Owned[r.id] ~= nil
         if owned and not r.isAlt then have = have + 1 end
         local slotOk = ns.char.selectedSlot == "All" or r.slot == ns.char.selectedSlot
         if slotOk and not (ns.char.missingOnly and owned) then
-            r.isNew = (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
+            r.isNew = (not realistic) and (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
             table.insert(list, r)
         end
     end
-    local total = #guide.items
 
     for i, data in ipairs(list) do
         fillRow(rows[i] or createRow(i), data)
@@ -283,7 +295,9 @@ function ns.RefreshBrowser()
     local info = ns.Phases[fromPhase]
     local text = ns.PhaseLabel(fromPhase) .. (info.subtitle and (" - " .. info.subtitle) or "")
         .. "  |  Data: " .. (info.source or "?") .. ", checked " .. (info.checked or "?")
-    if guide.alts and #guide.alts > 0 and ns.char.showAlts ~= false then
+    if realistic then
+        text = text .. "  |  Realistic set: " .. (guide.realisticSource or "community guides")
+    elseif guide.alts and #guide.alts > 0 and ns.char.showAlts ~= false then
         text = text .. "  |  Alternatives: " .. (guide.altSource or info.altSource or "community guides")
     end
     if fromPhase ~= phase then
@@ -347,6 +361,18 @@ local function phaseMenu(owner)
     end)
 end
 
+local function listMenu(owner)
+    openMenu(owner, function(_, root)
+        root:CreateTitle("Gear list")
+        root:CreateRadio("BiS (best available)",
+            function() return ns.char.listMode ~= "realistic" end,
+            function() ns.char.listMode = "bis"; ns.RefreshBrowser() end)
+        root:CreateRadio("Realistic (quick to collect)",
+            function() return ns.char.listMode == "realistic" end,
+            function() ns.char.listMode = "realistic"; ns.RefreshBrowser() end)
+    end)
+end
+
 local function slotMenu(owner)
     openMenu(owner, function(_, root)
         root:CreateTitle("Slot")
@@ -365,7 +391,7 @@ end
 ----------------------------------------------------------------------
 local function createFrame()
     frame = CreateFrame("Frame", "ForeverBiSFrame", UIParent, "BasicFrameTemplateWithInset")
-    frame:SetSize(ns.db.windowWidth or WIDTH, ns.db.windowHeight or HEIGHT)
+    frame:SetSize(savedWidth(), ns.db.windowHeight or HEIGHT)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("HIGH")
     frame:SetToplevel(true)
@@ -395,18 +421,31 @@ local function createFrame()
     phaseButton:SetScript("OnClick", phaseMenu)
 
     classButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    classButton:SetSize(120, 24)
+    classButton:SetSize(110, 24)
     classButton:SetPoint("LEFT", phaseButton, "RIGHT", 6, 0)
     classButton:SetScript("OnClick", classMenu)
 
     specButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    specButton:SetSize(120, 24)
+    specButton:SetSize(115, 24)
     specButton:SetPoint("LEFT", classButton, "RIGHT", 6, 0)
     specButton:SetScript("OnClick", specMenu)
 
     slotButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    slotButton:SetSize(110, 24)
-    slotButton:SetPoint("LEFT", specButton, "RIGHT", 6, 0)
+    listButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    listButton:SetSize(110, 24)
+    listButton:SetPoint("LEFT", specButton, "RIGHT", 6, 0)
+    listButton:SetScript("OnClick", listMenu)
+    listButton:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:AddLine("Gear list")
+        GameTooltip:AddLine("BiS: the best pre-raid items.", 1, 1, 1, true)
+        GameTooltip:AddLine("Realistic: a set most players can finish in a week or two from dungeons, quests and Tier 0.5.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    listButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    slotButton:SetSize(95, 24)
+    slotButton:SetPoint("LEFT", listButton, "RIGHT", 6, 0)
     slotButton:SetScript("OnClick", slotMenu)
 
     missingCheck = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
@@ -427,7 +466,7 @@ local function createFrame()
         ns.char.showAlts = self:GetChecked() and true or false
         ns.RefreshBrowser()
     end)
-    local altLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    altLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     altLabel:SetPoint("LEFT", altCheck, "RIGHT", 2, 0)
     altLabel:SetText("Alternatives")
 
@@ -447,7 +486,7 @@ local function createFrame()
     scroll:SetPoint("TOPLEFT", 12, -78)
     scroll:SetPoint("BOTTOMRIGHT", -32, 44)
     scrollChild = CreateFrame("Frame", nil, scroll)
-    scrollChild:SetSize((ns.db.windowWidth or WIDTH) - 46, 1)
+    scrollChild:SetSize(savedWidth() - 46, 1)
 
     -- resize grip in the bottom-right corner
     local grip = CreateFrame("Button", nil, frame)
@@ -488,7 +527,7 @@ local function createFrame()
     -- footer
     frame.sourceText = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     frame.sourceText:SetPoint("BOTTOMLEFT", 16, 12)
-    frame.sourceText:SetWidth((ns.db.windowWidth or WIDTH) - 240)
+    frame.sourceText:SetWidth(savedWidth() - 240)
     frame.sourceText:SetHeight(26)
     frame.sourceText:SetJustifyH("LEFT")
     frame.sourceText:SetJustifyV("MIDDLE")

@@ -43,13 +43,21 @@ function ns.BuildIndex()
                     addIndex(id,  { guide = g, phase = phase.id, slot = slot, source = src })
                 end
             end
-            for _, row in ipairs(g.alts or {}) do
-                local slot, id, src, hId, hSrc = row[1], row[2], row[3], row[4], row[5]
-                if hId then
-                    addIndex(id,  { guide = g, phase = phase.id, slot = slot, faction = "Alliance", source = src, alt = true })
-                    addIndex(hId, { guide = g, phase = phase.id, slot = slot, faction = "Horde",    source = hSrc, alt = true })
-                else
-                    addIndex(id,  { guide = g, phase = phase.id, slot = slot, source = src, alt = true })
+            -- alternatives, then the Realistic set; an item already indexed for this
+            -- spec as a main pick (or alternative) keeps that stronger label
+            local extras = {
+                { rows = g.alts or {},      flag = "alt" },
+                { rows = g.realistic or {}, flag = "realistic" },
+            }
+            for _, set in ipairs(extras) do
+                for _, row in ipairs(set.rows) do
+                    local slot, id, src, hId, hSrc = row[1], row[2], row[3], row[4], row[5]
+                    if hId and hId ~= id then
+                        addIndex(id,  { guide = g, phase = phase.id, slot = slot, faction = "Alliance", source = src, [set.flag] = true })
+                        addIndex(hId, { guide = g, phase = phase.id, slot = slot, faction = "Horde",    source = hSrc, [set.flag] = true })
+                    else
+                        addIndex(id,  { guide = g, phase = phase.id, slot = slot, source = src, [set.flag] = true })
+                    end
                 end
             end
         end
@@ -141,11 +149,21 @@ local function resolveRow(row, faction, isAlt)
     return { slot = slot, id = id, source = src, faction = hId and "Alliance" or nil, isAlt = isAlt, note = note }
 end
 
--- Rows for a guide resolved for the player's faction. With includeAlts, each
--- alternative is placed right after the last main pick for its slot.
-function ns.GetGuideRows(guide, includeAlts)
+-- Rows for a guide resolved for the player's faction.
+-- listMode "realistic" returns the Realistic set (when the spec has one) instead
+-- of the BiS list. With includeAlts (BiS list only), each alternative is placed
+-- right after the last main pick for its slot.
+function ns.GetGuideRows(guide, includeAlts, listMode)
     local faction = UnitFactionGroup("player")
     local rows = {}
+    if listMode == "realistic" and guide.realistic then
+        for _, row in ipairs(guide.realistic) do
+            local r = resolveRow(row, faction, nil)
+            if row[4] == row[2] then r.faction = nil end   -- same item for both factions
+            table.insert(rows, r)
+        end
+        return rows
+    end
     for _, row in ipairs(guide.items) do
         table.insert(rows, resolveRow(row, faction, nil))
     end

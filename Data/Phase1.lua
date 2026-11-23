@@ -823,9 +823,545 @@ local ALTS = {
     },
     -- Restoration Druid: both guides agree on every slot, so no alternatives
 }
+--[[
+    Realistic pre-raid sets: gear most players can finish in a week or two
+    (dungeon drops, quests, Tier 0.5 and at most one Pix Xizzix item), shown when
+    the browser's list switch is set to "Realistic".
+    Source: conquestcapped.com WoW Forever BiS guides, Realistic tab (23 Nov 2026).
+]]
+local REALISTIC = {
+    ["HUNTER:Marksmanship"] = {
+        { "Head", 226887, D2_HEAD, note = "1% hit" },                                              -- Beastmaster's Cap
+        { "Neck", 22340, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },               -- Pendant of Celerity
+        { "Shoulder", 226884, D2_LEGS },                                                           -- Beastmaster's Mantle
+        { "Back", 13340, "Stratholme: Baron Rivendare" },                                          -- Cape of the Black Baron
+        { "Chest", 226886, D2_HEAD },                                                              -- Beastmaster's Tunic
+        { "Wrist", 226885, D2_WRIST },                                                             -- Beastmaster's Bindings
+        { "Hands", 13963, "Quest: Maxwell's Mission (Lower Blackrock Spire)", 13963, "Quest: Warlord's Command (Lower Blackrock Spire)", note = "1.5% hit" }, -- Voone's Vice Grips
+        { "Waist", 22232, "Lower Blackrock Spire: Urok Doomhowl", note = "1% hit" },               -- Marksman's Girdle
+        { "Legs", 226882, D2_LEGS },                                                               -- Beastmaster's Pants
+        { "Feet", 226881, D2_LEGS },                                                               -- Beastmaster's Treads
+        { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
+        { "Finger", 18500, "Dire Maul North: Mizzle the Crafty (tribute)", note = "1% hit" },      -- Tarnished Elven Ring
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
+        { "Two Hand", 279910, "Quest: Mapping the Way Forward (The Shaper's Terrace)", 279910, "Quest: The Dark Crystal (The Shaper's Terrace)", note = "1.6% hit" }, -- Beastslayer's Trident
+        { "Ranged", 280020, "The Shaper's Terrace: Thunderhoof", note = "0.5% hit" },              -- Deep Jungle Rifle
+    },
+    ["HUNTER:Beast Mastery"] = {
+        { "Head", 226887, D2_HEAD, note = "1% hit" },                                              -- Beastmaster's Cap
+        { "Neck", 15411, "Quest: In Dreams (Western Plaguelands)" },                               -- Mark of Fordring
+        { "Shoulder", 271956, REP, 272106, REP_H },                                                -- Theramore Epaulets / Darkspear Epaulets
+        { "Back", 13340, "Stratholme: Baron Rivendare" },                                          -- Cape of the Black Baron
+        { "Chest", 226886, D2_HEAD },                                                              -- Beastmaster's Tunic
+        { "Wrist", 13211, "Lower Blackrock Spire: Halycon", note = "1% hit" },                     -- Slashclaw Bracers
+        { "Hands", 226883, D2_HANDS },                                                             -- Beastmaster's Gauntlets
+        { "Waist", 22232, "Lower Blackrock Spire: Urok Doomhowl", note = "1% hit" },               -- Marksman's Girdle
+        { "Legs", 226882, D2_LEGS },                                                               -- Beastmaster's Pants
+        { "Feet", 226881, D2_LEGS },                                                               -- Beastmaster's Treads
+        { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
+        { "Finger", 18500, "Dire Maul North: Mizzle the Crafty (tribute)", note = "1% hit" },      -- Tarnished Elven Ring
+        { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Two Hand", 279910, "Quest: Mapping the Way Forward (The Shaper's Terrace)", 279910, "Quest: The Dark Crystal (The Shaper's Terrace)", note = "1.6% hit" }, -- Beastslayer's Trident
+        { "Ranged", 280020, "The Shaper's Terrace: Thunderhoof", note = "0.5% hit" },              -- Deep Jungle Rifle
+    },
+    ["HUNTER:Survival"] = {
+        { "Head", 226887, D2_HEAD, note = "1% hit" },                                              -- Beastmaster's Cap
+        { "Neck", 15411, "Quest: In Dreams (Western Plaguelands)" },                               -- Mark of Fordring
+        { "Shoulder", 12927, "Upper Blackrock Spire: Pyroguard Emberseer", note = "1.5% hit" },    -- Truestrike Shoulders
+        { "Back", 13340, "Stratholme: Baron Rivendare" },                                          -- Cape of the Black Baron
+        { "Chest", 226886, D2_HEAD },                                                              -- Beastmaster's Tunic
+        { "Wrist", 18375, "Dire Maul West: Prince Tortheldrin" },                                  -- Bracers of the Eclipse
+        { "Hands", 226883, D2_HANDS },                                                             -- Beastmaster's Gauntlets
+        { "Waist", 22207, "Blackrock Depths: Emperor Dagran Thaurissan", note = "1% ranged hit" }, -- Sash of the Grand Hunt
+        { "Legs", 226882, D2_LEGS },                                                               -- Beastmaster's Pants
+        { "Feet", 13967, "Scholomance: Kirtonos the Herald", note = "1% hit" },                    -- Windreaver Greaves
+        { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
+        { "Finger", 18500, "Dire Maul North: Mizzle the Crafty (tribute)", note = "1% hit" },      -- Tarnished Elven Ring
+        { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Main Hand", 12940, "Upper Blackrock Spire: Warchief Rend Blackhand" },                  -- Dal'Rend's Sacred Charge
+        { "Off Hand", 12939, "Upper Blackrock Spire: Warchief Rend Blackhand" },                   -- Dal'Rend's Tribal Guardian
+        { "Ranged", 280020, "The Shaper's Terrace: Thunderhoof", note = "0.5% hit" },              -- Deep Jungle Rifle
+    },
+    ["WARRIOR:Arms"] = {
+        { "Head", 20521, "Quest: Voodoo Feathers (Sunken Temple)", note = "1% hit" },              -- Fury Visor
+        { "Neck", 15411, "Quest: In Dreams (Western Plaguelands)" },                               -- Mark of Fordring
+        { "Shoulder", 226858, D2_LEGS },                                                           -- Spaulders of Heroism
+        { "Back", 272414, PIX75, note = "1% hit" },                                                -- Howler's Furs
+        { "Chest", 226862, D2_HEAD, note = "1% hit" },                                             -- Breastplate of Heroism
+        { "Wrist", 12936, "Upper Blackrock Spire: Warchief Rend Blackhand", note = "1% hit" },     -- Battleborn Armbraces
+        { "Hands", 226861, D2_HANDS },                                                             -- Gauntlets of Heroism
+        { "Waist", 226864, D2_HANDS },                                                             -- Belt of Heroism
+        { "Legs", 226859, D2_LEGS },                                                               -- Legplates of Heroism
+        { "Feet", 226857, D2_LEGS, note = "1% hit" },                                              -- Battleboots of Heroism
+        { "Finger", 17713, "Maraudon: Princess Theradras", note = "1% hit" },                      -- Blackstone Ring
+        { "Finger", 18500, "Dire Maul North: Mizzle the Crafty (tribute)", note = "1% hit" },      -- Tarnished Elven Ring
+        { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Two Hand", 280018, "The Shaper's Terrace: Thunderhoof" },                               -- Hammer of Thundering Hooves
+        { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
+    },
+    ["WARRIOR:Fury"] = {
+        { "Head", 20521, "Quest: Voodoo Feathers (Sunken Temple)", note = "1% hit" },              -- Fury Visor
+        { "Neck", 15411, "Quest: In Dreams (Western Plaguelands)" },                               -- Mark of Fordring
+        { "Shoulder", 226858, D2_LEGS },                                                           -- Spaulders of Heroism
+        { "Back", 272414, PIX75, note = "1% hit" },                                                -- Howler's Furs
+        { "Chest", 226862, D2_HEAD, note = "1% hit" },                                             -- Breastplate of Heroism
+        { "Wrist", 12936, "Upper Blackrock Spire: Warchief Rend Blackhand", note = "1% hit" },     -- Battleborn Armbraces
+        { "Hands", 226861, D2_HANDS },                                                             -- Gauntlets of Heroism
+        { "Waist", 226864, D2_HANDS },                                                             -- Belt of Heroism
+        { "Legs", 226859, D2_LEGS },                                                               -- Legplates of Heroism
+        { "Feet", 226857, D2_LEGS, note = "1% hit" },                                              -- Battleboots of Heroism
+        { "Finger", 17713, "Maraudon: Princess Theradras", note = "1% hit" },                      -- Blackstone Ring
+        { "Finger", 18500, "Dire Maul North: Mizzle the Crafty (tribute)", note = "1% hit" },      -- Tarnished Elven Ring
+        { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Main Hand", 12940, "Upper Blackrock Spire: Warchief Rend Blackhand" },                  -- Dal'Rend's Sacred Charge
+        { "Off Hand", 12939, "Upper Blackrock Spire: Warchief Rend Blackhand" },                   -- Dal'Rend's Tribal Guardian
+        { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
+    },
+    ["WARRIOR:Protection"] = {
+        { "Head", 226869, D2_HEAD, note = "9 defense" },                                           -- Faceguard of Heroism
+        { "Neck", 275736, "Quest: Work Well Done (Mount Hyjal)" },                                 -- Horn of Ve'han
+        { "Shoulder", 226867, D2_LEGS },                                                           -- Pauldrons of Heroism
+        { "Back", 18495, "Dire Maul North: Mizzle the Crafty (tribute)", note = "7 defense" },     -- Redoubt Cloak
+        { "Chest", 226872, D2_HEAD, note = "9 defense" },                                          -- Chestguard of Heroism
+        { "Wrist", 226865, D2_WRIST },                                                             -- Wristguards of Heroism
+        { "Hands", 226870, D2_HANDS },                                                             -- Handguards of Heroism
+        { "Waist", 226866, D2_HANDS },                                                             -- Waistguard of Heroism
+        { "Legs", 226868, D2_LEGS },                                                               -- Legguards of Heroism
+        { "Feet", 226871, D2_LEGS },                                                               -- Sabatons of Heroism
+        { "Finger", 18315, "Dire Maul East: Alzzin the Wildshaper", note = "7 defense" },          -- Ring of Demonic Potency
+        { "Finger", 22331, "Scholomance: Kormok", note = "7 defense" },                            -- Band of the Steadfast Hero
+        { "Trinket", 272440, PIX125, note = "13 defense" },                                        -- Defender's Grip Stabilizer
+        { "Trinket", 11810, "Blackrock Depths: General Angerforge" },                              -- Force of Will
+        { "Main Hand", 17705, "Quest: Corruption of Earth and Seed (Maraudon)" },                  -- Thrash Blade
+        { "Off Hand", 12602, "Upper Blackrock Spire: General Drakkisath", note = "10 defense" },   -- Draconian Deflector
+        { "Ranged", 16996, "Quest: The Scarlet Oracle, Demetria (Eastern Plaguelands)" },          -- Gorewood Bow
+    },
+    ["PALADIN:Holy"] = {
+        { "Head", 226981, D2_HEAD },                                                               -- Soulforge Crown
+        { "Neck", 13141, "Upper Blackrock Spire: General Drakkisath" },                            -- Tooth of Gnarr
+        { "Shoulder", 226979, D2_LEGS },                                                           -- Soulforge Epaulets
+        { "Back", 272413, PIX75 },                                                                 -- Drape of Recovery
+        { "Chest", 226984, D2_HEAD },                                                              -- Soulforge Embrace
+        { "Wrist", 226977, D2_WRIST },                                                             -- Soulforge Bindings
+        { "Hands", 18527, "Dire Maul North: King Gordok" },                                        -- Harmonious Gauntlets
+        { "Waist", 18327, "Dire Maul East: Alzzin the Wildshaper" },                               -- Whipvine Cord
+        { "Legs", 226980, D2_LEGS },                                                               -- Soulforge Leggings
+        { "Feet", 226983, D2_LEGS },                                                               -- Soulforge Treads
+        { "Finger", 16058, "Quest: In Dreams (Western Plaguelands)" },                             -- Fordring's Seal
+        { "Finger", 13178, "Lower Blackrock Spire: Urok Doomhowl" },                               -- Rosewine Circle
+        { "Trinket", 18472, "Quest: The Light and How To Swing It (Dire Maul)" },                  -- Royal Seal (Paladin)
+        { "Trinket", 11832, "Blackrock Depths: Ambassador Flamelash" },                            -- Burst of Knowledge
+        { "Main Hand", 276404, "Stratholme: Crimson Hammersmith" },                                -- Masterwork Crimson Hammer
+        { "Off Hand", 15805, "Quest: Kirtonos the Herald (Scholomance)" },                         -- Penelope's Rose
+        { "Relic", 23201, "Scholomance: rare drop" },                                              -- Libram of Divinity
+    },
+    ["PALADIN:Protection"] = {
+        { "Head", 226989, D2_HEAD, note = "4 defense" },                                           -- Soulforge Faceguard
+        { "Neck", 275736, "Quest: Work Well Done (Mount Hyjal)" },                                 -- Horn of Ve'han
+        { "Shoulder", 226987, D2_LEGS },                                                           -- Soulforge Pauldrons
+        { "Back", 18495, "Dire Maul North: Mizzle the Crafty (tribute)", note = "7 defense" },     -- Redoubt Cloak
+        { "Chest", 226992, D2_HEAD },                                                              -- Soulforge Chestguards
+        { "Wrist", 226985, D2_WRIST },                                                             -- Soulforge Wristguards
+        { "Hands", 226990, D2_HANDS },                                                             -- Soulforge Handguards
+        { "Waist", 226986, D2_HANDS },                                                             -- Soulforge Waistguard
+        { "Legs", 226988, D2_LEGS },                                                               -- Soulforge Legguards
+        { "Feet", 226991, D2_LEGS },                                                               -- Soulforge Sabatons
+        { "Finger", 272409, PIX75, note = "9 defense" },                                           -- Ring of Awareness
+        { "Finger", 18315, "Dire Maul East: Alzzin the Wildshaper", note = "7 defense" },          -- Ring of Demonic Potency
+        { "Trinket", 17774, "Quest: The Pariah's Instructions (Maraudon)" },                       -- Mark of the Chosen
+        { "Trinket", 11810, "Blackrock Depths: General Angerforge" },                              -- Force of Will
+        { "Main Hand", 18048, "Upper Blackrock Spire: Goraluk Anvilcrack", note = "1% hit" },      -- Mastersmith's Hammer
+        { "Off Hand", 12602, "Upper Blackrock Spire: General Drakkisath", note = "10 defense" },   -- Draconian Deflector
+        { "Relic", 22401, "Dire Maul East: Isalien" },                                             -- Libram of Hope
+    },
+    ["PALADIN:Retribution"] = {
+        { "Head", 226976, D2_HEAD },                                                               -- Soulforge Greathelm
+        { "Neck", 15411, "Quest: In Dreams (Western Plaguelands)" },                               -- Mark of Fordring
+        { "Shoulder", 226969, D2_LEGS },                                                           -- Soulforge Spaulders
+        { "Back", 272411, PIX75, note = "1% hit" },                                                -- Arcanoweave Cloak
+        { "Chest", 226973, D2_HEAD },                                                              -- Soulforge Breastplate
+        { "Wrist", 226970, D2_WRIST },                                                             -- Soulforge Bracers
+        { "Hands", 226975, D2_HANDS },                                                             -- Soulforge Gauntlets
+        { "Waist", 226971, D2_HANDS, note = "1% hit" },                                            -- Soulforge Belt
+        { "Legs", 226972, D2_LEGS },                                                               -- Soulforge Legplates
+        { "Feet", 226974, D2_LEGS },                                                               -- Soulforge Warboots
+        { "Finger", 17713, "Maraudon: Princess Theradras", note = "1% hit" },                      -- Blackstone Ring
+        { "Finger", 18314, "Dire Maul East: Alzzin the Wildshaper", note = "1% hit" },             -- Ring of Demonic Guile
+        { "Trinket", 22321, "Lower Blackrock Spire: Overlord Wyrmthalak" },                        -- Heart of Wyrmthalak
+        { "Trinket", 13213, "Lower Blackrock Spire: Mother Smolderweb", note = "1% hit" },         -- Smolderweb's Eye
+        { "Two Hand", 280018, "The Shaper's Terrace: Thunderhoof" },                               -- Hammer of Thundering Hooves
+        { "Relic", 22401, "Dire Maul East: Isalien" },                                             -- Libram of Hope
+    },
+    ["ROGUE:Assassination"] = {
+        { "Head", 226829, D2_HEAD },                                                               -- Darkmantle Cap
+        { "Neck", 15411, "Quest: In Dreams (Western Plaguelands)" },                               -- Mark of Fordring
+        { "Shoulder", 226826, D2_LEGS },                                                           -- Darkmantle Spaulders
+        { "Back", 13340, "Stratholme: Baron Rivendare" },                                          -- Cape of the Black Baron
+        { "Chest", 226825, D2_HEAD, note = "1.5% hit" },                                           -- Darkmantle Tunic
+        { "Wrist", 226830, D2_WRIST },                                                             -- Darkmantle Bracers
+        { "Hands", 226828, D2_HANDS },                                                             -- Darkmantle Grips
+        { "Waist", 226832, D2_HANDS },                                                             -- Darkmantle Belt
+        { "Legs", 226827, D2_LEGS },                                                               -- Darkmantle Pants
+        { "Feet", 226831, D2_LEGS },                                                               -- Darkmantle Footpads
+        { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
+        { "Finger", 13098, "Upper Blackrock Spire: General Drakkisath" },                          -- Painweaver Band
+        { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Main Hand", 13984, "Quest: The Lich, Ras Frostwhisper (Scholomance)" },                 -- Darrowspike
+        { "Off Hand", 18392, "Dire Maul West: Prince Tortheldrin" },                               -- Distracting Dagger
+        { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
+    },
+    ["ROGUE:Combat"] = {
+        { "Head", 226829, D2_HEAD },                                                               -- Darkmantle Cap
+        { "Neck", 15411, "Quest: In Dreams (Western Plaguelands)" },                               -- Mark of Fordring
+        { "Shoulder", 226826, D2_LEGS, note = "0.6% hit" },                                        -- Darkmantle Spaulders
+        { "Back", 13340, "Stratholme: Baron Rivendare" },                                          -- Cape of the Black Baron
+        { "Chest", 226825, D2_HEAD, note = "1.5% hit" },                                           -- Darkmantle Tunic
+        { "Wrist", 226830, D2_WRIST },                                                             -- Darkmantle Bracers
+        { "Hands", 226828, D2_HANDS },                                                             -- Darkmantle Grips
+        { "Waist", 226832, D2_HANDS },                                                             -- Darkmantle Belt
+        { "Legs", 226827, D2_LEGS, note = "0.5% hit" },                                            -- Darkmantle Pants
+        { "Feet", 226831, D2_LEGS, note = "0.7% hit" },                                            -- Darkmantle Footpads
+        { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
+        { "Finger", 13098, "Upper Blackrock Spire: General Drakkisath" },                          -- Painweaver Band
+        { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Main Hand", 12940, "Upper Blackrock Spire: Warchief Rend Blackhand" },                  -- Dal'Rend's Sacred Charge
+        { "Off Hand", 12939, "Upper Blackrock Spire: Warchief Rend Blackhand" },                   -- Dal'Rend's Tribal Guardian
+        { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
+    },
+    ["ROGUE:Subtlety"] = {
+        { "Head", 226829, D2_HEAD },                                                               -- Darkmantle Cap
+        { "Neck", 15411, "Quest: In Dreams (Western Plaguelands)" },                               -- Mark of Fordring
+        { "Shoulder", 226826, D2_LEGS, note = "0.6% hit" },                                        -- Darkmantle Spaulders
+        { "Back", 13340, "Stratholme: Baron Rivendare" },                                          -- Cape of the Black Baron
+        { "Chest", 226825, D2_HEAD, note = "1.5% hit" },                                           -- Darkmantle Tunic
+        { "Wrist", 226830, D2_WRIST },                                                             -- Darkmantle Bracers
+        { "Hands", 226828, D2_HANDS },                                                             -- Darkmantle Grips
+        { "Waist", 226832, D2_HANDS },                                                             -- Darkmantle Belt
+        { "Legs", 226827, D2_LEGS, note = "0.5% hit" },                                            -- Darkmantle Pants
+        { "Feet", 226831, D2_LEGS, note = "0.7% hit" },                                            -- Darkmantle Footpads
+        { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
+        { "Finger", 13098, "Upper Blackrock Spire: General Drakkisath" },                          -- Painweaver Band
+        { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Main Hand", 18758, "Scholomance: Death Knight Darkreaver (summoned)" },                 -- Specter's Blade
+        { "Off Hand", 18392, "Dire Maul West: Prince Tortheldrin" },                               -- Distracting Dagger
+        { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
+    },
+    ["PRIEST:Discipline"] = {
+        { "Head", 226947, D2_HEAD },                                                               -- Virtuous Crown
+        { "Neck", 18723, "Stratholme: Ramstein the Gorger" },                                      -- Animated Chain Necklace
+        { "Shoulder", 22234, "Blackrock Depths: Lord Roccor" },                                    -- Mantle of Lost Hope
+        { "Back", 272413, PIX75 },                                                                 -- Drape of Recovery
+        { "Chest", 226945, D2_HEAD },                                                              -- Virtuous Robe
+        { "Wrist", 226949, D2_WRIST },                                                             -- Virtuous Bracers
+        { "Hands", 226950, D2_HANDS },                                                             -- Virtuous Mitts
+        { "Waist", 18327, "Dire Maul East: Alzzin the Wildshaper" },                               -- Whipvine Cord
+        { "Legs", 226946, D2_LEGS },                                                               -- Virtuous Skirt
+        { "Feet", 226952, D2_LEGS },                                                               -- Virtuous Sandals
+        { "Finger", 16058, "Quest: In Dreams (Western Plaguelands)" },                             -- Fordring's Seal
+        { "Finger", 13178, "Lower Blackrock Spire: Urok Doomhowl" },                               -- Rosewine Circle
+        { "Trinket", 18469, "Quest: Holy Bologna: What the Light Won't Tell You (Dire Maul)" },    -- Royal Seal (Priest)
+        { "Trinket", 11832, "Blackrock Depths: Ambassador Flamelash" },                            -- Burst of Knowledge
+        { "Main Hand", 13360, "Stratholme: Balnazzar" },                                           -- Gift of the Elven Magi
+        { "Off Hand", 15805, "Quest: Kirtonos the Herald (Scholomance)" },                         -- Penelope's Rose
+        { "Wand", 22254, "Blackrock Depths: Secret Safe" },                                        -- Wand of Eternal Light
+    },
+    ["PRIEST:Holy"] = {
+        { "Head", 226947, D2_HEAD },                                                               -- Virtuous Crown
+        { "Neck", 18723, "Stratholme: Ramstein the Gorger" },                                      -- Animated Chain Necklace
+        { "Shoulder", 226951, D2_LEGS },                                                           -- Virtuous Mantle
+        { "Back", 272413, PIX75 },                                                                 -- Drape of Recovery
+        { "Chest", 226945, D2_HEAD },                                                              -- Virtuous Robe
+        { "Wrist", 226949, D2_WRIST },                                                             -- Virtuous Bracers
+        { "Hands", 226950, D2_HANDS },                                                             -- Virtuous Mitts
+        { "Waist", 18327, "Dire Maul East: Alzzin the Wildshaper" },                               -- Whipvine Cord
+        { "Legs", 226946, D2_LEGS },                                                               -- Virtuous Skirt
+        { "Feet", 226952, D2_LEGS },                                                               -- Virtuous Sandals
+        { "Finger", 16058, "Quest: In Dreams (Western Plaguelands)" },                             -- Fordring's Seal
+        { "Finger", 13178, "Lower Blackrock Spire: Urok Doomhowl" },                               -- Rosewine Circle
+        { "Trinket", 18469, "Quest: Holy Bologna: What the Light Won't Tell You (Dire Maul)" },    -- Royal Seal (Priest)
+        { "Trinket", 11832, "Blackrock Depths: Ambassador Flamelash" },                            -- Burst of Knowledge
+        { "Main Hand", 13360, "Stratholme: Balnazzar" },                                           -- Gift of the Elven Magi
+        { "Off Hand", 15805, "Quest: Kirtonos the Herald (Scholomance)" },                         -- Penelope's Rose
+        { "Wand", 22254, "Blackrock Depths: Secret Safe" },                                        -- Wand of Eternal Light
+    },
+    ["PRIEST:Shadow"] = {
+        { "Head", 22267, "Upper Blackrock Spire: General Drakkisath", note = "1% hit" },           -- Spellweaver's Turban
+        { "Neck", 22403, "Stratholme: Cannon Master Willey", note = "1% hit" },                    -- Nacreous Shell Necklace
+        { "Shoulder", 226955, D2_LEGS, note = "1% hit" },                                          -- Virtuous Epaulets
+        { "Back", 272411, PIX75, note = "1% hit" },                                                -- Arcanoweave Cloak
+        { "Chest", 280057, "Blackmaw Hold: Impaan the Imprisoner", note = "1.8% hit" },            -- Robes of Dark Summons
+        { "Wrist", 226953, D2_WRIST },                                                             -- Virtuous Wraps
+        { "Hands", 226958, D2_HANDS },                                                             -- Virtuous Hands
+        { "Waist", 226954, D2_HANDS },                                                             -- Virtuous Cord
+        { "Legs", 226956, D2_LEGS },                                                               -- Virtuous Leggings
+        { "Feet", 226959, D2_LEGS },                                                               -- Virtuous Slippers
+        { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
+        { "Finger", 22433, "Scholomance: Darkmaster Gandling" },                                   -- Don Mauricio's Band of Domination
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 12930, "Upper Blackrock Spire: Jed Runewatcher" },                            -- Briarwood Reed
+        { "Main Hand", 18372, "Dire Maul West: Immol'thar" },                                      -- Blade of the New Moon
+        { "Off Hand", 18316, "Dire Maul East: Pusillin" },                                         -- Obsidian Bauble
+        { "Wand", 13396, "Stratholme: Skul (rare)" },                                              -- Skul's Ghastly Touch
+    },
+    ["SHAMAN:Elemental"] = {
+        { "Head", 227002, D2_HEAD },                                                               -- Coif of The Five Thunders
+        { "Neck", 22403, "Stratholme: Cannon Master Willey", note = "1% hit" },                    -- Nacreous Shell Necklace
+        { "Shoulder", 227003, D2_LEGS, note = "1% hit" },                                          -- Pauldrons of The Five Thunders
+        { "Back", 272411, PIX75, note = "1% hit" },                                                -- Arcanoweave Cloak
+        { "Chest", 227004, D2_HEAD },                                                              -- Vest of The Five Thunders
+        { "Wrist", 227001, D2_WRIST },                                                             -- Bindings of The Five Thunders
+        { "Hands", 227006, D2_HANDS, note = "1% hit" },                                            -- Gauntlets of The Five Thunders
+        { "Waist", 227008, D2_HANDS },                                                             -- Cord of The Five Thunders
+        { "Legs", 227005, D2_LEGS, note = "1% hit" },                                              -- Kilt of The Five Thunders
+        { "Feet", 227007, D2_LEGS },                                                               -- Slippers of The Five Thunders
+        { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
+        { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 18471, "Quest: Frost Shock and You (Dire Maul)" },                            -- Royal Seal (Shaman)
+        { "Main Hand", 13964, "Scholomance: Darkmaster Gandling" },                                -- Witchblade
+        { "Off Hand", 22336, "Upper Blackrock Spire: Lord Valthalak" },                            -- Draconian Aegis of the Legion
+        { "Relic", 228176, "Pix Xizzix (Booty Bay): 15 Tarnished Undermine Real" },                -- Totem of Thunder
+    },
+    ["SHAMAN:Enhancement"] = {
+        { "Head", 227021, D2_HEAD },                                                               -- Face of The Five Thunders
+        { "Neck", 15411, "Quest: In Dreams (Western Plaguelands)" },                               -- Mark of Fordring
+        { "Shoulder", 227019, D2_LEGS },                                                           -- Spaulders of The Five Thunders
+        { "Back", 272414, PIX75, note = "1% hit" },                                                -- Howler's Furs
+        { "Chest", 227024, D2_HEAD },                                                              -- Chain of The Five Thunders
+        { "Wrist", 227017, D2_WRIST },                                                             -- Bands of The Five Thunders
+        { "Hands", 227022, D2_HANDS },                                                             -- Fists of The Five Thunders
+        { "Waist", 227018, D2_HANDS, note = "1% hit" },                                            -- Girdle of The Five Thunders
+        { "Legs", 12963, "Upper Blackrock Spire: drop", note = "1% hit" },                         -- Blademaster Leggings
+        { "Feet", 13967, "Scholomance: Kirtonos the Herald", note = "1% hit" },                    -- Windreaver Greaves
+        { "Finger", 17713, "Maraudon: Princess Theradras", note = "1% hit" },                      -- Blackstone Ring
+        { "Finger", 18314, "Dire Maul East: Alzzin the Wildshaper", note = "1% hit" },             -- Ring of Demonic Guile
+        { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Two Hand", 280018, "The Shaper's Terrace: Thunderhoof" },                               -- Hammer of Thundering Hooves
+        { "Relic", 22395, "Blackrock Depths: Magmus" },                                            -- Totem of Rage
+    },
+    ["SHAMAN:Restoration"] = {
+        { "Head", 227013, D2_HEAD },                                                               -- Crown of The Five Thunders
+        { "Neck", 13141, "Upper Blackrock Spire: General Drakkisath" },                            -- Tooth of Gnarr
+        { "Shoulder", 227011, D2_LEGS },                                                           -- Mantle of The Five Thunders
+        { "Back", 272413, PIX75 },                                                                 -- Drape of Recovery
+        { "Chest", 227016, D2_HEAD },                                                              -- Tunic of The Five Thunders
+        { "Wrist", 227009, D2_WRIST },                                                             -- Bracers of The Five Thunders
+        { "Hands", 18527, "Dire Maul North: King Gordok" },                                        -- Harmonious Gauntlets
+        { "Waist", 18327, "Dire Maul East: Alzzin the Wildshaper" },                               -- Whipvine Cord
+        { "Legs", 227012, D2_LEGS },                                                               -- Leggings of The Five Thunders
+        { "Feet", 227015, D2_LEGS },                                                               -- Greaves of The Five Thunders
+        { "Finger", 16058, "Quest: In Dreams (Western Plaguelands)" },                             -- Fordring's Seal
+        { "Finger", 13178, "Lower Blackrock Spire: Urok Doomhowl" },                               -- Rosewine Circle
+        { "Trinket", 18471, "Quest: Frost Shock and You (Dire Maul)" },                            -- Royal Seal (Shaman)
+        { "Trinket", 11832, "Blackrock Depths: Ambassador Flamelash" },                            -- Burst of Knowledge
+        { "Main Hand", 13360, "Stratholme: Balnazzar" },                                           -- Gift of the Elven Magi
+        { "Off Hand", 15805, "Quest: Kirtonos the Herald (Scholomance)" },                         -- Penelope's Rose
+        { "Relic", 23200, "Scholomance: Lord Alexei Barov and others" },                           -- Totem of Sustaining
+    },
+    ["MAGE:Arcane"] = {
+        { "Head", 226935, D2_HEAD },                                                               -- Sorcerer's Crown
+        { "Neck", 22403, "Stratholme: Cannon Master Willey", note = "1% hit" },                    -- Nacreous Shell Necklace
+        { "Shoulder", 226936, D2_LEGS },                                                           -- Sorcerer's Mantle
+        { "Back", 272411, PIX75, note = "1% hit" },                                                -- Arcanoweave Cloak
+        { "Chest", 226932, D2_HEAD },                                                              -- Sorcerer's Robes
+        { "Wrist", 226929, D2_WRIST },                                                             -- Sorcerer's Bindings
+        { "Hands", 226930, D2_HANDS, note = "1% hit" },                                            -- Sorcerer's Gauntlets
+        { "Waist", 226934, D2_HANDS },                                                             -- Sorcerer's Belt
+        { "Legs", 226933, D2_LEGS, note = "1% hit" },                                              -- Sorcerer's Leggings
+        { "Feet", 226931, D2_LEGS },                                                               -- Sorcerer's Sandals
+        { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
+        { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 18468, "Quest: The Arcanist's Cookbook (Dire Maul)" },                        -- Royal Seal (Mage)
+        { "Two Hand", 22335, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },           -- Lord Valthalak's Staff of Command
+        { "Wand", 13938, "Scholomance: Darkmaster Gandling" },                                     -- Bonecreeper Stylus
+    },
+    ["MAGE:Fire"] = {
+        { "Head", 22267, "Upper Blackrock Spire: General Drakkisath", note = "1% hit" },           -- Spellweaver's Turban
+        { "Neck", 22403, "Stratholme: Cannon Master Willey", note = "1% hit" },                    -- Nacreous Shell Necklace
+        { "Shoulder", 226936, D2_LEGS },                                                           -- Sorcerer's Mantle
+        { "Back", 272411, PIX75, note = "1% hit" },                                                -- Arcanoweave Cloak
+        { "Chest", 280057, "Blackmaw Hold: Impaan the Imprisoner", note = "1.8% hit" },            -- Robes of Dark Summons
+        { "Wrist", 226929, D2_WRIST },                                                             -- Sorcerer's Bindings
+        { "Hands", 226930, D2_HANDS, note = "1% hit" },                                            -- Sorcerer's Gauntlets
+        { "Waist", 226934, D2_HANDS },                                                             -- Sorcerer's Belt
+        { "Legs", 226933, D2_LEGS, note = "1% hit" },                                              -- Sorcerer's Leggings
+        { "Feet", 226931, D2_LEGS },                                                               -- Sorcerer's Sandals
+        { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
+        { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 13213, "Lower Blackrock Spire: Mother Smolderweb", note = "1% hit" },         -- Smolderweb's Eye
+        { "Main Hand", 13964, "Scholomance: Darkmaster Gandling" },                                -- Witchblade
+        { "Off Hand", 18316, "Dire Maul East: Pusillin" },                                         -- Obsidian Bauble
+        { "Wand", 13938, "Scholomance: Darkmaster Gandling" },                                     -- Bonecreeper Stylus
+    },
+    ["MAGE:Frost"] = {
+        { "Head", 22267, "Upper Blackrock Spire: General Drakkisath", note = "1% hit" },           -- Spellweaver's Turban
+        { "Neck", 22403, "Stratholme: Cannon Master Willey", note = "1% hit" },                    -- Nacreous Shell Necklace
+        { "Shoulder", 226936, D2_LEGS },                                                           -- Sorcerer's Mantle
+        { "Back", 272411, PIX75, note = "1% hit" },                                                -- Arcanoweave Cloak
+        { "Chest", 280057, "Blackmaw Hold: Impaan the Imprisoner", note = "1.8% hit" },            -- Robes of Dark Summons
+        { "Wrist", 226929, D2_WRIST },                                                             -- Sorcerer's Bindings
+        { "Hands", 226930, D2_HANDS, note = "1% hit" },                                            -- Sorcerer's Gauntlets
+        { "Waist", 226934, D2_HANDS },                                                             -- Sorcerer's Belt
+        { "Legs", 226933, D2_LEGS, note = "1% hit" },                                              -- Sorcerer's Leggings
+        { "Feet", 226931, D2_LEGS },                                                               -- Sorcerer's Sandals
+        { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
+        { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 12930, "Upper Blackrock Spire: Jed Runewatcher" },                            -- Briarwood Reed
+        { "Main Hand", 13964, "Scholomance: Darkmaster Gandling" },                                -- Witchblade
+        { "Off Hand", 11904, "Quest: It's Dangerous to Go Alone (Un'Goro Crater)" },               -- Spirit of Aquementas
+        { "Wand", 19108, "Alterac Valley quest: Korrak the Bloodrager / Hero of the Stormpike / Hero of the Frostwolf" }, -- Wand of Biting Cold
+    },
+    ["WARLOCK:Affliction"] = {
+        { "Head", 226909, D2_HEAD, note = "1% hit" },                                              -- Deathmist Mask
+        { "Neck", 22403, "Stratholme: Cannon Master Willey", note = "1% hit" },                    -- Nacreous Shell Necklace
+        { "Shoulder", 226912, D2_LEGS },                                                           -- Deathmist Mantle
+        { "Back", 272411, PIX75, note = "1% hit" },                                                -- Arcanoweave Cloak
+        { "Chest", 280057, "Blackmaw Hold: Impaan the Imprisoner", note = "1.8% hit" },            -- Robes of Dark Summons
+        { "Wrist", 226907, D2_WRIST },                                                             -- Deathmist Bracers
+        { "Hands", 226911, D2_HANDS, note = "1% hit" },                                            -- Deathmist Wraps
+        { "Waist", 226905, D2_HANDS },                                                             -- Deathmist Belt
+        { "Legs", 226910, D2_LEGS, note = "1% hit" },                                              -- Deathmist Leggings
+        { "Feet", 11822, "Blackrock Depths: Golem Lord Argelmach" },                               -- Omnicast Boots
+        { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
+        { "Finger", 18314, "Dire Maul East: Alzzin the Wildshaper", note = "1% hit" },             -- Ring of Demonic Guile
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 18467, "Quest: Harnessing Shadows (Dire Maul)" },                             -- Royal Seal (Warlock)
+        { "Main Hand", 18372, "Dire Maul West: Immol'thar" },                                      -- Blade of the New Moon
+        { "Off Hand", 18316, "Dire Maul East: Pusillin" },                                         -- Obsidian Bauble
+        { "Wand", 13396, "Stratholme: Skul (rare)" },                                              -- Skul's Ghastly Touch
+    },
+    ["WARLOCK:Demonology"] = {
+        { "Head", 22267, "Upper Blackrock Spire: General Drakkisath", note = "1% hit" },           -- Spellweaver's Turban
+        { "Neck", 22403, "Stratholme: Cannon Master Willey", note = "1% hit" },                    -- Nacreous Shell Necklace
+        { "Shoulder", 226912, D2_LEGS },                                                           -- Deathmist Mantle
+        { "Back", 272411, PIX75, note = "1% hit" },                                                -- Arcanoweave Cloak
+        { "Chest", 280057, "Blackmaw Hold: Impaan the Imprisoner", note = "1.8% hit" },            -- Robes of Dark Summons
+        { "Wrist", 226907, D2_WRIST },                                                             -- Deathmist Bracers
+        { "Hands", 226911, D2_HANDS, note = "1% hit" },                                            -- Deathmist Wraps
+        { "Waist", 226905, D2_HANDS },                                                             -- Deathmist Belt
+        { "Legs", 226910, D2_LEGS, note = "1% hit" },                                              -- Deathmist Leggings
+        { "Feet", 226908, D2_LEGS },                                                               -- Deathmist Sandals
+        { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
+        { "Finger", 18314, "Dire Maul East: Alzzin the Wildshaper", note = "1% hit" },             -- Ring of Demonic Guile
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 18467, "Quest: Harnessing Shadows (Dire Maul)" },                             -- Royal Seal (Warlock)
+        { "Main Hand", 18372, "Dire Maul West: Immol'thar" },                                      -- Blade of the New Moon
+        { "Off Hand", 11904, "Quest: It's Dangerous to Go Alone (Un'Goro Crater)" },               -- Spirit of Aquementas
+        { "Wand", 13938, "Scholomance: Darkmaster Gandling" },                                     -- Bonecreeper Stylus
+    },
+    ["WARLOCK:Destruction"] = {
+        { "Head", 22267, "Upper Blackrock Spire: General Drakkisath", note = "1% hit" },           -- Spellweaver's Turban
+        { "Neck", 22403, "Stratholme: Cannon Master Willey", note = "1% hit" },                    -- Nacreous Shell Necklace
+        { "Shoulder", 226912, D2_LEGS },                                                           -- Deathmist Mantle
+        { "Back", 272411, PIX75, note = "1% hit" },                                                -- Arcanoweave Cloak
+        { "Chest", 280057, "Blackmaw Hold: Impaan the Imprisoner", note = "1.8% hit" },            -- Robes of Dark Summons
+        { "Wrist", 226907, D2_WRIST },                                                             -- Deathmist Bracers
+        { "Hands", 226911, D2_HANDS, note = "1% hit" },                                            -- Deathmist Wraps
+        { "Waist", 226905, D2_HANDS },                                                             -- Deathmist Belt
+        { "Legs", 13170, "Lower Blackrock Spire: Highlord Omokk" },                                -- Skyshroud Leggings
+        { "Feet", 11822, "Blackrock Depths: Golem Lord Argelmach" },                               -- Omnicast Boots
+        { "Finger", 18314, "Dire Maul East: Alzzin the Wildshaper", note = "1% hit" },             -- Ring of Demonic Guile
+        { "Finger", 22433, "Scholomance: Darkmaster Gandling" },                                   -- Don Mauricio's Band of Domination
+        { "Trinket", 18467, "Quest: Harnessing Shadows (Dire Maul)" },                             -- Royal Seal (Warlock)
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Main Hand", 18396, "Dire Maul West: Prince Tortheldrin" },                              -- Mind Carver
+        { "Off Hand", 18316, "Dire Maul East: Pusillin" },                                         -- Obsidian Bauble
+        { "Wand", 13938, "Scholomance: Darkmaster Gandling" },                                     -- Bonecreeper Stylus
+    },
+    ["DRUID:Balance"] = {
+        { "Head", 226773, D2_HEAD },                                                               -- Feralheart Cowl
+        { "Neck", 22403, "Stratholme: Cannon Master Willey", note = "1% hit" },                    -- Nacreous Shell Necklace
+        { "Shoulder", 226778, D2_LEGS, note = "1% hit" },                                          -- Feralheart Spaulders
+        { "Back", 18350, "Dire Maul West: Magister Kalendris" },                                   -- Amplifying Cloak
+        { "Chest", 226776, D2_HEAD },                                                              -- Feralheart Vest
+        { "Wrist", 226775, D2_WRIST },                                                             -- Feralheart Wraps
+        { "Hands", 226777, D2_HANDS },                                                             -- Feralheart Hands
+        { "Waist", 11662, "Blackrock Depths: Ok'thor the Breaker", note = "1% hit" },              -- Ban'thok Sash
+        { "Legs", 13170, "Lower Blackrock Spire: Highlord Omokk" },                                -- Skyshroud Leggings
+        { "Feet", 226774, D2_LEGS },                                                               -- Feralheart Galoshes
+        { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
+        { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 13213, "Lower Blackrock Spire: Mother Smolderweb", note = "1% hit" },         -- Smolderweb's Eye
+        { "Main Hand", 13964, "Scholomance: Darkmaster Gandling" },                                -- Witchblade
+        { "Off Hand", 18316, "Dire Maul East: Pusillin" },                                         -- Obsidian Bauble
+        { "Relic", 272430, PIX50 },                                                                -- Swarming Idol
+    },
+    ["DRUID:Feral"] = {
+        { "Head", 226792, D2_HEAD },                                                               -- Feralheart Cap
+        { "Neck", 15411, "Quest: In Dreams (Western Plaguelands)" },                               -- Mark of Fordring
+        { "Shoulder", 12927, "Upper Blackrock Spire: Pyroguard Emberseer", note = "1.5% hit" },    -- Truestrike Shoulders
+        { "Back", 13340, "Stratholme: Baron Rivendare" },                                          -- Cape of the Black Baron
+        { "Chest", 226795, D2_HEAD },                                                              -- Feralheart Tunic
+        { "Wrist", 270124, "Quest: Lethtendris's Web (Dire Maul)" },                               -- Warpwood Bracers
+        { "Hands", 226793, D2_HANDS },                                                             -- Feralheart Fists
+        { "Waist", 226789, D2_HANDS, note = "0.7% hit" },                                          -- Feralheart Girdle
+        { "Legs", 226791, D2_LEGS },                                                               -- Feralheart Trousers
+        { "Feet", 226794, D2_LEGS },                                                               -- Feralheart Walkers
+        { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
+        { "Finger", 22255, "Blackrock Depths: Secret Safe" },                                      -- Magma Forged Band
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Trinket", 11815, "Blackrock Depths: Emperor Dagran Thaurissan" },                       -- Hand of Justice
+        { "Two Hand", 18420, "Quest: The Treasure of the Shen'dralar (Dire Maul)" },               -- Bonecrusher
+        { "Relic", 22397, "Blackrock Depths: Lord Roccor" },                                       -- Idol of Ferocity
+    },
+    ["DRUID:Feral Tank"] = {
+        { "Head", 226801, D2_HEAD },                                                               -- Feralheart Faceguard
+        { "Neck", 275736, "Quest: Work Well Done (Mount Hyjal)" },                                 -- Horn of Ve'han
+        { "Shoulder", 226798, D2_LEGS },                                                           -- Feralheart Pauldrons
+        { "Back", 272415, PIX75, note = "1% hit" },                                                -- Stalwart Cloak
+        { "Chest", 226804, D2_HEAD },                                                              -- Feralheart Armor
+        { "Wrist", 226796, D2_WRIST },                                                             -- Feralheart Wristguards
+        { "Hands", 226802, D2_HANDS },                                                             -- Feralheart Grips
+        { "Waist", 226797, D2_HANDS },                                                             -- Feralheart Waistguard
+        { "Legs", 226799, D2_LEGS },                                                               -- Feralheart Legguards
+        { "Feet", 226803, D2_LEGS },                                                               -- Feralheart Treads
+        { "Finger", 260216, "Quest: Blackmaw Reclamation (Blackmaw Hold)" },                       -- Ouroboros Ring
+        { "Finger", 15855, "Quest: Hidden Treasures" },                                            -- Ring of Protection
+        { "Trinket", 17774, "Quest: The Pariah's Instructions (Maraudon)" },                       -- Mark of the Chosen
+        { "Trinket", 11810, "Blackrock Depths: General Angerforge" },                              -- Force of Will
+        { "Two Hand", 18531, "Dire Maul North: Mizzle the Crafty (tribute)" },                     -- Unyielding Maul
+        { "Relic", 23198, "Stratholme: Magistrate Barthilas" },                                    -- Idol of Brutality
+    },
+    ["DRUID:Restoration"] = {
+        { "Head", 226786, D2_HEAD },                                                               -- Feralheart Headdress
+        { "Neck", 10829, "Sunken Temple: Shade of Eranikus" },                                     -- Dragon's Eye
+        { "Shoulder", 226785, D2_LEGS },                                                           -- Feralheart Mantle
+        { "Back", 18350, "Dire Maul West: Magister Kalendris" },                                   -- Amplifying Cloak
+        { "Chest", 13346, "Stratholme: Baron Rivendare" },                                         -- Robes of the Exalted
+        { "Wrist", 226782, D2_WRIST },                                                             -- Feralheart Bindings
+        { "Hands", 226784, D2_HANDS },                                                             -- Feralheart Gauntlets
+        { "Waist", 226780, D2_HANDS },                                                             -- Feralheart Cord
+        { "Legs", 16694, "Stratholme: Baron Rivendare" },                                          -- Devout Skirt
+        { "Feet", 226781, D2_LEGS },                                                               -- Feralheart Sandals
+        { "Finger", 275740, "Quest: Work Well Done (Mount Hyjal)" },                               -- Ring of Nature's Cycles
+        { "Finger", 284079, "Western Plaguelands: Scarlet High Clerist (rare)" },                  -- High Clerist's Seal
+        { "Trinket", 1713, "World drop (BoE)" },                                                   -- Ankh of Life
+        { "Trinket", 280060, "Blackmaw Hold: Bonesnout the Unbroken" },                            -- Lucky Shovelnose Tuft
+        { "Main Hand", 13360, "Stratholme: Balnazzar" },                                           -- Gift of the Elven Magi
+        { "Off Hand", 15805, "Quest: Kirtonos the Herald (Scholomance)" },                         -- Penelope's Rose
+        { "Relic", 272429, PIX50 },                                                                -- Idol of Synthesis
+    },
+}
+
 for _, g in ipairs(guides) do
-    g.alts = ALTS[g.class .. ":" .. g.spec]
+    local key = g.class .. ":" .. g.spec
+    g.alts = ALTS[key]
     if g.alts then g.altSource = "conquestcapped.com" end
+    g.realistic = REALISTIC[key]
+    if g.realistic then g.realisticSource = "conquestcapped.com" end
 end
 
 ns.RegisterPhase({

@@ -67,6 +67,17 @@ for _, p in ipairs(ns.PhaseList) do
             local weaponSwap = (row[1] == "Main Hand" or row[1] == "Off Hand") and slotCount["Two Hand"]
             if not slotCount[row[1]] and not weaponSwap then warn(where .. ": no main pick for slot " .. row[1]) end
         end
+        local realCount = {}
+        for i, row in ipairs(g.realistic or {}) do
+            local where = p.label .. " " .. name .. " realistic " .. i
+            if not validSlot[row[1]] then err(where .. ": unknown slot '" .. tostring(row[1]) .. "'") end
+            if type(row[2]) ~= "number" or row[2] <= 0 then err(where .. ": item ID must be a positive number") end
+            if type(row[3]) ~= "string" or row[3] == "" then err(where .. ": missing source text") end
+            realCount[row[1]] = (realCount[row[1]] or 0) + 1
+        end
+        for slot, n in pairs(realCount) do
+            if n > (multi[slot] or 1) then warn(p.label .. " " .. name .. " realistic: " .. n .. " rows for " .. slot) end
+        end
         for slot, n in pairs(slotCount) do
             if n > (multi[slot] or 1) then warn(p.label .. " " .. name .. ": " .. n .. " rows for " .. slot) end
         end
@@ -85,7 +96,8 @@ for _, p in ipairs(ns.PhaseList) do
             for _, row in ipairs(g.items) do if not set[row[2]] then newCount = newCount + 1 end end
         end
         print(string.format("   %-8s %-14s %2d rows%s%s", g.class, g.spec, #g.items,
-            g.alts and string.format(", %d alternatives", #g.alts) or "",
+            (g.alts and string.format(", %d alternatives", #g.alts) or "")
+                .. (g.realistic and string.format(", %d realistic", #g.realistic) or ""),
             prev and string.format(", %d new vs %s", newCount, ns.PhaseLabel(prev.phase)) or ""))
     end
     -- specs carried over from earlier phases

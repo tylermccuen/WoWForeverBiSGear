@@ -28,6 +28,7 @@ local charDefaults = {
     selectedSlot  = "All",
     missingOnly   = false,
     showAlts      = true,
+    listMode      = "bis",          -- "bis" or "realistic"
     bankItems     = {},
 }
 
