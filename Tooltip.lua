@@ -39,6 +39,7 @@ end
 
 local CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:14:14|t"
 local CROSS = "|TInterface\\RaidFrame\\ReadyCheck-NotReady:14:14|t"
+local ALT   = "|TInterface\\RaidFrame\\ReadyCheck-Waiting:14:14|t"
 local OWNED_TEXT = { equipped = "equipped", bag = "in your bags", bank = "in your bank" }
 
 local function itemName(id)
@@ -70,6 +71,26 @@ local function addVerdict(tooltip, itemID)
         local owned = ns.Owned[itemID]
         if owned then text = text .. ", " .. OWNED_TEXT[owned] end
         tooltip:AddLine(text, 0.2, 1, 0.2)
+        return true
+    end
+
+    -- One of my alternatives: say so and name the main pick for that slot
+    local altSlot
+    for _, r in ipairs(ns.GetGuideRows(guide, true)) do
+        if r.isAlt and r.id == itemID then altSlot = r.slot break end
+    end
+    if altSlot then
+        tooltip:AddLine(" ")
+        local text = ALT .. " Alternative for you: " .. spec .. " " .. altSlot
+        local owned = ns.Owned[itemID]
+        if owned then text = text .. ", " .. OWNED_TEXT[owned] end
+        tooltip:AddLine(text, 0.56, 0.72, 1)
+        for _, r in ipairs(rows) do
+            if r.slot == altSlot then
+                local mark = ns.Owned[r.id] and (" " .. CHECK) or ""
+                tooltip:AddDoubleLine("   Main " .. r.slot .. " BiS:", itemName(r.id) .. mark, 0.7, 0.7, 0.7, 1, 0.82, 0)
+            end
+        end
         return true
     end
 
@@ -126,10 +147,10 @@ local function addBisLines(tooltip, itemID, noSpacer)
                 local faction = (e.faction and e.faction ~= playerFaction) and e.faction or nil
                 local found
                 for _, l in ipairs(byClass[cls].labels) do
-                    if l.spec == e.guide.spec and l.faction == faction then found = l end
+                    if l.spec == e.guide.spec and l.faction == faction and l.alt == e.alt then found = l end
                 end
                 if not found then
-                    found = { spec = e.guide.spec, faction = faction, phases = {} }
+                    found = { spec = e.guide.spec, faction = faction, alt = e.alt, phases = {} }
                     table.insert(byClass[cls].labels, found)
                 end
                 for id in pairs(active) do found.phases[id] = true end
@@ -155,7 +176,7 @@ local function addBisLines(tooltip, itemID, noSpacer)
         local labels = byClass[cls].labels
         -- drop "Spec (other faction)" when the same spec is already listed for the player's faction
         local plain = {}
-        for _, l in ipairs(labels) do if not l.faction then plain[l.spec] = true end end
+        for _, l in ipairs(labels) do if not l.faction and not l.alt then plain[l.spec] = true end end
         local texts, tags, sameTag, anyFaction = {}, {}, true, false
         for _, l in ipairs(labels) do
             if not (l.faction and plain[l.spec]) then
@@ -164,6 +185,7 @@ local function addBisLines(tooltip, itemID, noSpacer)
                 local tag = showTags and phaseTag(list) or ""
                 local t = l.spec
                 if l.faction then t = t .. " (" .. l.faction .. ")"; anyFaction = true end
+                if l.alt then t = t .. " (alt)"; anyFaction = true end
                 if tag ~= "" then t = t .. " " .. tag end
                 table.insert(texts, t)
                 if tags[1] and tags[1] ~= tag then sameTag = false end

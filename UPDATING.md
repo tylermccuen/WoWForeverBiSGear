@@ -44,6 +44,9 @@ ns.RegisterPhase({
 - Use the hand-picked lists from guide sites, not stat-weight calculators: calculators produced wrong picks such as a tank neck on hunters.
 - A list is a full replacement for that spec in that phase, not a diff: include every slot.
 
+## Alternatives
+Each phase file can also give specs alternatives: other good items per slot, shown under the main pick. In `Data/Phase1.lua` they live in the `ALTS` table, keyed `"CLASS:Spec"`, using the same row format plus an optional `note = "..."`. A spec in a later phase file can set `alts = { ... }` on its guide directly.
+
 ## Asking Claude to do it
 Start a new chat, attach the zipped `ForeverBestInSlot` folder, and say something like:
 

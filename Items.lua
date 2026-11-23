@@ -1,6 +1,7 @@
 local _, ns = ...
 
--- ItemIndex[itemID] = { { guide = g, phase = n, slot = "Head", faction = "Alliance"|"Horde"|nil, source = "..." }, ... }
+-- ItemIndex[itemID] = { { guide = g, phase = n, slot = "Head", faction = "Alliance"|"Horde"|nil, source = "...", alt = true|nil }, ... }
+-- Main BiS picks are indexed before alternatives, so an item that is both counts as a main pick.
 ns.ItemIndex = {}
 ns.GuideByKey = {}     -- [phaseID][ "CLASS:Spec" ] = guide
 ns.ClassSpecs = {}     -- [class] = { "Spec1", "Spec2", ... } across all phases
@@ -40,6 +41,15 @@ function ns.BuildIndex()
                     addIndex(hId, { guide = g, phase = phase.id, slot = slot, faction = "Horde",    source = hSrc })
                 else
                     addIndex(id,  { guide = g, phase = phase.id, slot = slot, source = src })
+                end
+            end
+            for _, row in ipairs(g.alts or {}) do
+                local slot, id, src, hId, hSrc = row[1], row[2], row[3], row[4], row[5]
+                if hId then
+                    addIndex(id,  { guide = g, phase = phase.id, slot = slot, faction = "Alliance", source = src, alt = true })
+                    addIndex(hId, { guide = g, phase = phase.id, slot = slot, faction = "Horde",    source = hSrc, alt = true })
+                else
+                    addIndex(id,  { guide = g, phase = phase.id, slot = slot, source = src, alt = true })
                 end
             end
         end
@@ -123,15 +133,34 @@ function ns.GuideItemSet(guide)
 end
 
 -- Rows for a guide resolved for the player's faction
-function ns.GetGuideRows(guide)
+local function resolveRow(row, faction, isAlt)
+    local slot, id, src, hId, hSrc, note = row[1], row[2], row[3], row[4], row[5], row.note
+    if hId and faction == "Horde" then
+        return { slot = slot, id = hId, source = hSrc, faction = "Horde", isAlt = isAlt, note = note }
+    end
+    return { slot = slot, id = id, source = src, faction = hId and "Alliance" or nil, isAlt = isAlt, note = note }
+end
+
+-- Rows for a guide resolved for the player's faction. With includeAlts, each
+-- alternative is placed right after the last main pick for its slot.
+function ns.GetGuideRows(guide, includeAlts)
     local faction = UnitFactionGroup("player")
     local rows = {}
     for _, row in ipairs(guide.items) do
-        local slot, id, src, hId, hSrc = row[1], row[2], row[3], row[4], row[5]
-        if hId and faction == "Horde" then
-            table.insert(rows, { slot = slot, id = hId, source = hSrc, faction = "Horde" })
-        else
-            table.insert(rows, { slot = slot, id = id, source = src, faction = hId and "Alliance" or nil })
+        table.insert(rows, resolveRow(row, faction, nil))
+    end
+    if includeAlts and guide.alts then
+        local mainIds = {}
+        for _, r in ipairs(rows) do mainIds[r.id] = true end
+        for _, row in ipairs(guide.alts) do
+            local alt = resolveRow(row, faction, true)
+            if not mainIds[alt.id] then
+                local pos = #rows + 1
+                for i = #rows, 1, -1 do
+                    if rows[i].slot == alt.slot then pos = i + 1 break end
+                end
+                table.insert(rows, pos, alt)
+            end
         end
     end
     return rows

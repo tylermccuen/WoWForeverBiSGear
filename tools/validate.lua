@@ -59,6 +59,13 @@ for _, p in ipairs(ns.PhaseList) do
             end
             slotCount[row[1]] = (slotCount[row[1]] or 0) + 1
         end
+        for i, row in ipairs(g.alts or {}) do
+            local where = p.label .. " " .. name .. " alternative " .. i
+            if not validSlot[row[1]] then err(where .. ": unknown slot '" .. tostring(row[1]) .. "'") end
+            if type(row[2]) ~= "number" or row[2] <= 0 then err(where .. ": item ID must be a positive number") end
+            if type(row[3]) ~= "string" or row[3] == "" then err(where .. ": missing source text") end
+            if not slotCount[row[1]] then warn(where .. ": no main pick for slot " .. row[1]) end
+        end
         for slot, n in pairs(slotCount) do
             if n > (multi[slot] or 1) then warn(p.label .. " " .. name .. ": " .. n .. " rows for " .. slot) end
         end
@@ -76,7 +83,8 @@ for _, p in ipairs(ns.PhaseList) do
             local set = ns.GuideItemSet(prev)
             for _, row in ipairs(g.items) do if not set[row[2]] then newCount = newCount + 1 end end
         end
-        print(string.format("   %-8s %-14s %2d rows%s", g.class, g.spec, #g.items,
+        print(string.format("   %-8s %-14s %2d rows%s%s", g.class, g.spec, #g.items,
+            g.alts and string.format(", %d alternatives", #g.alts) or "",
             prev and string.format(", %d new vs %s", newCount, ns.PhaseLabel(prev.phase)) or ""))
     end
     -- specs carried over from earlier phases

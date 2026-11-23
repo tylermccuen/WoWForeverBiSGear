@@ -628,6 +628,33 @@ local guides = {
     } },
 }
 
+--[[
+    Alternatives: other good picks per slot, shown under the main BiS item in the
+    browser (toggle "Alternatives") and on tooltips as "Alternative for you".
+    Source: conquestcapped.com WoW Forever BiS guides (updated 22 Nov 2026).
+    Same row format as above, plus an optional note = "..." shown next to the source.
+]]
+local CC = "https://conquestcapped.com/guides/wow-forever/"
+local ALTS = {
+    ["HUNTER:Marksmanship"] = {
+        { "Back",  272414, PIX75, note = "1% hit" },
+        { "Wrist", 18375,  "Dire Maul West: Prince Tortheldrin" },
+    },
+    ["HUNTER:Survival"] = {
+        { "Back",  272414, PIX75, note = "1% hit" },
+        { "Feet",  13967,  "Scholomance: Kirtonos the Herald", note = "1% hit" },
+    },
+    ["WARRIOR:Fury"] = {
+        CUTTHROAT,
+        { "Main Hand", 11684, "Blackrock Depths: Emperor Dagran Thaurissan" },
+        { "Ranged",    18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },
+    },
+}
+for _, g in ipairs(guides) do
+    g.alts = ALTS[g.class .. ":" .. g.spec]
+    if g.alts then g.altSource = "conquestcapped.com" end
+end
+
 ns.RegisterPhase({
     id       = 1,
     label    = "Phase 1",

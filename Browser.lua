@@ -1,10 +1,30 @@
 local _, ns = ...
 
 local ROW_HEIGHT = 40
-local WIDTH, HEIGHT = 720, 540
+local WIDTH, HEIGHT = 720, 540          -- default size
+local MIN_W, MIN_H, MAX_W, MAX_H = 640, 320, 1400, 1100
+local headerSource                      -- "WHERE TO GET IT" column header
+
+-- Column positions follow the window width
+local function columnLayout(contentWidth)
+    local sourceX = math.max(300, math.floor(contentWidth * 0.42))
+    local nameW = sourceX - 50
+    local sourceW = math.max(180, contentWidth - sourceX - 170)
+    return sourceX, nameW, sourceW
+end
+
+local function layoutRow(row)
+    local sourceX, nameW, sourceW = columnLayout(scrollChild:GetWidth())
+    row.name:SetWidth(nameW - (row.isAlt and 18 or 0))
+    row.slot:SetWidth(nameW)
+    row.source:SetPoint("TOPLEFT", sourceX, -5)
+    row.source:SetWidth(sourceW)
+    row.also:SetPoint("BOTTOMLEFT", sourceX, 5)
+    row.also:SetWidth(sourceW)
+end
 
 local frame, scrollChild, rows = nil, nil, {}
-local classButton, specButton, phaseButton, slotButton, missingCheck, countText
+local classButton, specButton, phaseButton, slotButton, missingCheck, altCheck, countText
 
 local OWNED_ICON = {
     equipped = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16:16|t Equipped",
@@ -95,6 +115,7 @@ local function createRow(i)
     row.bg = row:CreateTexture(nil, "BACKGROUND")
     row.bg:SetAllPoints()
     row.bg:SetColorTexture(1, 1, 1, (i % 2 == 0) and 0.04 or 0)
+    row.index = i
 
     local icon = CreateFrame("Button", nil, row)
     icon:SetSize(32, 32)
@@ -170,13 +191,28 @@ local function fillRow(row, data)
     row.token = (row.token or 0) + 1
     local token = row.token
 
+    -- alternatives are indented and tinted under the main pick for their slot
+    row.isAlt = data.isAlt
+    row.icon:ClearAllPoints()
+    row.icon:SetPoint("LEFT", data.isAlt and 22 or 4, 0)
+    row.icon:SetSize(data.isAlt and 26 or 32, data.isAlt and 26 or 32)
+    if data.isAlt then
+        row.bg:SetColorTexture(0.45, 0.6, 1, 0.07)
+    else
+        row.bg:SetColorTexture(1, 1, 1, (row.index % 2 == 0) and 0.04 or 0)
+    end
+
+    layoutRow(row)
     row.icon.tex:SetTexture(C_Item.GetItemIconByID(data.id) or 134400)
     row.name:SetText("|cff888888Loading item " .. data.id .. "...|r")
     local slotText = data.slot
+    if data.isAlt then slotText = "|cff8fb8ffAlternative|r  " .. slotText end
     if data.isNew then slotText = "|cff1eff00NEW|r  " .. slotText end
     if data.faction then slotText = slotText .. "  |cffffd100(" .. data.faction .. ")|r" end
     row.slot:SetText(slotText)
-    row.source:SetText(data.source or "")
+    local src = data.source or ""
+    if data.note then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
+    row.source:SetText(src)
     row.also:SetText(otherSpecsText(data.id))
     row.owned:SetText(OWNED_ICON[ns.Owned[data.id]] or "")
 
@@ -190,6 +226,7 @@ local function fillRow(row, data)
         row.itemName = item:GetItemName()
         row.icon.tex:SetTexture(item:GetItemIcon())
         local text = (row.itemLink or row.itemName or ""):gsub("[%[%]]", "")
+        if row.isAlt then text = "|cff8fb8ffAlt:|r " .. text end
         row.name:SetText(text)
     end)
     row:Show()
@@ -221,15 +258,16 @@ function ns.RefreshBrowser()
     specButton:SetText(ns.char.selectedSpec or "")
     slotButton:SetText("Slot: " .. (ns.char.selectedSlot or "All"))
     missingCheck:SetChecked(ns.char.missingOnly)
+    altCheck:SetChecked(ns.char.showAlts ~= false)
 
     local list = {}
     local have = 0
-    for _, r in ipairs(ns.GetGuideRows(guide)) do
+    for _, r in ipairs(ns.GetGuideRows(guide, ns.char.showAlts ~= false)) do
         local owned = ns.Owned[r.id] ~= nil
-        if owned then have = have + 1 end
+        if owned and not r.isAlt then have = have + 1 end
         local slotOk = ns.char.selectedSlot == "All" or r.slot == ns.char.selectedSlot
         if slotOk and not (ns.char.missingOnly and owned) then
-            r.isNew = prevSet ~= nil and not prevSet[r.id]
+            r.isNew = (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
             table.insert(list, r)
         end
     end
@@ -245,6 +283,9 @@ function ns.RefreshBrowser()
     local info = ns.Phases[fromPhase]
     local text = ns.PhaseLabel(fromPhase) .. (info.subtitle and (" - " .. info.subtitle) or "")
         .. "  |  Data: " .. (info.source or "?") .. ", checked " .. (info.checked or "?")
+    if guide.alts and #guide.alts > 0 and ns.char.showAlts ~= false then
+        text = text .. "  |  Alternatives: " .. (guide.altSource or info.altSource or "community guides")
+    end
     if fromPhase ~= phase then
         text = "|cffffd100No " .. ns.PhaseLabel(phase) .. " list for this spec yet, showing "
             .. ns.PhaseLabel(fromPhase) .. ".|r  " .. text
@@ -324,7 +365,7 @@ end
 ----------------------------------------------------------------------
 local function createFrame()
     frame = CreateFrame("Frame", "ForeverBiSFrame", UIParent, "BasicFrameTemplateWithInset")
-    frame:SetSize(WIDTH, HEIGHT)
+    frame:SetSize(ns.db.windowWidth or WIDTH, ns.db.windowHeight or HEIGHT)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("HIGH")
     frame:SetToplevel(true)
@@ -335,6 +376,12 @@ local function createFrame()
     frame:SetScript("OnDragStart", frame.StartMoving)
     frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
     frame:SetScale(ns.db.windowScale or 1)
+    frame:SetResizable(true)
+    if frame.SetResizeBounds then
+        frame:SetResizeBounds(MIN_W, MIN_H, MAX_W, MAX_H)
+    else
+        frame:SetMinResize(MIN_W, MIN_H); frame:SetMaxResize(MAX_W, MAX_H)
+    end
     frame:Hide()
     tinsert(UISpecialFrames, "ForeverBiSFrame")
 
@@ -373,8 +420,19 @@ local function createFrame()
     mcLabel:SetPoint("LEFT", missingCheck, "RIGHT", 2, 0)
     mcLabel:SetText("Missing only")
 
+    altCheck = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+    altCheck:SetSize(24, 24)
+    altCheck:SetPoint("LEFT", mcLabel, "RIGHT", 10, 0)
+    altCheck:SetScript("OnClick", function(self)
+        ns.char.showAlts = self:GetChecked() and true or false
+        ns.RefreshBrowser()
+    end)
+    local altLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    altLabel:SetPoint("LEFT", altCheck, "RIGHT", 2, 0)
+    altLabel:SetText("Alternatives")
+
     countText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    countText:SetPoint("TOPRIGHT", -18, -38)
+    countText:SetPoint("TOPRIGHT", -40, -62)
 
     -- column headers
     local h1 = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
@@ -382,26 +440,62 @@ local function createFrame()
     h1:SetText("ITEM")
     local h2 = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     h2:SetPoint("TOPLEFT", 314, -64)
+    headerSource = h2
     h2:SetText("WHERE TO GET IT")
 
     local scroll = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", 12, -78)
     scroll:SetPoint("BOTTOMRIGHT", -32, 44)
     scrollChild = CreateFrame("Frame", nil, scroll)
-    scrollChild:SetSize(WIDTH - 46, 1)
+    scrollChild:SetSize((ns.db.windowWidth or WIDTH) - 46, 1)
+
+    -- resize grip in the bottom-right corner
+    local grip = CreateFrame("Button", nil, frame)
+    grip:SetSize(16, 16)
+    grip:SetPoint("BOTTOMRIGHT", -4, 4)
+    grip:SetFrameLevel(frame:GetFrameLevel() + 10)
+    grip:SetNormalTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Up")
+    grip:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Highlight")
+    grip:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
+    grip:SetScript("OnMouseDown", function() frame:StartSizing("BOTTOMRIGHT") end)
+    grip:SetScript("OnMouseUp", function()
+        frame:StopMovingOrSizing()
+        ns.db.windowWidth, ns.db.windowHeight = math.floor(frame:GetWidth()), math.floor(frame:GetHeight())
+    end)
+    grip:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine("Drag to resize")
+        GameTooltip:AddLine("Double-click to reset size", 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    grip:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    grip:SetScript("OnDoubleClick", function()
+        frame:SetSize(WIDTH, HEIGHT)
+        ns.db.windowWidth, ns.db.windowHeight = nil, nil
+    end)
+
+    frame:SetScript("OnSizeChanged", function(self, w)
+        scrollChild:SetWidth(w - 46)
+        if self.sourceText then self.sourceText:SetWidth(w - 240) end
+        local sourceX = columnLayout(w - 46)
+        headerSource:SetPoint("TOPLEFT", sourceX + 14, -64)
+        for _, row in ipairs(rows) do
+            if row:IsShown() then layoutRow(row) end
+        end
+    end)
     scroll:SetScrollChild(scrollChild)
 
     -- footer
     frame.sourceText = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     frame.sourceText:SetPoint("BOTTOMLEFT", 16, 12)
-    frame.sourceText:SetWidth(WIDTH - 240)
+    frame.sourceText:SetWidth((ns.db.windowWidth or WIDTH) - 240)
     frame.sourceText:SetHeight(26)
     frame.sourceText:SetJustifyH("LEFT")
     frame.sourceText:SetJustifyV("MIDDLE")
 
     local guideLink = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     guideLink:SetSize(110, 22)
-    guideLink:SetPoint("BOTTOMRIGHT", -14, 12)
+    guideLink:SetPoint("BOTTOMRIGHT", -26, 12)
     guideLink:SetText("Guide link")
     guideLink:SetScript("OnClick", function()
         local g = currentGuide()
@@ -417,6 +511,8 @@ local function createFrame()
     settings:SetScript("OnClick", function() ns.OpenOptions() end)
 
     frame:SetScript("OnShow", function() ns.RefreshOwned(); ns.RefreshBrowser() end)
+    -- apply the saved size to the columns once
+    frame:GetScript("OnSizeChanged")(frame, frame:GetWidth(), frame:GetHeight())
 end
 
 function ns.ToggleBrowser()

@@ -27,6 +27,7 @@ local charDefaults = {
     selectedSpec  = nil,
     selectedSlot  = "All",
     missingOnly   = false,
+    showAlts      = true,
     bankItems     = {},
 }
 
