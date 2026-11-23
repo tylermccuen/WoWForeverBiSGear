@@ -167,6 +167,15 @@ check("consumables list for every class/spec", function()
   print("   Fire mage consumable rows:", (visibleRows()))
   ns.char.listMode="bis"; ns.RefreshBrowser()
 end)
+check("raid check draws even if item data never loads", function()
+  local saveWith = ns.WithItem
+  ns.WithItem = function() end          -- simulate items that never finish loading
+  local calls = 0
+  ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"
+  ns.RunRaidCheck(function(r) calls = calls + 1 end)
+  ns.WithItem = saveWith
+  if calls == 0 then error("nothing drawn while items load") end
+end)
 check("raid companion docks with browser", function()
   ns.db.raidCompanion = true
   ns.UpdateRaidCompanion()

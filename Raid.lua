@@ -269,8 +269,18 @@ function ns.RunRaidCheck(cb)
     local mine, bis = {}, {}
     for inv = 1, 18 do addStats(mine, itemStats(equipped[inv])) end
 
+    -- Draw the hard checks right away; the stat comparison follows once the
+    -- BiS items' data has loaded (or after 3 seconds with what has loaded).
+    local loadingLine = { status = "info", text = "Loading item stats..." }
+    table.insert(report.lines, loadingLine)
+    cb(report)
+    table.remove(report.lines)
+
     local pending = #bisIds
+    local finished = false
     local function finish()
+        if finished then return end
+        finished = true
         local wanted = ROLE_STATS[role] or {}
         local any = false
         for _, key in ipairs(wanted) do
@@ -290,8 +300,10 @@ function ns.RunRaidCheck(cb)
         cb(report)
     end
     if pending == 0 then finish() return end
+    if C_Timer and C_Timer.After then C_Timer.After(3, finish) end
     for _, id in ipairs(bisIds) do
         ns.WithItem(id, function(item)
+            if finished then return end
             if item then addStats(bis, itemStats(item:GetItemLink())) end
             pending = pending - 1
             if pending == 0 then finish() end
@@ -331,7 +343,21 @@ local function render(report)
 end
 
 function ns.RefreshRaidCheck()
-    if panel and panel:IsShown() then ns.RunRaidCheck(render) end
+    if not (panel and panel:IsShown()) then return end
+    -- each run gets a token so a slow earlier run can't overwrite a newer one
+    panel.runToken = (panel.runToken or 0) + 1
+    local token = panel.runToken
+    local ok, err = pcall(ns.RunRaidCheck, function(report)
+        if panel.runToken ~= token then return end
+        local ok2, err2 = pcall(render, report)
+        if not ok2 then
+            body:SetText("|cffff5555Raid check error:|r " .. tostring(err2))
+        end
+    end)
+    if not ok then
+        summary:SetText("|cffff5555Raid check couldn't run|r")
+        body:SetText("Please send this to the addon author:\n\n" .. tostring(err))
+    end
 end
 
 -- The panel is a companion docked to the right edge of the browser window:
@@ -397,8 +423,18 @@ function ns.UpdateRaidCompanion()
     if not panel then createPanel() end
     panel:SetScale(browser:GetScale())
     panel:ClearAllPoints()
-    panel:SetPoint("TOPLEFT", browser, "TOPRIGHT", -3, 0)
-    panel:SetPoint("BOTTOMLEFT", browser, "BOTTOMRIGHT", -3, 0)
+    -- dock on the right, or on the left when there's no room on the right
+    local right, screen = browser:GetRight(), UIParent:GetRight()
+    local bs, us = browser:GetEffectiveScale(), UIParent:GetEffectiveScale()
+    local scale = (bs and us and us > 0) and bs / us or 1
+    local width = panel:GetWidth() or 380
+    if right and screen and (right + width) * scale > screen then
+        panel:SetPoint("TOPRIGHT", browser, "TOPLEFT", 3, 0)
+        panel:SetPoint("BOTTOMRIGHT", browser, "BOTTOMLEFT", 3, 0)
+    else
+        panel:SetPoint("TOPLEFT", browser, "TOPRIGHT", -3, 0)
+        panel:SetPoint("BOTTOMLEFT", browser, "BOTTOMRIGHT", -3, 0)
+    end
     if browser:IsShown() and ns.db.raidCompanion ~= false then
         if panel:IsShown() then ns.RefreshRaidCheck() else panel:Show() end
     else

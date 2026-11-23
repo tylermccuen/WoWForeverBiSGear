@@ -30,7 +30,7 @@ local function layoutRow(row)
     row.also:SetWidth(sourceW)
 end
 
-local classButton, specButton, phaseButton, listButton, slotButton, missingCheck, altCheck, altLabel, doneCheck, doneLabel, countText
+local classButton, specButton, phaseButton, listTabs, slotButton, missingCheck, altCheck, altLabel, doneCheck, doneLabel, countText
 
 local OWNED_ICON = {
     equipped = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16:16|t Equipped",
@@ -308,8 +308,7 @@ function ns.RefreshBrowser()
     elseif ns.char.listMode == "consumables" and guide.consumables then mode = "consumables" end
     local gearList = mode == "bis" or mode == "realistic"
     local realistic = mode == "realistic"
-    listButton:SetText(mode == "realistic" and "List: Realistic" or mode == "enchants" and "List: Enchants"
-        or mode == "consumables" and "List: Consumes" or "List: BiS")
+    ns.UpdateListTabs(mode, guide)
     -- alternatives belong to the BiS list; "hide finished slots" to the gear lists
     if mode ~= "bis" then altCheck:Disable(); altLabel:SetAlpha(0.4) else altCheck:Enable(); altLabel:SetAlpha(1) end
     if mode == "consumables" then doneCheck:Disable(); doneLabel:SetAlpha(0.4) else doneCheck:Enable(); doneLabel:SetAlpha(1) end
@@ -468,22 +467,65 @@ local function phaseMenu(owner)
     end)
 end
 
-local function listMenu(owner)
-    openMenu(owner, function(_, root)
-        root:CreateTitle("Gear list")
-        root:CreateRadio("BiS (best available)",
-            function() return ns.char.listMode == nil or ns.char.listMode == "bis" end,
-            function() ns.char.listMode = "bis"; ns.RefreshBrowser() end)
-        root:CreateRadio("Realistic (quick to collect)",
-            function() return ns.char.listMode == "realistic" end,
-            function() ns.char.listMode = "realistic"; ns.RefreshBrowser() end)
-        root:CreateRadio("Enchants",
-            function() return ns.char.listMode == "enchants" end,
-            function() ns.char.listMode = "enchants"; ns.RefreshBrowser() end)
-        root:CreateRadio("Consumables (raid shopping list)",
-            function() return ns.char.listMode == "consumables" end,
-            function() ns.char.listMode = "consumables"; ns.RefreshBrowser() end)
-    end)
+-- List tabs along the bottom edge of the window (like the character panel)
+local LIST_TABS = {
+    { mode = "bis",         text = "BiS",         tip = "The best pre-raid items." },
+    { mode = "realistic",   text = "Realistic",   tip = "A set most players can finish in a week or two from dungeons, quests and Tier 0.5." },
+    { mode = "enchants",    text = "Enchants",    tip = "The enchant, arcanum or armor kit for each slot." },
+    { mode = "consumables", text = "Consumables", tip = "Raid shopping list: flask, elixirs, food, weapon oil or stone and potions." },
+}
+
+local function createListTabs()
+    listTabs = {}
+    for i, info in ipairs(LIST_TABS) do
+        local name = "ForeverBiSFrameTab" .. i
+        local ok, tab = pcall(CreateFrame, "Button", name, frame, "PanelTabButtonTemplate")
+        if not ok or not tab then
+            tab = CreateFrame("Button", name, frame, "UIPanelButtonTemplate")   -- fallback look
+            tab:SetSize(100, 24)
+        end
+        tab:SetID(i)
+        tab:SetText(info.text)
+        if PanelTemplates_TabResize then pcall(PanelTemplates_TabResize, tab, 0) end
+        if i == 1 then
+            tab:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 12, 2)
+        else
+            tab:SetPoint("LEFT", listTabs[i - 1], "RIGHT", 3, 0)
+        end
+        tab:SetScript("OnClick", function()
+            ns.char.listMode = info.mode
+            if PlaySound and SOUNDKIT and SOUNDKIT.IG_CHARACTER_INFO_TAB then pcall(PlaySound, SOUNDKIT.IG_CHARACTER_INFO_TAB) end
+            ns.RefreshBrowser()
+        end)
+        tab:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(info.text)
+            GameTooltip:AddLine(info.tip, 1, 1, 1, true)
+            GameTooltip:Show()
+        end)
+        tab:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        listTabs[i] = tab
+    end
+    frame.numTabs = #listTabs
+    frame.Tabs = listTabs
+end
+
+-- Highlight the tab for the list on screen; grey out lists this spec lacks
+function ns.UpdateListTabs(mode, guide)
+    if not listTabs then return end
+    local have = { bis = true, realistic = guide and guide.realistic ~= nil,
+                   enchants = guide and guide.enchants ~= nil, consumables = guide and guide.consumables ~= nil }
+    for i, info in ipairs(LIST_TABS) do
+        local tab = listTabs[i]
+        if info.mode == mode then
+            if PanelTemplates_SelectTab then pcall(PanelTemplates_SelectTab, tab) else tab:LockHighlight() end
+        elseif have[info.mode] then
+            if PanelTemplates_EnableTab then pcall(PanelTemplates_EnableTab, frame, i) end
+            if PanelTemplates_DeselectTab then pcall(PanelTemplates_DeselectTab, tab) else tab:UnlockHighlight(); tab:Enable() end
+        else
+            if PanelTemplates_DisableTab then pcall(PanelTemplates_DisableTab, frame, i) else tab:Disable() end
+        end
+    end
 end
 
 local function slotMenu(owner)
@@ -513,7 +555,10 @@ local function createFrame()
     frame:SetClampedToScreen(true)
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", frame.StartMoving)
-    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
+    frame:SetScript("OnDragStop", function(self)
+        self:StopMovingOrSizing()
+        if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end   -- re-pick the docking side
+    end)
     frame:SetScale(ns.db.windowScale or 1)
     frame:SetResizable(true)
     if frame.SetResizeBounds then
@@ -547,23 +592,10 @@ local function createFrame()
     specButton:SetScript("OnClick", specMenu)
 
     slotButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    listButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    listButton:SetSize(110, 24)
-    listButton:SetPoint("LEFT", specButton, "RIGHT", 6, 0)
-    listButton:SetScript("OnClick", listMenu)
-    listButton:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-        GameTooltip:AddLine("Gear list")
-        GameTooltip:AddLine("BiS: the best pre-raid items.", 1, 1, 1, true)
-        GameTooltip:AddLine("Realistic: a set most players can finish in a week or two from dungeons, quests and Tier 0.5.", 1, 1, 1, true)
-        GameTooltip:AddLine("Enchants: the enchant, arcanum or armor kit for each slot.", 1, 1, 1, true)
-        GameTooltip:AddLine("Consumables: flask, elixirs, food, weapon oil or stone and potions to buy for raid.", 1, 1, 1, true)
-        GameTooltip:Show()
-    end)
-    listButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    createListTabs()
 
     slotButton:SetSize(95, 24)
-    slotButton:SetPoint("LEFT", listButton, "RIGHT", 6, 0)
+    slotButton:SetPoint("LEFT", specButton, "RIGHT", 6, 0)
     slotButton:SetScript("OnClick", slotMenu)
 
     missingCheck = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
