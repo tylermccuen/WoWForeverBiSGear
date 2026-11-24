@@ -8,4 +8,5 @@ ignore:
   - tools
   - media
   - UPDATING.md
+  - MAINTENANCE.md
   - .github
