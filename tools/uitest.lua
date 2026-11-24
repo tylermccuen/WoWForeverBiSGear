@@ -51,7 +51,7 @@ CreateAtlasMarkup = function() return "" end
 
 local ns = {}
 local events = {}
-local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Crafting.lua","Data/DropRates.lua","Data/Bosses.lua","Data/Quests.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Boss.lua","Quests.lua","Announce.lua","Minimap.lua","Options.lua"}
+local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Crafting.lua","Data/DropRates.lua","Data/Bosses.lua","Data/Quests.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Boss.lua","Quests.lua","Minimap.lua","Options.lua"}
 for _,f in ipairs(files) do assert(loadfile(f))("ForeverBestInSlot", ns) end
 local function fire(ev, ...)
   for _, f in ipairs(ALLFRAMES) do
@@ -246,34 +246,6 @@ check("enchant column", function()
   local shown = 0
   for _, e in ipairs(ns.ItemIndex[g.items[7][2]] or {}) do shown = shown + 1 end
   print("   specs indexed for MM hands item:", shown)
-end)
-check("guild announce only for new BiS items", function()
-  local sent = {}
-  SendChatMessage = function(msg, chan) table.insert(sent, chan .. ": " .. msg) end
-  IsInGuild = function() return true end
-  InCombatLockdown = function() return false end
-  local t = 0; GetTime = function() return t end
-  UnitClass = function() return "Hunter", "HUNTER" end
-  ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"
-  ns.db.announceGuild = true
-  ns.char.seenItems = nil
-  local g = ns.GetGuide("HUNTER","Marksmanship",1)
-  local bisA, bisB = g.items[1][2], g.items[2][2]
-  local saveWith = ns.WithItem
-  ns.WithItem = function(id, cb) cb({ GetItemLink = function() return "[Item " .. id .. "]" end }) end
-  -- login: already-owned BiS item is remembered, not announced
-  ns.Owned = { [bisA] = "equipped" }
-  ns.CheckNewBis()                       -- before readyAt is set: baseline
-  if #sent ~= 0 then error("announced at login") end
-  -- simulate entering world + 20s
-  t = 0; ns.FireEvent("PLAYER_ENTERING_WORLD"); t = 20
-  ns.Owned = { [bisA] = "equipped", [bisB] = "bag", [12345] = "bag" }
-  ns.CheckNewBis()
-  print("   sent:", #sent, sent[1])
-  if #sent ~= 1 then error("expected exactly one announcement") end
-  ns.CheckNewBis()
-  if #sent ~= 1 then error("announced twice") end
-  ns.WithItem = saveWith; ns.db.announceGuild = false; ns.Owned = {}
 end)
 check("compact beside the character window and back", function()
   local shown = true

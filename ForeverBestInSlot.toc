@@ -26,6 +26,5 @@ Browser.lua
 Raid.lua
 Boss.lua
 Quests.lua
-Announce.lua
 Minimap.lua
 Options.lua

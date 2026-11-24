@@ -285,7 +285,6 @@ function ns.RefreshOwned()
         if id then ns.Owned[id] = "equipped" end
     end
 
-    if ns.CheckNewBis then pcall(ns.CheckNewBis) end
     if ns.OnOwnedChanged then ns.OnOwnedChanged() end
 end
 

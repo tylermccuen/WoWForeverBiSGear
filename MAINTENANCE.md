@@ -59,8 +59,8 @@ Run the generators from the repo root, e.g. `python3 tools/data/gen_crafting.py`
 - [ ] Re-read conquestcapped.com's hit cap guide.
 
 ### E. Client / API changes (new Forever client build)
-- [ ] Test in game: browser opens, tooltips, raid check panel, compact mode beside the character window, boss models, quest hover, guild announce.
-- [ ] If something breaks, check the API calls used: `TooltipDataProcessor`, `C_TooltipInfo.GetInventoryItem`, `GetHitModifier` / `GetCombatRatingBonus`, `C_Container`, `C_QuestLog`, `PlayerModel:SetDisplayInfo / SetCreature`, `C_ChatInfo.SendChatMessage`, `PanelTemplates_*`, `Settings.RegisterCanvasLayoutCategory`.
+- [ ] Test in game: browser opens, tooltips, raid check panel, compact mode beside the character window, boss models, quest hover.
+- [ ] If something breaks, check the API calls used: `TooltipDataProcessor`, `C_TooltipInfo.GetInventoryItem`, `GetHitModifier` / `GetCombatRatingBonus`, `C_Container`, `C_QuestLog`, `PlayerModel:SetDisplayInfo / SetCreature`, `PanelTemplates_*`, `Settings.RegisterCanvasLayoutCategory`.
 - [ ] Update the `## Interface:` number in `ForeverBestInSlot.toc` when the client's interface version changes.
 
 ---
