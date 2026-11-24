@@ -262,4 +262,19 @@ check("compact beside the character window and back", function()
   print("   after close:", f.compact, " width:", f:GetWidth())
   if f.compact then error("stayed compact") end
 end)
+check("quest highlight", function()
+  C_QuestLog = { GetNumQuestLogEntries = function() return 2 end,
+                 GetInfo = function(i) return ({ { title = "Libram of Voracity" }, { title = "General Drakkisath's Demise" } })[i] end }
+  ns.ScanQuestLog()
+  local tests = {
+    ["Quest: Libram of Voracity (Burning Steppes)"] = true,
+    ["Quest: For The Horde! / General Drakkisath's Demise"] = true,
+    ["Dungeon Set 2 quest: Saving the Best for Last"] = false,
+    ["Scholomance: Darkmaster Gandling"] = false,
+  }
+  for src, want in pairs(tests) do
+    if ns.OnSourceQuest(src) ~= want then error("wrong for " .. src) end
+  end
+  ns.RefreshBrowser()
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

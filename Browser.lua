@@ -132,6 +132,40 @@ local function enchantCell(row, data)
     end)
 end
 
+-- Quests in the player's quest log (lower-case titles), for highlighting
+-- "Quest: ..." sources the player is already on.
+local questTitles = {}
+local function scanQuestLog()
+    wipe(questTitles)
+    if not (C_QuestLog and C_QuestLog.GetNumQuestLogEntries and C_QuestLog.GetInfo) then return end
+    local ok, n = pcall(C_QuestLog.GetNumQuestLogEntries)
+    for i = 1, (ok and n or 0) do
+        local okI, info = pcall(C_QuestLog.GetInfo, i)
+        if okI and type(info) == "table" and info.title and not info.isHeader then
+            questTitles[info.title:lower()] = true
+        end
+    end
+end
+
+-- "Quest: Name (Zone)", "Dungeon Set 2 quest: Name", "Quest: A / B"
+function ns.OnSourceQuest(source)
+    if type(source) ~= "string" then return false end
+    local names = source:match("[Qq]uest: (.+)$")
+    if not names then return false end
+    names = names:gsub("%s*%b()%s*$", "")
+    for name in (names .. " / "):gmatch("(.-) / ") do
+        if questTitles[name:lower()] then return true end
+    end
+    return false
+end
+
+ns.On("QUEST_LOG_UPDATE", function()
+    scanQuestLog()
+    if frame and frame:IsShown() then ns.RefreshBrowser() end
+end)
+ns.On("PLAYER_LOGIN", scanQuestLog)
+ns.ScanQuestLog = scanQuestLog   -- used by tools/uitest.lua
+
 ----------------------------------------------------------------------
 -- Rows
 ----------------------------------------------------------------------
@@ -266,9 +300,13 @@ local function fillRow(row, data)
     elseif data.isAlt then slotText = "|cff8fb8ffAlternative|r  " .. slotText end
     if data.isNew then slotText = "|cff1eff00NEW|r  " .. slotText end
     if data.faction then slotText = slotText .. "  |cffffd100(" .. data.faction .. ")|r" end
-    if frame.compact and data.source then slotText = slotText .. "  |cff999999" .. data.source .. "|r" end
+    local onQuest = ns.OnSourceQuest(data.source)
+    if frame.compact and data.source then
+        slotText = slotText .. (onQuest and "  |cff33ff33" or "  |cff999999") .. data.source .. "|r"
+    end
     row.slot:SetText(slotText)
     local src = data.source or ""
+    if onQuest then src = "|cff33ff33" .. src .. "  (On quest)|r" end
     if data.note then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
     row.source:SetText(src)
     row.enchantID = data.enchantID

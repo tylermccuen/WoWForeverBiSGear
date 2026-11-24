@@ -1,6 +1,7 @@
 # Forever Best In Slot
 
 ## 1.7.1
+- **On quest:** when an item comes from a quest that's in your quest log, its "where to get it" text turns green and says "On quest".
 - **Enchant column:** the "Avoid grouping with" column is gone. In its place, the BiS and Realistic tabs show your spec's enchant for each item's slot, so gear and enchants read as one checklist. The enchant gets a green tick when that item is equipped and already enchanted.
 
 ## 1.7.0
