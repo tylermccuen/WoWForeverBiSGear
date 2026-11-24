@@ -4,7 +4,7 @@ local ROW_HEIGHT = 40
 local frame, scrollChild, rows = nil, nil, {}
 local CHECK_ICON = "|TInterface\\RaidFrame\\ReadyCheck-Ready:12:12|t "
 local lastRaidSpec
-local WIDTH, HEIGHT = 900, 540          -- default size
+local WIDTH, HEIGHT = 960, 540          -- default size
 local MIN_W, MIN_H, MAX_W, MAX_H = 880, 320, 1500, 1100
 local headerSource, headerAvoid        -- "WHERE TO GET IT" / "ENCHANT" headers
 
@@ -22,10 +22,11 @@ local function columnLayout(contentWidth)
         local nameW = math.max(200, contentWidth - 250)
         return nameW + 50, nameW, 0, nameW + 50, 0
     end
-    local sourceX = math.max(290, math.floor(contentWidth * 0.36))
+    local sourceX = math.max(250, math.floor(contentWidth * 0.30))
     local nameW = sourceX - 50
     local rest = math.max(300, contentWidth - sourceX - 200)   -- 200 = owned / done / link
-    local sourceW = math.floor(rest * 0.56)
+    local avoidFixed = 150                                     -- enchant column
+    local sourceW = math.max(180, rest - avoidFixed - 10)
     local avoidX = sourceX + sourceW + 10
     local avoidW = rest - sourceW - 10
     return sourceX, nameW, sourceW, avoidX, avoidW
@@ -212,11 +213,13 @@ local function createRow(i)
     row.slot:SetTextColor(0.65, 0.65, 0.65)
     row.slot:SetWordWrap(false)
 
-    row.source = row:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    row.source = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     row.source:SetPoint("TOPLEFT", 300, -5)
     row.source:SetWidth(250)
     row.source:SetJustifyH("LEFT")
-    row.source:SetWordWrap(false)
+    row.source:SetJustifyV("MIDDLE")
+    row.source:SetWordWrap(true)          -- up to two lines instead of cutting off
+    if row.source.SetMaxLines then row.source:SetMaxLines(2) end
 
     row.avoid = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     row.avoid:SetJustifyH("LEFT")
@@ -307,7 +310,7 @@ local function fillRow(row, data)
     row.slot:SetText(slotText)
     local src = data.source or ""
     if onQuest then src = "|cff33ff33" .. src .. "  (On quest)|r" end
-    if data.note then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
+    if data.note and not data.isPre then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
     row.source:SetText(src)
     row.enchantID = data.enchantID
     enchantCell(row, data)

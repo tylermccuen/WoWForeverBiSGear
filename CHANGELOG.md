@@ -1,6 +1,7 @@
 # Forever Best In Slot
 
 ## 1.7.1
+- **Easier to read:** "Where to get it" uses a larger font, gets more room and wraps onto a second line instead of being cut off. The Tier 0 "Needs:" rows drop the long turn-in note (the "For T0.5 quest" label already says it), and the window is a little wider by default.
 - **On quest:** when an item comes from a quest that's in your quest log, its "where to get it" text turns green and says "On quest".
 - **Enchant column:** the "Avoid grouping with" column is gone. In its place, the BiS and Realistic tabs show your spec's enchant for each item's slot, so gear and enchants read as one checklist. The enchant gets a green tick when that item is equipped and already enchanted.
 
