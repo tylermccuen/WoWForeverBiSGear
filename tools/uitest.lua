@@ -51,7 +51,7 @@ CreateAtlasMarkup = function() return "" end
 
 local ns = {}
 local events = {}
-local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Crafting.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Announce.lua","Minimap.lua","Options.lua"}
+local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Crafting.lua","Data/DropRates.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Boss.lua","Announce.lua","Minimap.lua","Options.lua"}
 for _,f in ipairs(files) do assert(loadfile(f))("ForeverBestInSlot", ns) end
 local function fire(ev, ...)
   for _, f in ipairs(ALLFRAMES) do
@@ -287,6 +287,58 @@ check("recipe + materials on Consumables and Enchants", function()
     for _, r in ipairs(set) do if ns.Crafting[r[2]] then crafted = crafted + 1 end end
     print("   " .. m .. ": crafting data for " .. crafted .. " / " .. #set)
   end
+  ns.char.listMode = "bis"; ns.RefreshBrowser()
+end)
+check("boss lookup + window", function()
+  EJ_GetNumTiers = function() return 1 end
+  EJ_GetCurrentTier = function() return 1 end
+  EJ_SelectTier = function() end
+  EJ_GetInstanceByIndex = function(i, raid) if i == 1 and not raid then return 236, "Stratholme" end end
+  EJ_GetEncounterInfoByIndex = function(j, inst) if j == 1 then return "Baron Rivendare", "desc", 456 end end
+  EJ_GetEncounterInfo = function() return "Baron Rivendare", "The master of Stratholme." end
+  EJ_GetCreatureInfo = function() return 1, "Baron Rivendare", "", 10729 end
+  local tests = {
+    ["Stratholme: Baron Rivendare"] = true,
+    ["Drop: Baron Rivendare (Stratholme)"] = true,
+    ["Stratholme: Baron Rivendare / Madam Swyndle (vendor)"] = true,
+    ["Quest: Baron Rivendare"] = false,
+    ["Random trash drop (Stratholme, Scholomance, Blackrock Spire)"] = false,
+  }
+  for src, want in pairs(tests) do
+    if (ns.FindBoss(src) ~= nil) ~= want then error("wrong for " .. src) end
+  end
+  ns.ShowBoss(ns.FindBoss("Stratholme: Baron Rivendare"))
+  ns.RefreshBrowser()
+end)
+check("dungeon / boss split and sorting", function()
+  local cases = {
+    { "Stratholme: Baron Rivendare", "Stratholme", "Baron Rivendare" },
+    { "Quest: The Princess Saved? (Blackrock Depths)", "Blackrock Depths", "Quest: The Princess Saved?" },
+    { "Dungeon Set 2 quest: Saving the Best for Last", "Dungeon Set 2", "Quest: Saving the Best for Last" },
+    { "Crafted: Leatherworking", "Crafted", "Leatherworking" },
+    { "Random trash drop (Stratholme, Scholomance, Blackrock Spire)", "Stratholme, Scholomance, Blackrock Spire", "Trash drop" },
+    { "Stormpike Guard / Frostwolf Clan (Exalted)", "", "Stormpike Guard / Frostwolf Clan (Exalted)" },
+  }
+  for _, c in ipairs(cases) do
+    local d, b = ns.SplitSource(c[1])
+    if d ~= c[2] or b ~= c[3] then error(c[1] .. " -> [" .. d .. "] [" .. b .. "]") end
+  end
+  ns.DropRates = { [101] = { { "Baron Rivendare", 11.1 } }, [102] = { { "Gyth", 19.7 } } }
+  local list = {
+    { id = 100, slot = "Head", source = "Quest: X (Zone)" },
+    { id = 101, slot = "Legs", source = "Stratholme: Baron Rivendare" },
+    { id = 999, slot = "Legs", source = "T0", isAlt = true },
+    { id = 102, slot = "Shoulder", source = "Upper Blackrock Spire: Gyth" },
+  }
+  ns.char.sortBy, ns.char.sortDesc = "drop", true
+  local out = ns.SortRows(list)
+  local ids = {}; for _, r in ipairs(out) do ids[#ids+1] = r.id end
+  print("   by drop:", table.concat(ids, ","))
+  if table.concat(ids, ",") ~= "102,101,999,100" then error("drop sort wrong") end
+  ns.char.sortBy, ns.char.sortDesc = "dungeon", false
+  ids = {}; for _, r in ipairs(ns.SortRows(list)) do ids[#ids+1] = r.id end
+  print("   by dungeon:", table.concat(ids, ","))
+  ns.char.sortBy, ns.char.sortDesc = "slot", false
   ns.char.listMode = "bis"; ns.RefreshBrowser()
 end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

@@ -6,7 +6,7 @@ local CHECK_ICON = "|TInterface\\RaidFrame\\ReadyCheck-Ready:12:12|t "
 local YELLOW_CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16:16:0:0:64:64:0:64:0:64:255:210:0|t"
 local GREEN_CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16:16|t"
 local lastRaidSpec
-local WIDTH, HEIGHT = 960, 540          -- default size
+local WIDTH, HEIGHT = 1040, 540          -- default size
 local MIN_W, MIN_H, MAX_W, MAX_H = 880, 320, 1500, 1100
 local headerSource, headerAvoid        -- "WHERE TO GET IT" / "ENCHANT" headers
 
@@ -18,37 +18,165 @@ end
 -- Column positions follow the window width
 local COMPACT_W = 660   -- width beside the character window
 
+-- Column positions. Gear tabs: item | dungeon | boss / source | drop | enchant.
+-- Consumables / Enchants: item | recipe | materials. Compact: item | source | drop.
 local function columnLayout(contentWidth)
+    local L = { dungeonW = 0, dropW = 0 }
+    local gear = frame and (frame.layoutMode == nil or frame.layoutMode == "bis" or frame.layoutMode == "realistic")
     if frame and frame.compact then
-        -- compact: item, where to get it (two lines), then done / link; no enchant column
-        local nameW = 180
-        local sourceX = nameW + 50
-        local sourceW = math.max(160, contentWidth - sourceX - 130)
-        return sourceX, nameW, sourceW, sourceX + sourceW, 0
+        L.nameW = 180
+        L.sourceX = L.nameW + 50
+        L.dropW = gear and 40 or 0
+        L.sourceW = math.max(140, contentWidth - L.sourceX - 130 - L.dropW - (gear and 8 or 0))
+        L.dropX = L.sourceX + L.sourceW + 8
+        L.avoidX, L.avoidW = L.dropX + L.dropW, 0
+        L.dungeonX = L.sourceX
+        return L
     end
-    local sourceX = math.max(250, math.floor(contentWidth * 0.30))
-    local nameW = sourceX - 50
-    local rest = math.max(300, contentWidth - sourceX - 200)   -- 200 = owned / done / link
-    local avoidFixed = 150                                     -- enchant column
-    if frame and (frame.layoutMode == "consumables" or frame.layoutMode == "enchants") then
-        avoidFixed = math.floor(rest * 0.45)                   -- materials column
+    local firstX = math.max(250, math.floor(contentWidth * 0.28))
+    L.nameW = firstX - 50
+    local rest = math.max(360, contentWidth - firstX - 200)   -- 200 = owned / done / link
+    if gear then
+        local enchantW, dropW = 140, 44
+        local inner = math.max(200, rest - enchantW - dropW - 30)
+        L.dungeonX, L.dungeonW = firstX, math.floor(inner * 0.42)
+        L.sourceX = L.dungeonX + L.dungeonW + 10
+        L.sourceW = inner - L.dungeonW
+        L.dropX, L.dropW = L.sourceX + L.sourceW + 10, dropW
+        L.avoidX, L.avoidW = L.dropX + dropW + 10, enchantW
+    else
+        local matsW = math.floor(rest * 0.45)
+        L.dungeonX = firstX
+        L.sourceX, L.sourceW = firstX, math.max(180, rest - matsW - 10)
+        L.dropX = L.sourceX + L.sourceW
+        L.avoidX, L.avoidW = L.sourceX + L.sourceW + 10, rest - L.sourceW - 10
     end
-    local sourceW = math.max(180, rest - avoidFixed - 10)
-    local avoidX = sourceX + sourceW + 10
-    local avoidW = rest - sourceW - 10
-    return sourceX, nameW, sourceW, avoidX, avoidW
+    return L
+end
+
+-- "Stratholme: Baron Rivendare" -> "Stratholme", "Baron Rivendare"
+-- "Quest: The Princess Saved? (Blackrock Depths)" -> "Blackrock Depths", "Quest: The Princess Saved?"
+-- "Dungeon Set 2 quest: Saving the Best for Last" -> "Dungeon Set 2", "Quest: Saving the Best for Last"
+function ns.SplitSource(source)
+    if type(source) ~= "string" or source == "" then return "", "" end
+    local q = source:match("^Quest: (.+)$")
+    if q then
+        local name, zone = q:match("^(.-)%s*%(([^()]*)%)$")
+        return zone or "Quest", "Quest: " .. (name or q)
+    end
+    local prefix, qname = source:match("^(.-) quest: (.+)$")
+    if prefix then return prefix, "Quest: " .. qname end
+    local prof = source:match("^Crafted: (.+)$")
+    if prof then return "Crafted", prof end
+    local trash = source:match("^Random trash drop %((.-)%)$")
+    if trash then return trash, "Trash drop" end
+    local where, rest = source:match("^(.-):%s*(.+)$")
+    if where then return where, rest end
+    return "", source
+end
+
+-- Drop chance (percent) of an item from the boss its source names
+function ns.DropChance(itemID, source)
+    local list = ns.DropRates and ns.DropRates[itemID]
+    if not list then return nil end
+    if type(source) == "string" then
+        for _, e in ipairs(list) do
+            if source:find(e[1], 1, true) then return e[2] end
+        end
+    end
+    return list[1][2]
+end
+
+function ns.FormatChance(p)
+    if p >= 10 then return string.format("%d%%", math.floor(p + 0.5)) end
+    return string.format("%.1f%%", p)
+end
+
+-- Sort the gear list by ns.char.sortBy; alternatives / Tier 0 rows stay
+-- under their main item.
+function ns.SortRows(list)
+    local by = ns.char.sortBy or "slot"
+    if by == "slot" and not ns.char.sortDesc then return list end
+    local blocks = {}
+    for i, r in ipairs(list) do
+        if r.isAlt and #blocks > 0 then
+            table.insert(blocks[#blocks].rows, r)
+        else
+            table.insert(blocks, { main = r, rows = { r }, index = i })
+        end
+    end
+    local function key(r)
+        if by == "dungeon" then
+            local d = ns.SplitSource(r.source)
+            return d == "" and "~" or d:lower()
+        elseif by == "boss" then
+            local _, b = ns.SplitSource(r.source)
+            return b:lower()
+        elseif by == "drop" then
+            return ns.DropChance(r.id, r.source) or -1
+        end
+        return 0
+    end
+    for _, b in ipairs(blocks) do b.key = key(b.main) end
+    local desc = ns.char.sortDesc
+    table.sort(blocks, function(a, b)
+        if a.key == b.key then return a.index < b.index end
+        if desc then return a.key > b.key end
+        return a.key < b.key
+    end)
+    local out = {}
+    for _, b in ipairs(blocks) do
+        for _, r in ipairs(b.rows) do table.insert(out, r) end
+    end
+    return out
+end
+
+-- Header positions and labels for the current tab and width
+function ns.LayoutHeaders()
+    if not frame or not frame.headers then return end
+    local H = frame.headers
+    local L = columnLayout(scrollChild:GetWidth())
+    local mode = frame.layoutMode or "bis"
+    local gear = mode == "bis" or mode == "realistic"
+    local crafting = mode == "consumables" or mode == "enchants"
+    local function place(h, x, text, shown)
+        h:ClearAllPoints()
+        h:SetPoint("TOPLEFT", frame, "TOPLEFT", x + 14, -62)
+        local arrow = ""
+        if gear and h.sortKey and (ns.char.sortBy or "slot") == h.sortKey then
+            arrow = ns.char.sortDesc and " v" or " ^"
+        end
+        h:SetText(text .. arrow)
+        h:SetShown(shown)
+    end
+    place(H.item, 4, "ITEM", true)
+    place(H.dungeon, L.dungeonX, "DUNGEON", gear and L.dungeonW > 0)
+    place(H.source, L.sourceX, crafting and "RECIPE / WHERE TO GET IT"
+        or (frame.compact and "WHERE TO GET IT" or "BOSS / SOURCE"), true)
+    place(H.drop, L.dropX, "DROP", gear and L.dropW > 0)
+    place(H.avoid, L.avoidX, crafting and "MATERIALS" or "ENCHANT", not frame.compact)
+    -- sorting only applies to the gear tabs
+    for _, h in pairs(H) do if h.sortKey then h:EnableMouse(gear) end end
 end
 
 local function layoutRow(row)
-    local sourceX, nameW, sourceW, avoidX, avoidW = columnLayout(scrollChild:GetWidth())
-    row.name:SetWidth(nameW - (row.isAlt and 18 or 0))
-    row.slot:SetWidth(nameW)
+    local L = columnLayout(scrollChild:GetWidth())
+    row.name:SetWidth(L.nameW - (row.isAlt and 18 or 0))
+    row.slot:SetWidth(L.nameW)
+    row.dungeon:ClearAllPoints()
+    row.dungeon:SetPoint("LEFT", L.dungeonX, 0)
+    row.dungeon:SetWidth(math.max(1, L.dungeonW))
+    row.dungeon:SetShown(L.dungeonW > 0)
     row.source:ClearAllPoints()
-    row.source:SetPoint("LEFT", sourceX, 0)
-    row.source:SetWidth(sourceW)
+    row.source:SetPoint("LEFT", L.sourceX, 0)
+    row.source:SetWidth(L.sourceW)
+    row.drop:ClearAllPoints()
+    row.drop:SetPoint("LEFT", L.dropX, 0)
+    row.drop:SetWidth(math.max(1, L.dropW))
+    row.drop:SetShown(L.dropW > 0)
     row.avoid:ClearAllPoints()
-    row.avoid:SetPoint("LEFT", avoidX, 0)
-    row.avoid:SetWidth(avoidW)
+    row.avoid:SetPoint("LEFT", L.avoidX, 0)
+    row.avoid:SetWidth(math.max(1, L.avoidW))
     row.avoid:SetShown(not frame.compact)
 end
 
@@ -240,10 +368,35 @@ local function createRow(i)
     row.source:SetWordWrap(true)          -- up to two lines instead of cutting off
     if row.source.SetMaxLines then row.source:SetMaxLines(2) end
 
+    row.dungeon = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    row.dungeon:SetJustifyH("LEFT")
+    row.dungeon:SetJustifyV("MIDDLE")
+    row.dungeon:SetWordWrap(true)
+    if row.dungeon.SetMaxLines then row.dungeon:SetMaxLines(2) end
+
+    row.drop = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    row.drop:SetJustifyH("RIGHT")
+
     row.avoid = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     row.avoid:SetJustifyH("LEFT")
     row.avoid:SetWordWrap(true)
     if row.avoid.SetMaxLines then row.avoid:SetMaxLines(2) end
+
+    -- click area over "where to get it": opens the boss window
+    local srcHit = CreateFrame("Button", nil, row)
+    srcHit:SetPoint("TOPLEFT", row.source, "TOPLEFT", -2, 4)
+    srcHit:SetPoint("BOTTOMRIGHT", row.source, "BOTTOMRIGHT", 2, -4)
+    srcHit:SetScript("OnClick", function() if row.boss then ns.ShowBoss(row.boss) end end)
+    srcHit:SetScript("OnEnter", function(self)
+        if not row.boss then return end
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine(row.boss.name)
+        GameTooltip:AddLine(row.boss.instance or "", 1, 1, 1)
+        GameTooltip:AddLine("Click to see the boss", 0.2, 1, 0.2)
+        GameTooltip:Show()
+    end)
+    srcHit:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    row.srcHit = srcHit
 
     -- hover area over the enchant name: shows what the enchant does
     local enchHit = CreateFrame("Frame", nil, row)
@@ -382,7 +535,24 @@ local function fillRow(row, data)
             src = c.from
         end
     end
+    -- gear tabs: dungeon in its own column, boss / source in this one
+    local splitCols = not data.craft and not frame.compact
+        and (frame.layoutMode == nil or frame.layoutMode == "bis" or frame.layoutMode == "realistic")
+    local dungeon, bossText = ns.SplitSource(data.source)
+    if splitCols then
+        row.dungeon:SetText(dungeon)
+        src = bossText
+    else
+        row.dungeon:SetText("")
+    end
+    local rate = ns.DropChance(data.id, data.source)
+    row.drop:SetText(rate and ns.FormatChance(rate) or "|cff666666-|r")
     if onQuest then src = "|cff33ff33" .. src .. "  (On quest)|r" end
+    -- a Dungeon Journal boss: skull icon, click to view it
+    local boss = ns.FindBoss and ns.FindBoss(data.craft and data.craft.from or data.source)
+    row.boss = boss
+    row.srcHit:SetShown(boss ~= nil)
+    if boss then src = ns.BOSS_ICON .. src end
     if data.note and not data.isPre then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
     row.source:SetText(src)
     row.enchantID = data.enchantID
@@ -458,17 +628,13 @@ function ns.RefreshBrowser()
     local gearList = mode == "bis" or mode == "realistic"
     local realistic = mode == "realistic"
     ns.UpdateListTabs(mode, guide)
-    if headerAvoid then
-        local crafting = mode == "consumables" or mode == "enchants"
-        headerSource:SetText(crafting and "RECIPE / WHERE TO GET IT" or "WHERE TO GET IT")
-        headerAvoid:SetText(crafting and "MATERIALS" or "ENCHANT")
-        headerAvoid:SetShown(not frame.compact)
-    end
+    -- (headers are set in ns.LayoutHeaders)
     if frame.layoutMode ~= mode then
         frame.layoutMode = mode
         local onSize = frame:GetScript("OnSizeChanged")
         if onSize then onSize(frame, frame:GetWidth(), frame:GetHeight()) end
     end
+    ns.LayoutHeaders()
     -- alternatives belong to the BiS list; "hide finished slots" to the gear lists
     if mode ~= "bis" then altCheck:Disable(); altLabel:SetAlpha(0.4) else altCheck:Enable(); altLabel:SetAlpha(1) end
     if mode == "consumables" then doneCheck:Disable(); doneLabel:SetAlpha(0.4) else doneCheck:Enable(); doneLabel:SetAlpha(1) end
@@ -569,6 +735,7 @@ function ns.RefreshBrowser()
         end
     end
 
+    if gearList then list = ns.SortRows(list) end
     for i, data in ipairs(list) do
         fillRow(rows[i] or createRow(i), data)
     end
@@ -849,16 +1016,42 @@ local function createFrame()
     countText:SetPoint("RIGHT", raidButton, "LEFT", -10, 0)
 
     -- column headers
-    local h1 = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    h1:SetPoint("TOPLEFT", 18, -64)
-    h1:SetText("ITEM")
-    local h2 = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    h2:SetPoint("TOPLEFT", 314, -64)
-    headerSource = h2
-    h2:SetText("WHERE TO GET IT")
-    headerAvoid = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    headerAvoid:SetPoint("TOPLEFT", 560, -64)
-    headerAvoid:SetText("ENCHANT")
+    -- column headers; the gear tabs' headers sort the list when clicked
+    local function header(key, text, x)
+        local b = CreateFrame("Button", nil, frame)
+        b:SetSize(100, 16)
+        b:SetPoint("TOPLEFT", x, -62)
+        local fs = b:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        fs:SetPoint("LEFT")
+        fs:SetText(text)
+        b.label, b.baseText, b.sortKey = fs, text, key
+        b.SetText = function(self, t) self.baseText = t; self.label:SetText(t); self:SetWidth(math.max(40, (self.label:GetStringWidth() or 60) + 14)) end
+        if key then
+            b:SetScript("OnClick", function()
+                if ns.char.sortBy == key then ns.char.sortDesc = not ns.char.sortDesc
+                else ns.char.sortBy, ns.char.sortDesc = key, (key == "drop") end
+                ns.RefreshBrowser()
+            end)
+            b:SetScript("OnEnter", function(self)
+                self.label:SetTextColor(1, 1, 1)
+                GameTooltip:SetOwner(self, "ANCHOR_TOP")
+                GameTooltip:AddLine("Click to sort by " .. text:lower())
+                GameTooltip:Show()
+            end)
+            b:SetScript("OnLeave", function(self) self.label:SetTextColor(1, 0.82, 0); GameTooltip:Hide() end)
+        end
+        b:SetText(text)
+        return b
+    end
+    frame.headers = {
+        item = header("slot", "ITEM", 18),
+        dungeon = header("dungeon", "DUNGEON", 300),
+        source = header("boss", "BOSS / SOURCE", 420),
+        drop = header("drop", "DROP", 600),
+        avoid = header(nil, "ENCHANT", 660),
+    }
+    headerSource = frame.headers.source
+    headerAvoid = frame.headers.avoid
     table.insert(frame.wideOnly, headerAvoid)
 
     local scroll = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
@@ -914,9 +1107,7 @@ local function createFrame()
     frame:SetScript("OnSizeChanged", function(self, w)
         scrollChild:SetWidth(w - 46)
         if self.sourceText then self.sourceText:SetWidth(w - 240) end
-        local sourceX, _, _, avoidX = columnLayout(w - 46)
-        headerSource:SetPoint("TOPLEFT", sourceX + 14, -64)
-        headerAvoid:SetPoint("TOPLEFT", avoidX + 14, -64)
+        ns.LayoutHeaders()
         for _, row in ipairs(rows) do
             if row:IsShown() then layoutRow(row) end
         end
