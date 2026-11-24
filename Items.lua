@@ -113,6 +113,49 @@ function ns.GetMySpec()
         end
     end
 
+    return ns.GetActiveSpec()
+end
+
+-- Spec from talent points: the tab with the most points. Forever uses classic
+-- talents, where the retail spec call may not say which tree you're in.
+local function specFromTalents(specs)
+    if not GetNumTalentTabs or not GetTalentTabInfo then return nil end
+    local okN, n = pcall(GetNumTalentTabs)
+    if not okN or type(n) ~= "number" then return nil end
+    local best, bestPts = nil, 0
+    for tab = 1, n do
+        local r = { pcall(GetTalentTabInfo, tab) }
+        if r[1] then
+            local name, pts
+            if type(r[2]) == "number" and type(r[3]) == "string" then
+                name, pts = r[3], r[6]          -- id, name, description, icon, pointsSpent
+            elseif type(r[2]) == "string" then
+                name, pts = r[2], r[4]          -- name, icon, pointsSpent
+            end
+            if type(name) == "string" and type(pts) == "number" and pts > bestPts then
+                for _, sp in ipairs(specs) do
+                    if sp:lower() == name:lower() then best, bestPts = sp, pts end
+                end
+            end
+        end
+    end
+    return best
+end
+
+-- The character's real class and active spec (ignores what the browser shows):
+-- talent points first, then a spec you picked yourself, then the game's spec.
+function ns.GetActiveSpec()
+    local _, playerClass = UnitClass("player")
+    local specs = ns.GetSpecsForClass(playerClass)
+    if #specs == 0 then return playerClass, nil end
+    local t = specFromTalents(specs)
+    if t then return playerClass, t end
+    local pick = ns.char and ns.char.mySpec
+    if pick then
+        for _, s in ipairs(specs) do
+            if s == pick then return playerClass, s end
+        end
+    end
     local ok, idx = pcall(GetSpecialization)
     if ok and idx and GetSpecializationInfo then
         local _, specName = GetSpecializationInfo(idx)
@@ -125,21 +168,10 @@ function ns.GetMySpec()
     return playerClass, specs[1]
 end
 
--- The character's real class and active spec (ignores what the browser shows)
-function ns.GetActiveSpec()
+-- True when the talents decide the spec (then a manual pick isn't needed)
+function ns.SpecFromTalents()
     local _, playerClass = UnitClass("player")
-    local specs = ns.GetSpecsForClass(playerClass)
-    if #specs == 0 then return playerClass, nil end
-    local ok, idx = pcall(GetSpecialization)
-    if ok and idx and GetSpecializationInfo then
-        local _, specName = GetSpecializationInfo(idx)
-        if specName then
-            for _, s in ipairs(specs) do
-                if s:lower() == specName:lower() then return playerClass, s end
-            end
-        end
-    end
-    return playerClass, specs[1]
+    return specFromTalents(ns.GetSpecsForClass(playerClass)) ~= nil
 end
 
 -- Your specs: your active spec first, then up to 5 saved class / spec pairs
@@ -419,6 +451,10 @@ local function queueRefresh()
 end
 
 ns.On("BAG_UPDATE_DELAYED", queueRefresh)
+-- spending talent points can change your spec
+local function talentsChanged() if ns.RefreshBrowser then ns.RefreshBrowser() end end
+ns.On("CHARACTER_POINTS_CHANGED", talentsChanged)
+ns.On("PLAYER_TALENT_UPDATE", talentsChanged)
 ns.On("PLAYER_EQUIPMENT_CHANGED", queueRefresh)
 ns.On("BANKFRAME_OPENED", function() bankOpen = true; queueRefresh() end)
 ns.On("BANKFRAME_CLOSED", function() bankOpen = false end)

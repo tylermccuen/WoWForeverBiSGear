@@ -81,7 +81,7 @@ local handlers = {}
 function ns.On(event, fn)
     if not handlers[event] then
         handlers[event] = {}
-        events:RegisterEvent(event)
+        pcall(events.RegisterEvent, events, event)   -- an event this client lacks is skipped
     end
     table.insert(handlers[event], fn)
 end

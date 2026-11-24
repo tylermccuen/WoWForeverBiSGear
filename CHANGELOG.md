@@ -5,6 +5,7 @@
 - **Up to 5 saved specs:** save up to 5 specs for quick switching (was 3); your own spec is still always first. The spec icons now sit in the title bar, so they no longer run into the checkboxes.
 - **Quest rows:** quest rewards no longer show "Quest" twice. The Dungeon column now names the place (for example Blackrock Spire for the Drakkisath quest trinkets), so they also sort with that dungeon. Reputation rewards (like Darkspear / Theramore Epaulets or The Watchers ring) say "Reputation", Alterac Valley rewards say "Alterac Valley", and world drops say "World drop", instead of leaving the column blank.
 - **Raid check next to the character window:** the "things to fix" heading no longer runs under the Refresh button in the narrow panel.
+- **Your spec is read from your talents:** the gold-ringed "your spec" icon now follows the talent tree you've put the most points in (it could show Beast Mastery for a Marksmanship hunter). If it's ever wrong, right-click it to choose your spec. Its tooltip also says how the spec was picked.
 - **Lower memory use:** the addon only keeps track of items that are on a list (not your whole bags and bank), and skips redrawing when a bag change doesn't touch any of them. Lists are built once and reused, and item tooltips are read once per equipped item instead of on every refresh. Hovering items and looting now make roughly half the memory churn or less, and the saved bank list is much smaller.
 
 ## 1.7.2

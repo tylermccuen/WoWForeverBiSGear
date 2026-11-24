@@ -410,7 +410,20 @@ local function createSpecBar()
             local f = self.entry
             if not f then return end
             if button == "RightButton" then
-                if not f.mine then ns.RemoveSavedSpec(f.class, f.spec); ns.RefreshBrowser() end
+                if not f.mine then ns.RemoveSavedSpec(f.class, f.spec); ns.RefreshBrowser()
+                elseif MenuUtil and MenuUtil.CreateContextMenu then
+                    -- pick your spec by hand when the talents can't tell
+                    MenuUtil.CreateContextMenu(self, function(_, root)
+                        root:CreateTitle("Your spec")
+                        for _, sp in ipairs(ns.GetSpecsForClass(f.class)) do
+                            root:CreateRadio(sp, function() return f.spec == sp end, function()
+                                ns.char.mySpec = sp
+                                ns.char.selectedClass, ns.char.selectedSpec = f.class, sp
+                                ns.RefreshBrowser()
+                            end)
+                        end
+                    end)
+                end
                 return
             end
             ns.char.selectedClass, ns.char.selectedSpec = f.class, f.spec
@@ -422,7 +435,12 @@ local function createSpecBar()
             GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
             GameTooltip:AddLine(classColorHex(f.class) .. f.spec .. " " .. className(f.class) .. "|r")
             if f.mine then
-                GameTooltip:AddLine("Your spec. Always first.", 1, 0.82, 0)
+                GameTooltip:AddLine("Your spec", 1, 0.82, 0)
+                if ns.SpecFromTalents and ns.SpecFromTalents() then
+                    GameTooltip:AddLine("Picked from where your talent points are.", 0.8, 0.8, 0.8, true)
+                else
+                    GameTooltip:AddLine("Right-click to choose your spec if this is wrong.", 0.8, 0.8, 0.8, true)
+                end
             else
                 GameTooltip:AddLine("Saved spec. Right-click to remove.", 0.8, 0.8, 0.8)
             end

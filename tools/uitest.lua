@@ -375,6 +375,27 @@ check("saved specs: your spec first, up to 5 saved", function()
   if #ns.GetMySpecList() ~= 5 then error("remove failed") end
   ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"; ns.RefreshBrowser()
 end)
+check("your spec comes from talent points", function()
+  UnitClass = function() return "Hunter", "HUNTER" end
+  GetSpecialization = function() return 1 end
+  GetSpecializationInfo = function() return 0, "Beast Mastery" end
+  GetNumTalentTabs = function() return 3 end
+  local pts = { 5, 31, 15 }
+  local names = { "Beast Mastery", "Marksmanship", "Survival" }
+  GetTalentTabInfo = function(i) return 100 + i, names[i], "", 0, pts[i] end
+  local _, sp = ns.GetActiveSpec()
+  if sp ~= "Marksmanship" then error("got " .. tostring(sp)) end
+  GetTalentTabInfo = function(i) return names[i], 0, pts[i] end   -- older return order
+  _, sp = ns.GetActiveSpec()
+  if sp ~= "Marksmanship" then error("old order got " .. tostring(sp)) end
+  GetNumTalentTabs, GetTalentTabInfo = nil, nil
+  ns.char.mySpec = "Survival"
+  _, sp = ns.GetActiveSpec()
+  if sp ~= "Survival" then error("manual pick ignored: " .. tostring(sp)) end
+  ns.char.mySpec = nil
+  GetSpecialization = function() return 2 end
+  GetSpecializationInfo = function() return 0, "Marksmanship" end
+end)
 check("ticks clear when the lists change a slot", function()
   ns.char.selectedClass, ns.char.selectedSpec, ns.char.listMode = "HUNTER", "Marksmanship", "bis"
   ns.char.done = {}
