@@ -3,7 +3,7 @@
 ## 1.7.1
 - **Easier to read:** "Where to get it" uses a larger font, gets more room and wraps onto a second line instead of being cut off. The Tier 0 "Needs:" rows drop the long turn-in note (the "For T0.5 quest" label already says it), and the window is a little wider by default. The same goes for the narrower window beside the character window, which now keeps a proper two-line "Where to get it" column.
 - **On quest:** when an item comes from a quest that's in your quest log, its "where to get it" text turns green and says "On quest".
-- **Enchant column:** the "Avoid grouping with" column is gone. In its place, the BiS and Realistic tabs show your spec's enchant for each item's slot, so gear and enchants read as one checklist. The enchant gets a green tick when that item is equipped and already enchanted.
+- **Enchant column:** the "Avoid grouping with" column is gone. In its place, the BiS and Realistic tabs show your spec's enchant for each item's slot, so gear and enchants read as one checklist. The enchant gets a green tick when that item is equipped and already enchanted. Hover an enchant to see what it does, where to get it and what's currently on your equipped item.
 
 ## 1.7.0
 - **Beside the character window:** opening your character window shrinks the browser and moves it right next to it so you can compare your gear; closing the character window puts it back. Turn it off in Settings.

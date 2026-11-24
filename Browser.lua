@@ -109,7 +109,7 @@ end
 local function enchantFor(guide, slot)
     if not guide.enchants then return nil end
     for _, e in ipairs(guide.enchants) do
-        if e[1] == slot then return e[2] end
+        if e[1] == slot then return e[2], e.note, e[3] end
     end
 end
 
@@ -226,6 +226,30 @@ local function createRow(i)
     row.avoid:SetJustifyH("LEFT")
     row.avoid:SetWordWrap(false)
 
+    -- hover area over the enchant name: shows what the enchant does
+    local enchHit = CreateFrame("Frame", nil, row)
+    enchHit:SetPoint("TOPLEFT", row.avoid, "TOPLEFT", -2, 6)
+    enchHit:SetPoint("BOTTOMRIGHT", row.avoid, "BOTTOMRIGHT", 2, -6)
+    enchHit:EnableMouse(true)
+    enchHit:SetScript("OnEnter", function(self)
+        if not row.enchantID then return end
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetItemByID(row.enchantID)
+        if row.enchantNote or row.enchantSource then GameTooltip:AddLine(" ") end
+        if row.enchantNote then GameTooltip:AddLine("Gives: " .. row.enchantNote, 0.2, 1, 0.2) end
+        if row.enchantSource then GameTooltip:AddLine("Get it from: " .. row.enchantSource, 1, 0.82, 0) end
+        local current, enchanted
+        if ns.SlotEnchant then current, enchanted = ns.SlotEnchant(row.slotName) end
+        if enchanted then
+            GameTooltip:AddLine("Your " .. row.slotName:lower() .. " now: " .. (current or "enchanted"), 1, 1, 1)
+        elseif current == nil and enchanted == false and ns.Owned[row.itemID] == "equipped" then
+            GameTooltip:AddLine("Your " .. row.slotName:lower() .. " isn't enchanted yet", 1, 0.4, 0.4)
+        end
+        GameTooltip:Show()
+    end)
+    enchHit:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    row.enchHit = enchHit
+
 
     local link = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
     link:SetSize(64, 22)
@@ -312,6 +336,9 @@ local function fillRow(row, data)
     if data.note and not data.isPre then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
     row.source:SetText(src)
     row.enchantID = data.enchantID
+    row.enchantNote, row.enchantSource = data.enchantNote, data.enchantSource
+    row.slotName, row.itemID = data.slot, data.id
+    row.enchHit:SetShown(data.enchantID ~= nil and not frame.compact)
     enchantCell(row, data)
     local ownedText = OWNED_ICON[ns.Owned[data.id]] or ""
     if frame.compact then ownedText = ownedText:match("^(|T.-|t)") or ownedText end   -- icon only
@@ -445,7 +472,11 @@ function ns.RefreshBrowser()
         if slotOk and not hidden and not (ns.char.missingOnly and owned) then
             r.isNew = mode == "bis" and (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
             r.specKey = specKey
-            r.enchantID = gearList and not r.isAlt and enchantFor(guide, r.slot) or nil
+            if gearList and not r.isAlt then
+                r.enchantID, r.enchantNote, r.enchantSource = enchantFor(guide, r.slot)
+            else
+                r.enchantID, r.enchantNote, r.enchantSource = nil, nil, nil
+            end
             table.insert(list, r)
         end
     end
