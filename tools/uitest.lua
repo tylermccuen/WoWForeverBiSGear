@@ -185,7 +185,7 @@ check("raid check (every spec)", function()
   GetInventoryItemLink = function(_, inv) if inv == 1 then return "|cff0070dd|Hitem:226887:0:0|h[Cap]|h|r" end end
   GetHitModifier = function() return 2 end
   CR_HIT_MELEE, CR_HIT_RANGED, CR_HIT_SPELL = 6, 7, 8
-  GetCombatRatingBonus = function(cr) return cr == 7 and 2.7 or 1.7 end
+  GetCombatRatingBonus = function(cr) return 1.7 end
   GetCritChance = function() return 12.5 end
   UnitDefense = function() return 300, 120 end
   C_Item.GetItemStats = function(link) return { ITEM_MOD_AGILITY_SHORT = 10, ITEM_MOD_STAMINA_SHORT = 8 } end
@@ -195,6 +195,7 @@ check("raid check (every spec)", function()
   end
   C_TooltipInfo = { GetInventoryItem = function(_, inv)
     if inv == 1 then return { lines = { { leftText = "Beastmaster's Cap" }, { leftText = "Enchanted: +8 Agility" } } } end
+    if inv == 6 then return { lines = { { leftText = "Sash of the Grand Hunt" }, { leftText = "Equip: Improves your chance to hit with ranged weapons by 1%." } } } end
     return { lines = { { leftText = "Some Neck" } } }
   end }
   C_Item.GetItemNameByID = function(id) return "Item " .. id end

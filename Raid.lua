@@ -83,6 +83,23 @@ local function maxOf(...)
     return best
 end
 
+-- Sum of "Improves your chance to hit with ranged weapons by x%" on equipped gear
+function ns.RangedOnlyHit()
+    local total = 0
+    if not (C_TooltipInfo and C_TooltipInfo.GetInventoryItem) then return 0 end
+    for inv = 1, 19 do
+        local ok, data = pcall(C_TooltipInfo.GetInventoryItem, "player", inv)
+        if ok and type(data) == "table" and type(data.lines) == "table" then
+            for _, l in ipairs(data.lines) do
+                local t = l.leftText
+                local pct = type(t) == "string" and t:match("hit with ranged weapons by ([%d%.]+)%%")
+                if pct then total = total + (tonumber(pct) or 0) end
+            end
+        end
+    end
+    return total
+end
+
 -- Live character stats (each call guarded: the Forever API may differ)
 function ns.PlayerRaidStats()
     local s = {}
@@ -96,6 +113,10 @@ function ns.PlayerRaidStats()
     end
     s.hitMelee  = hitFor(GetHitModifier, CR_HIT_MELEE)
     s.hitRanged = hitFor(GetHitModifier, CR_HIT_RANGED)
+    -- "+x% hit with ranged weapons" gear (e.g. Sash of the Grand Hunt) isn't in
+    -- the modifier the API returns, so add it from the equipped items' tooltips
+    local extra = ns.RangedOnlyHit()
+    if extra > 0 then s.hitRanged = (s.hitRanged or 0) + extra end
     s.hitSpell  = hitFor(GetSpellHitModifier or GetHitModifier, CR_HIT_SPELL)
     local spellCrit, spellDmg
     for school = 2, 7 do
