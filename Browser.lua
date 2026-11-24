@@ -263,7 +263,7 @@ local function createRow(i)
             if row.craft.recipe then
                 GameTooltip:AddLine(" ")
                 GameTooltip:AddLine(row.craft.recipe, 1, 0.82, 0)
-                if row.craft.from then GameTooltip:AddLine(row.craft.from, 1, 1, 1, true) end
+                GameTooltip:AddLine(row.craft.from or "Where to get it: TBD", 1, 1, 1, true)
             end
             GameTooltip:Show()
             return
@@ -372,8 +372,12 @@ local function fillRow(row, data)
         local c = data.craft
         if c.prof then
             src = "|cffffd100" .. c.prof .. (c.skill and (" " .. c.skill) or "") .. "|r"
-            if c.recipe then src = src .. "  " .. c.recipe .. (c.from and (": " .. c.from) or "") end
-            if not c.recipe then src = src .. "  (learned from a trainer or quest)" end
+            local TBD = "|cff999999TBD|r"
+            if c.recipe then
+                src = src .. "  " .. c.recipe .. ": " .. (c.from or TBD)
+            else
+                src = src .. "  Recipe: " .. TBD
+            end
         elseif c.from then
             src = c.from
         end
