@@ -11,6 +11,8 @@
 
 - **Hunter quivers:** every hunter list now shows both Alterac Valley options as the best picks, Harpy Hide Quiver for bows and Gnoll Skin Bandolier for guns (15% ranged attack speed, Revered with Stormpike Guard / Frostwolf Clan), with Ribbly's Quiver and Bandolier as alternatives.
 
+- **Raid Check tab:** the raid check is now its own tab at the bottom of the browser (next to Consumables), and the "Raid check" button is gone. When you open your character window, the raid check panel opens right beside it (and the compact browser lines up next to that); it closes with the character window. Turn the panel off in Settings. `/bis raid` opens the Raid Check tab.
+
 ## 1.7.1
 - **Recipes and materials:** the Consumables and Enchants tabs now show how each item is made: the profession and skill, the recipe and where it comes from (for example "Recipe: Flask of the Titans: Drop: General Drakkisath"), and a Materials column ("30 Gromsblood, 10 Stonescale Oil, 1 Black Lotus, 1 Crystal Vial"). Hover the materials to see how many of each you already have. Data from kovarel.com's and Wowhead's WoW Forever databases.
 - **Ready to enchant:** on the Enchants tab, a yellow check means you have that slot's BiS or Realistic item, so you could enchant it now; a green check means the equipped item is already enchanted (and the slot is ticked done).

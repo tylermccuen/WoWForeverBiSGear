@@ -394,10 +394,13 @@ local ICON = {
     info = "|TInterface\\RaidFrame\\ReadyCheck-Waiting:14:14|t ",
 }
 
-local panel, body, summary
+-- A "view" is a set of widgets that shows a report: { summary, body, child,
+-- runToken }. There are two: the Raid Check tab in the browser and the panel
+-- next to the character window.
+local views = {}
+local panel   -- the character-window panel
 
-local function render(report)
-    if not panel then return end
+local function render(view, report)
     local parts = {}
     for _, l in ipairs(report.lines) do
         if l.status == "head" then
@@ -406,136 +409,142 @@ local function render(report)
             table.insert(parts, (ICON[l.status] or "") .. l.text)
         end
     end
-    body:SetText(table.concat(parts, "\n"))
+    view.body:SetText(table.concat(parts, "\n"))
     local who = (report.spec or "?") .. " (" .. (report.role or "?") .. ")"
     if report.failed == 0 then
-        summary:SetText("|cff33ff33Raid ready|r  -  " .. who)
+        view.summary:SetText("|cff33ff33Raid ready|r  -  " .. who)
     else
-        summary:SetText(string.format("|cffff5555%d thing%s to fix|r  -  %s", report.failed, report.failed == 1 and "" or "s", who))
+        view.summary:SetText(string.format("|cffff5555%d thing%s to fix|r  -  %s", report.failed, report.failed == 1 and "" or "s", who))
     end
-    panel.scrollChild:SetHeight((body:GetStringHeight() or 0) + 20)
+    view.child:SetHeight((view.body:GetStringHeight() or 0) + 20)
+end
+
+local function refreshView(view)
+    if not (view and view.frame:IsVisible()) then return end
+    -- each run gets a token so a slow earlier run can't overwrite a newer one
+    view.runToken = (view.runToken or 0) + 1
+    local token = view.runToken
+    local ok, err = pcall(ns.RunRaidCheck, function(report)
+        if view.runToken ~= token then return end
+        local ok2, err2 = pcall(render, view, report)
+        if not ok2 then view.body:SetText("|cffff5555Raid check error:|r " .. tostring(err2)) end
+    end)
+    if not ok then
+        view.summary:SetText("|cffff5555Raid check couldn't run|r")
+        view.body:SetText("Please send this to the addon author:\n\n" .. tostring(err))
+    end
 end
 
 function ns.RefreshRaidCheck()
-    if not (panel and panel:IsShown()) then return end
-    -- each run gets a token so a slow earlier run can't overwrite a newer one
-    panel.runToken = (panel.runToken or 0) + 1
-    local token = panel.runToken
-    local ok, err = pcall(ns.RunRaidCheck, function(report)
-        if panel.runToken ~= token then return end
-        local ok2, err2 = pcall(render, report)
-        if not ok2 then
-            body:SetText("|cffff5555Raid check error:|r " .. tostring(err2))
-        end
-    end)
-    if not ok then
-        summary:SetText("|cffff5555Raid check couldn't run|r")
-        body:SetText("Please send this to the addon author:\n\n" .. tostring(err))
-    end
+    for _, v in ipairs(views) do refreshView(v) end
 end
 
--- The panel is a companion docked to the right edge of the browser window:
--- it opens and closes with the browser and moves with it.
+-- Build a report view inside a frame: summary line, Refresh button, scrolling
+-- body and a footer with the targets' sources.
+function ns.CreateRaidView(parent, top, bottom, width)
+    local view = { frame = parent }
+    view.summary = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    view.summary:SetPoint("TOPLEFT", 16, top)
+    view.summary:SetPoint("RIGHT", -100, 0)
+    view.summary:SetJustifyH("LEFT")
+
+    local refresh = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
+    refresh:SetSize(80, 22)
+    refresh:SetPoint("TOPRIGHT", -14, top + 6)
+    refresh:SetText("Refresh")
+    refresh:SetScript("OnClick", function() refreshView(view) end)
+
+    local scroll = CreateFrame("ScrollFrame", nil, parent, "UIPanelScrollFrameTemplate")
+    scroll:SetPoint("TOPLEFT", 14, top - 26)
+    scroll:SetPoint("BOTTOMRIGHT", -32, bottom + 22)
+    view.child = CreateFrame("Frame", nil, scroll)
+    view.child:SetSize(width, 400)
+    scroll:SetScrollChild(view.child)
+
+    view.body = view.child:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    view.body:SetPoint("TOPLEFT", 2, -2)
+    view.body:SetWidth(width - 4)
+    view.body:SetJustifyH("LEFT")
+    view.body:SetJustifyV("TOP")
+    view.body:SetSpacing(4)
+
+    local foot = parent:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    foot:SetPoint("BOTTOMLEFT", 16, bottom)
+    foot:SetPoint("BOTTOMRIGHT", -16, bottom)
+    foot:SetJustifyH("LEFT")
+    foot:SetText("Hit: 8% melee/ranged, 17% spells (conquestcapped.com). Tanks: 440 defense.")
+    foot:SetWordWrap(true)
+
+    view.refresh = function() refreshView(view) end
+    view.setWidth = function(w)
+        view.child:SetWidth(w)
+        view.body:SetWidth(w - 4)
+    end
+    table.insert(views, view)
+    return view
+end
+
+----------------------------------------------------------------------
+-- Panel attached to the character window
+----------------------------------------------------------------------
 local function createPanel()
     panel = CreateFrame("Frame", "ForeverBiSRaidFrame", UIParent, "BasicFrameTemplateWithInset")
     panel:SetWidth(380)
     panel:SetFrameStrata("HIGH")
     panel:EnableMouse(true)
     panel:Hide()
-    -- the template's close button turns the companion off
+    -- close for now (it comes back next time the character window opens)
     if type(panel.CloseButton) == "table" then
         panel.CloseButton:SetScript("OnClick", function()
-            ns.db.raidCompanion = false
             panel:Hide()
+            if ns.UpdateCompact then ns.UpdateCompact() end   -- browser moves next to the character window
         end)
     end
-
     local title = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", 0, -5)
     title:SetText("Raid check")
-
-    summary = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    summary:SetPoint("TOPLEFT", 16, -36)
-    summary:SetPoint("RIGHT", -100, 0)
-    summary:SetJustifyH("LEFT")
-
-    local refresh = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-    refresh:SetSize(80, 22)
-    refresh:SetPoint("TOPRIGHT", -14, -30)
-    refresh:SetText("Refresh")
-    refresh:SetScript("OnClick", ns.RefreshRaidCheck)
-
-    local scroll = CreateFrame("ScrollFrame", nil, panel, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", 14, -62)
-    scroll:SetPoint("BOTTOMRIGHT", -32, 34)
-    local child = CreateFrame("Frame", nil, scroll)
-    child:SetSize(330, 400)
-    scroll:SetScrollChild(child)
-    panel.scrollChild = child
-
-    body = child:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    body:SetPoint("TOPLEFT", 2, -2)
-    body:SetWidth(326)
-    body:SetJustifyH("LEFT")
-    body:SetJustifyV("TOP")
-    body:SetSpacing(4)
-
-    local foot = panel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-    foot:SetPoint("BOTTOMLEFT", 16, 12)
-    foot:SetPoint("BOTTOMRIGHT", -16, 12)
-    foot:SetJustifyH("LEFT")
-    foot:SetText("Hit: 8% melee/ranged, 17% spells (conquestcapped.com). Tanks: 440 defense.")
-    foot:SetWordWrap(true)
-
-    panel:SetScript("OnShow", ns.RefreshRaidCheck)
+    panel.view = ns.CreateRaidView(panel, -36, 12, 330)
+    panel:SetScript("OnShow", function() panel.view.refresh() end)
 end
 
--- Dock to the browser and show / hide with it
+function ns.RaidPanelShown()
+    return panel ~= nil and panel:IsShown()
+end
+
+-- Show beside the character window while it's open (setting on by default)
 function ns.UpdateRaidCompanion()
-    local browser = _G.ForeverBiSFrame
-    if not browser then return end
-    if not panel then createPanel() end
-    panel:SetScale(browser:GetScale())
-    panel:ClearAllPoints()
-    -- dock on the right, or on the left when there's no room on the right
-    local right, screen = browser:GetRight(), UIParent:GetRight()
-    local bs, us = browser:GetEffectiveScale(), UIParent:GetEffectiveScale()
-    local scale = (bs and us and us > 0) and bs / us or 1
-    local width = panel:GetWidth() or 380
-    local noRoomRight = right and screen and (right + width) * scale > screen
-    if noRoomRight and browser.compact then
-        -- the left side is the character window: no room, so hide for now
-        panel:Hide()
-        return
-    end
-    if noRoomRight then
-        panel:SetPoint("TOPRIGHT", browser, "TOPLEFT", 3, 0)
-        panel:SetPoint("BOTTOMRIGHT", browser, "BOTTOMLEFT", 3, 0)
-    else
-        panel:SetPoint("TOPLEFT", browser, "TOPRIGHT", -3, 0)
-        panel:SetPoint("BOTTOMLEFT", browser, "BOTTOMRIGHT", -3, 0)
-    end
-    if browser:IsShown() and ns.db.raidCompanion ~= false then
-        if panel:IsShown() then ns.RefreshRaidCheck() else panel:Show() end
-    else
+    local char = CharacterFrame
+    if not char then return end
+    local want = char:IsShown() and ns.db.raidWithCharacter ~= false
+    if want then
+        if not panel then createPanel() end
+        panel:SetScale(ns.db.windowScale or 1)
+        panel:ClearAllPoints()
+        panel:SetPoint("TOPLEFT", char, "TOPRIGHT", 4, 0)
+        local cs, ps = char:GetEffectiveScale(), panel:GetEffectiveScale()
+        local ratio = (cs and ps and ps > 0) and cs / ps or 1
+        panel:SetHeight(math.max(420, (char:GetHeight() or 420) * ratio))
+        panel:Show()
+    elseif panel then
         panel:Hide()
     end
+    if ns.UpdateCompact then ns.UpdateCompact() end   -- the browser lines up beside it
 end
 
+-- /bis raid: open the browser on the Raid Check tab
 function ns.ToggleRaidCheck()
+    ns.char.listMode = "raid"
     local browser = _G.ForeverBiSFrame
-    if not browser or not browser:IsShown() then
-        ns.db.raidCompanion = true
-        ns.ToggleBrowser()          -- opening the browser brings the companion with it
-        ns.UpdateRaidCompanion()
-        return
-    end
-    ns.db.raidCompanion = (ns.db.raidCompanion == false)
-    ns.UpdateRaidCompanion()
+    if not browser or not browser:IsShown() then ns.ToggleBrowser() else ns.RefreshBrowser() end
 end
+
+ns.On("PLAYER_LOGIN", function()
+    if CharacterFrame and CharacterFrame.HookScript then
+        CharacterFrame:HookScript("OnShow", ns.UpdateRaidCompanion)
+        CharacterFrame:HookScript("OnHide", ns.UpdateRaidCompanion)
+    end
+end)
 
 ns.On("PLAYER_EQUIPMENT_CHANGED", function()
-    if panel and panel:IsShown() then
-        C_Timer.After(0.6, ns.RefreshRaidCheck)   -- after the owned-items refresh
-    end
+    C_Timer.After(0.6, ns.RefreshRaidCheck)   -- after the owned-items refresh
 end)

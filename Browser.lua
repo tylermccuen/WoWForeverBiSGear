@@ -630,6 +630,19 @@ function ns.RefreshBrowser()
     classButton:SetText(classColorHex(ns.char.selectedClass) .. className(ns.char.selectedClass) .. "|r")
     specButton:SetText(ns.char.selectedSpec or "")
     slotButton:SetText("Slot: " .. (ns.char.selectedSlot or "All"))
+    -- Raid Check tab: the report replaces the item list
+    if ns.char.listMode == "raid" then
+        ns.UpdateListTabs("raid", guide)
+        frame.listScroll:Hide()
+        for _, h in pairs(frame.headers or {}) do h:Hide() end
+        countText:SetText("")
+        frame.raidPane:Show()
+        frame.raidPane.view.refresh()
+        return
+    end
+    frame.raidPane:Hide()
+    frame.listScroll:Show()
+
     local mode = "bis"
     if ns.char.listMode == "realistic" and guide.realistic then mode = "realistic"
     elseif ns.char.listMode == "enchants" and guide.enchants then mode = "enchants"
@@ -836,6 +849,7 @@ local LIST_TABS = {
     { mode = "realistic",   text = "Realistic",   tip = "A set most players can finish in a week or two from dungeons, quests and Tier 0.5." },
     { mode = "enchants",    text = "Enchants",    tip = "The enchant, arcanum or armor kit for each slot." },
     { mode = "consumables", text = "Consumables", tip = "Raid shopping list: flask, elixirs, food, weapon oil or stone and potions." },
+    { mode = "raid",        text = "Raid Check",  tip = "Is your character ready to raid? Hit, defense, empty slots, enchants and your gear's stats against the BiS set." },
 }
 
 local function createListTabs()
@@ -877,7 +891,8 @@ end
 function ns.UpdateListTabs(mode, guide)
     if not listTabs then return end
     local have = { bis = true, realistic = guide and guide.realistic ~= nil,
-                   enchants = guide and guide.enchants ~= nil, consumables = guide and guide.consumables ~= nil }
+                   enchants = guide and guide.enchants ~= nil, consumables = guide and guide.consumables ~= nil,
+                   raid = true }
     for i, info in ipairs(LIST_TABS) do
         local tab = listTabs[i]
         if info.mode == mode then
@@ -918,10 +933,7 @@ local function createFrame()
     frame:SetClampedToScreen(true)
     frame:RegisterForDrag("LeftButton")
     frame:SetScript("OnDragStart", frame.StartMoving)
-    frame:SetScript("OnDragStop", function(self)
-        self:StopMovingOrSizing()
-        if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end   -- re-pick the docking side
-    end)
+    frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
     frame:SetScale(ns.db.windowScale or 1)
     frame:SetResizable(true)
     if frame.SetResizeBounds then
@@ -935,14 +947,8 @@ local function createFrame()
     if type(frame.CloseButton) == "table" then
         frame.CloseButton:SetScript("OnClick", function() frame:Hide() end)   -- works in combat
     end
-    frame:HookScript("OnShow", function()
-        ns.UpdateCompact()
-        if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end
-    end)
-    frame:HookScript("OnHide", function()
-        ns.UpdateCompact()      -- leave compact mode so the next open is normal size
-        if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end
-    end)
+    frame:HookScript("OnShow", function() ns.UpdateCompact() end)
+    frame:HookScript("OnHide", function() ns.UpdateCompact() end)   -- leave compact mode so the next open is normal size
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", 0, -5)
@@ -1011,21 +1017,8 @@ local function createFrame()
     doneLabel:SetText("Hide finished")
     frame.wideOnly = { missingCheck, mcLabel, altCheck, altLabel, doneCheck, doneLabel }   -- "where to get it" stays
 
-    local raidButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
-    raidButton:SetSize(96, 20)
-    raidButton:SetPoint("TOPRIGHT", -14, -60)
-    raidButton:SetText("Raid check")
-    raidButton:SetScript("OnClick", function() ns.ToggleRaidCheck() end)
-    raidButton:SetScript("OnEnter", function(self)
-        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
-        GameTooltip:AddLine("Raid check")
-        GameTooltip:AddLine("Checks hit, defense, empty slots and enchants for your spec, and compares your gear's stats with the pre-raid BiS set.", 1, 1, 1, true)
-        GameTooltip:Show()
-    end)
-    raidButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
-
     countText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    countText:SetPoint("RIGHT", raidButton, "LEFT", -10, 0)
+    countText:SetPoint("TOPRIGHT", -40, -62)
 
     -- column headers
     -- column headers; the gear tabs' headers sort the list when clicked
@@ -1069,6 +1062,15 @@ local function createFrame()
     local scroll = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", 12, -78)
     scroll:SetPoint("BOTTOMRIGHT", -32, 44)
+    frame.listScroll = scroll
+
+    -- Raid Check tab content
+    local raidPane = CreateFrame("Frame", nil, frame)
+    raidPane:SetPoint("TOPLEFT", 0, -44)
+    raidPane:SetPoint("BOTTOMRIGHT", 0, 40)
+    raidPane:Hide()
+    raidPane.view = ns.CreateRaidView(raidPane, -12, 4, 600)
+    frame.raidPane = raidPane
     scrollChild = CreateFrame("Frame", nil, scroll)
     scrollChild:SetSize(savedWidth() - 46, 1)
 
@@ -1100,7 +1102,6 @@ local function createFrame()
         if not frame.compact then
             ns.db.windowWidth, ns.db.windowHeight = math.floor(frame:GetWidth()), math.floor(frame:GetHeight())
         end
-        if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end
     end)
     grip:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -1118,6 +1119,7 @@ local function createFrame()
 
     frame:SetScript("OnSizeChanged", function(self, w)
         scrollChild:SetWidth(w - 46)
+        if frame.raidPane then frame.raidPane.view.setWidth(math.max(300, w - 60)) end
         if self.sourceText then self.sourceText:SetWidth(w - 240) end
         ns.LayoutHeaders()
         for _, row in ipairs(rows) do
@@ -1177,8 +1179,6 @@ local function setCompact(on)
         frame.compact = true
         if frame.SetResizeBounds then frame:SetResizeBounds(COMPACT_W - 60, MIN_H, MAX_W, MAX_H) end
         for _, w in ipairs(frame.wideOnly or {}) do w:Hide() end
-        frame:ClearAllPoints()
-        frame:SetPoint("TOPLEFT", CharacterFrame, "TOPRIGHT", 6, 0)
         frame:SetWidth(COMPACT_W)
     else
         frame.compact = false
@@ -1193,7 +1193,15 @@ local function setCompact(on)
     local onSize = frame:GetScript("OnSizeChanged")
     if onSize then onSize(frame, frame:GetWidth(), frame:GetHeight()) end
     ns.RefreshBrowser()
-    if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end
+end
+
+-- Compact: right of the raid check panel if it's open, else right of the
+-- character window
+local function anchorCompact()
+    local raid = _G.ForeverBiSRaidFrame
+    local anchor = (ns.RaidPanelShown and ns.RaidPanelShown() and raid) or CharacterFrame
+    frame:ClearAllPoints()
+    frame:SetPoint("TOPLEFT", anchor, "TOPRIGHT", 4, 0)
 end
 
 -- Compact while both windows are open (and the setting is on)
@@ -1201,11 +1209,7 @@ function ns.UpdateCompact()
     if not frame then return end
     local charOpen = CharacterFrame and CharacterFrame:IsShown()
     setCompact((frame:IsShown() and charOpen and ns.db.compactWithCharacter) and true or false)
+    if frame.compact then anchorCompact() end
 end
-
-ns.On("PLAYER_LOGIN", function()
-    if CharacterFrame and CharacterFrame.HookScript then
-        CharacterFrame:HookScript("OnShow", ns.UpdateCompact)
-        CharacterFrame:HookScript("OnHide", ns.UpdateCompact)
-    end
-end)
+-- (the character window's show / hide hooks are in Raid.lua: they place the
+-- raid panel first, then call ns.UpdateCompact)

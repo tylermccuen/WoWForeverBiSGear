@@ -176,9 +176,22 @@ check("raid check draws even if item data never loads", function()
   ns.WithItem = saveWith
   if calls == 0 then error("nothing drawn while items load") end
 end)
-check("raid companion docks with browser", function()
-  ns.db.raidCompanion = true
+check("raid check tab", function()
+  ns.char.listMode = "raid"; ns.RefreshBrowser()
+  if not _G.ForeverBiSFrame.raidPane:IsShown() then error("raid pane not shown") end
+  ns.char.listMode = "bis"; ns.RefreshBrowser()
+end)
+check("raid panel with the character window", function()
+  local shown = true
+  CharacterFrame = { IsShown = function() return shown end, HookScript = function() end,
+                     GetHeight = function() return 500 end, GetEffectiveScale = function() return 1 end,
+                     GetRight = function() return 400 end }
+  ns.db.raidWithCharacter = true
   ns.UpdateRaidCompanion()
+  if not ns.RaidPanelShown() then error("panel not shown with the character window") end
+  shown = false
+  ns.UpdateRaidCompanion()
+  if ns.RaidPanelShown() then error("panel still shown after closing the character window") end
 end)
 check("raid check (every spec)", function()
   local _GetLink = GetInventoryItemLink

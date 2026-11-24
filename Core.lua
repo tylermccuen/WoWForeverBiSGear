@@ -21,6 +21,7 @@ local accountDefaults = {
     customTemplate   = "https://www.wowhead.com/forever/item={id}",
     windowScale      = 1,
     compactWithCharacter = true,    -- shrink the browser next to the character window
+    raidWithCharacter = true,       -- raid check panel next to the character window
     announceGuild    = false,       -- post new BiS items in guild chat
 }
 

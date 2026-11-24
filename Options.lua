@@ -71,10 +71,14 @@ local function buildPanel()
         "When you open your character window, the browser gets narrower and moves beside it so you can compare your gear. It goes back to normal when you close the character window.",
         function() return ns.db.compactWithCharacter end,
         function(v) ns.db.compactWithCharacter = v; if ns.UpdateCompact then ns.UpdateCompact() end end, c4)
+    local c5b = checkbox(panel, "Show the raid check next to the character window",
+        "When you open your character window, the raid check panel opens beside it. You can also see it any time on the browser's Raid Check tab.",
+        function() return ns.db.raidWithCharacter end,
+        function(v) ns.db.raidWithCharacter = v; if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end end, c5)
     local c6 = checkbox(panel, "Announce new BiS items in guild chat",
         "When you loot or receive an item that's on your spec's BiS list for the first time, posts it with the item link in guild chat.",
         function() return ns.db.announceGuild end,
-        function(v) ns.db.announceGuild = v end, c5)
+        function(v) ns.db.announceGuild = v end, c5b)
 
     -- Link site
     local linkHeader = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
