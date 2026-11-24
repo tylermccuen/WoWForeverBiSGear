@@ -477,6 +477,10 @@ local function render(view, report)
     -- banner
     local b = view.banner
     local ready = report.failed == 0
+    -- next to the character window the panel is narrow: smaller title, shorter button
+    local narrow = W < 420
+    b.title:SetFontObject(narrow and "GameFontNormal" or "GameFontNormalLarge")
+    b.refresh:SetWidth(narrow and 64 or 80)
     b.bg:SetColorTexture(ready and 0.1 or 0.55, ready and 0.45 or 0.08, ready and 0.1 or 0.08, 0.45)
     b.icon:SetTexture(ready and READY_ICON or NOT_ICON)
     if ready then
@@ -667,16 +671,24 @@ function ns.CreateRaidView(parent, top, bottom, width)
     b.icon = b:CreateTexture(nil, "ARTWORK")
     b.icon:SetSize(26, 26)
     b.icon:SetPoint("LEFT", 10, 0)
-    b.title = b:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    b.title:SetPoint("TOPLEFT", 44, -7)
-    b.sub = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    b.sub:SetPoint("TOPLEFT", 44, -27)
-    b.sub:SetTextColor(0.8, 0.8, 0.8)
     local refresh = CreateFrame("Button", nil, b, "UIPanelButtonTemplate")
     refresh:SetSize(80, 22)
     refresh:SetPoint("RIGHT", -10, 0)
     refresh:SetText("Refresh")
     refresh:SetScript("OnClick", function() view.refresh() end)
+    b.refresh = refresh
+    -- title and spec line stop at the Refresh button instead of running under it
+    b.title = b:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    b.title:SetPoint("TOPLEFT", 44, -7)
+    b.title:SetPoint("RIGHT", refresh, "LEFT", -6, 0)
+    b.title:SetJustifyH("LEFT")
+    b.title:SetWordWrap(false)
+    b.sub = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    b.sub:SetPoint("TOPLEFT", 44, -27)
+    b.sub:SetPoint("RIGHT", refresh, "LEFT", -6, 0)
+    b.sub:SetJustifyH("LEFT")
+    b.sub:SetWordWrap(false)
+    b.sub:SetTextColor(0.8, 0.8, 0.8)
     view.banner = b
     -- the summary line some code still writes to
     view.summary = b.title
