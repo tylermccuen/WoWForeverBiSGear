@@ -84,19 +84,54 @@ local function maxOf(...)
 end
 
 -- Sum of "Improves your chance to hit with ranged weapons by x%" on equipped gear
-function ns.RangedOnlyHit()
-    local total = 0
-    if not (C_TooltipInfo and C_TooltipInfo.GetInventoryItem) then return 0 end
-    for inv = 1, 19 do
-        local ok, data = pcall(C_TooltipInfo.GetInventoryItem, "player", inv)
-        if ok and type(data) == "table" and type(data.lines) == "table" then
+local function enchantOf(link)
+    if not link then return nil end
+    local e = link:match("item:%-?%d+:(%-?%d*)")
+    return tonumber(e) or 0
+end
+
+-- What's enchanted on an equipped item. The tooltip's "Enchanted: ..." line
+-- is the most reliable source; the enchant ID in the item link is the backup.
+-- Returns text (or nil), enchanted (boolean).
+local ENCHANT_PREFIX = (ENCHANTED_TOOLTIP_LINE and ENCHANTED_TOOLTIP_LINE:match("^(.-)%%s")) or "Enchanted: "
+-- Reading an item's tooltip builds a large table, so results are kept per
+-- slot until the item there changes. The link includes the enchant, so a new
+-- enchant also counts as a change.
+local tipCache = {}   -- [inv] = { link = ..., enchant = text, enchanted = bool, rangedHit = n }
+
+local function tipInfo(inv)
+    local ok, link = pcall(GetInventoryItemLink, "player", inv)
+    if not ok then link = nil end
+    local c = tipCache[inv]
+    if c and c.link == link then return c end
+    c = { link = link, enchanted = false, rangedHit = 0 }
+    tipCache[inv] = c
+    if not link then return c end
+    if C_TooltipInfo and C_TooltipInfo.GetInventoryItem then
+        local okT, data = pcall(C_TooltipInfo.GetInventoryItem, "player", inv)
+        if okT and type(data) == "table" and type(data.lines) == "table" then
             for _, l in ipairs(data.lines) do
                 local t = l.leftText
-                local pct = type(t) == "string" and t:match("hit with ranged weapons by ([%d%.]+)%%")
-                if pct then total = total + (tonumber(pct) or 0) end
+                if type(t) == "string" then
+                    if not c.enchant and t:sub(1, #ENCHANT_PREFIX) == ENCHANT_PREFIX then
+                        c.enchant, c.enchanted = t:sub(#ENCHANT_PREFIX + 1), true
+                    end
+                    local pct = t:match("hit with ranged weapons by ([%d%.]+)%%")
+                    if pct then c.rangedHit = c.rangedHit + (tonumber(pct) or 0) end
+                end
             end
         end
     end
+    if not c.enchanted then
+        local id = enchantOf(link)
+        if id and id ~= 0 then c.enchanted = true end
+    end
+    return c
+end
+
+function ns.RangedOnlyHit()
+    local total = 0
+    for inv = 1, 19 do total = total + tipInfo(inv).rangedHit end
     return total
 end
 
@@ -163,41 +198,14 @@ local function addStats(into, stats)
     end
 end
 
-local function enchantOf(link)
-    if not link then return nil end
-    local e = link:match("item:%-?%d+:(%-?%d*)")
-    return tonumber(e) or 0
-end
-
--- What's enchanted on an equipped item. The tooltip's "Enchanted: ..." line
--- is the most reliable source; the enchant ID in the item link is the backup.
--- Returns text (or nil), enchanted (boolean).
-local ENCHANT_PREFIX = (ENCHANTED_TOOLTIP_LINE and ENCHANTED_TOOLTIP_LINE:match("^(.-)%%s")) or "Enchanted: "
-local function enchantText(inv, link)
-    if C_TooltipInfo and C_TooltipInfo.GetInventoryItem then
-        local ok, data = pcall(C_TooltipInfo.GetInventoryItem, "player", inv)
-        if ok and type(data) == "table" and type(data.lines) == "table" then
-            for _, l in ipairs(data.lines) do
-                local t = l.leftText
-                if type(t) == "string" and t:sub(1, #ENCHANT_PREFIX) == ENCHANT_PREFIX then
-                    return t:sub(#ENCHANT_PREFIX + 1), true
-                end
-            end
-        end
-    end
-    local id = enchantOf(link)
-    if id and id ~= 0 then return nil, true end
-    return nil, false
-end
-
 -- Equipped item's enchant for an inventory slot: text (or nil), enchanted
 local INV_OF = INV
 function ns.SlotEnchant(slot)
     local inv = INV_OF[slot]
     if not inv then return nil, false end
-    local ok, link = pcall(GetInventoryItemLink, "player", inv)
-    if not ok or not link then return nil, false end
-    return enchantText(inv, link)
+    local c = tipInfo(inv)
+    if not c.link then return nil, false end
+    return c.enchant, c.enchanted
 end
 
 local function itemNameOf(id)
@@ -302,7 +310,7 @@ function ns.RunRaidCheck(cb)
             local slot, inv = row[1], INV[row[1]]
             if inv and not seen[inv] and equipped[inv] then
                 seen[inv] = true
-                local text, enchanted = enchantText(inv, equipped[inv])
+                local text, enchanted = ns.SlotEnchant(slot)
                 if enchanted then
                     line("pass", slot .. ": " .. (text or "enchanted"))
                     table.insert(report.enchants, { slot = slot, ok = true, text = text or "enchanted" })

@@ -2,6 +2,8 @@
 
 ## 1.7.3
 - **Done ticks follow list updates:** a slot you ticked done is remembered together with the items the BiS and Realistic lists had for it (or the enchant). If a later update changes that slot's pick, the tick is cleared and a chat message says which slots changed, so you can check the new items. Slots you own the item for still tick themselves.
+- **Up to 5 saved specs:** save up to 5 specs for quick switching (was 3); your own spec is still always first. The spec icons now sit in the title bar, so they no longer run into the checkboxes.
+- **Lower memory use:** the addon only keeps track of items that are on a list (not your whole bags and bank), and skips redrawing when a bag change doesn't touch any of them. Lists are built once and reused, and item tooltips are read once per equipped item instead of on every refresh. Hovering items and looting now make roughly half the memory churn or less, and the saved bank list is much smaller.
 
 ## 1.7.2
 - **Dungeon, Boss and Drop columns:** on the BiS and Realistic tabs, "Where to get it" is split into a Dungeon column, a Boss / Source column and a Drop column with the drop chance (from kovarel.com's WoW Forever database).

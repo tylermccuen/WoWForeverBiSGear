@@ -32,7 +32,7 @@ local charDefaults = {
     showAlts      = true,
     listMode      = "bis",          -- "bis", "realistic", "enchants" or "consumables"
     hideDone      = false,          -- hide slots where the BiS or Realistic item is owned
-    savedSpecs    = {},             -- up to 3 "CLASS:Spec" picks for quick switching
+    savedSpecs    = {},             -- up to 5 "CLASS:Spec" picks for quick switching
     bankItems     = {},
 }
 

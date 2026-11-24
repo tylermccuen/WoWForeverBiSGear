@@ -142,8 +142,8 @@ function ns.GetActiveSpec()
     return playerClass, specs[1]
 end
 
--- Your specs: your active spec first, then up to 3 saved class / spec pairs
-ns.MAX_SAVED_SPECS = 3
+-- Your specs: your active spec first, then up to 5 saved class / spec pairs
+ns.MAX_SAVED_SPECS = 5
 function ns.GetSavedSpecs()
     ns.char.savedSpecs = ns.char.savedSpecs or {}
     return ns.char.savedSpecs
@@ -241,7 +241,7 @@ local function addPrequest(guide, rows)
     return out
 end
 
-function ns.GetGuideRows(guide, includeAlts, listMode)
+local function buildGuideRows(guide, includeAlts, listMode)
     local faction = UnitFactionGroup("player")
     local rows = {}
     local set = (listMode == "realistic" and guide.realistic) or (listMode == "enchants" and guide.enchants)
@@ -275,6 +275,37 @@ function ns.GetGuideRows(guide, includeAlts, listMode)
     return addPrequest(guide, rows)
 end
 
+-- Rows are cached per guide / list / faction and rebuilt only when what you
+-- own changes (Tier 0 rows depend on it), so tooltips and refreshes don't
+-- build fresh tables every time.
+ns.OwnedVersion = 0
+local rowCache = setmetatable({}, { __mode = "k" })
+local cacheVersion = -1
+local cachedGuides = 0
+
+function ns.GetGuideRows(guide, includeAlts, listMode)
+    if cacheVersion ~= ns.OwnedVersion then
+        wipe(rowCache); cachedGuides = 0
+        cacheVersion = ns.OwnedVersion
+    end
+    local key = (listMode or "bis") .. (includeAlts and "+" or "-") .. (UnitFactionGroup("player") or "")
+    local byGuide = rowCache[guide]
+    if not byGuide then
+        -- keep only a few specs (yours for tooltips, the one on screen)
+        cachedGuides = cachedGuides + 1
+        if cachedGuides > 3 then wipe(rowCache); cachedGuides = 1 end
+        byGuide = {}; rowCache[guide] = byGuide
+    end
+    local rows = byGuide[key]
+    if not rows then
+        rows = buildGuideRows(guide, includeAlts, listMode)
+        byGuide[key] = rows
+    end
+    return rows
+end
+
+function ns.ClearRowCache() wipe(rowCache); cachedGuides = 0 end
+
 -- Asynchronous item data load. cb(itemMixin or nil)
 function ns.WithItem(itemID, cb)
     if not itemID or itemID <= 0 then cb(nil) return end
@@ -294,10 +325,16 @@ local function safeNumSlots(bag)
     return 0
 end
 
+-- Only items the guides list are remembered: a bag full of other things then
+-- costs nothing, and the saved bank list stays small.
+local function wanted(id)
+    return next(ns.ItemIndex) == nil or ns.ItemIndex[id] ~= nil
+end
+
 local function scanContainer(bag, into)
     for slot = 1, safeNumSlots(bag) do
         local ok, id = pcall(C_Container.GetContainerItemID, bag, slot)
-        if ok and type(id) == "number" then into[id] = true end
+        if ok and type(id) == "number" and wanted(id) then into[id] = true end
     end
 end
 
@@ -320,28 +357,53 @@ end
 
 local bankOpen = false
 
+local scratch, bankScratch = {}, {}
+
 function ns.RefreshOwned()
     if not ns.char then return end
-    wipe(ns.Owned)
+    local now = scratch
+    wipe(now)
 
     if bankOpen then
-        local bank = {}
-        for _, bag in ipairs(bankBagIDs()) do scanContainer(bag, bank) end
-        ns.char.bankItems = bank
+        wipe(bankScratch)
+        for _, bag in ipairs(bankBagIDs()) do scanContainer(bag, bankScratch) end
+        local saved = {}
+        for id in pairs(bankScratch) do saved[id] = true end
+        ns.char.bankItems = saved
     end
-    for id in pairs(ns.char.bankItems or {}) do ns.Owned[id] = "bank" end
+    for id in pairs(ns.char.bankItems or {}) do
+        if wanted(id) then now[id] = "bank" end
+    end
 
-    local bags = {}
     local lastBag = (NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4)
-    for bag = 0, lastBag do scanContainer(bag, bags) end
-    for id in pairs(bags) do ns.Owned[id] = "bag" end
+    for bag = 0, lastBag do
+        for slot = 1, safeNumSlots(bag) do
+            local ok, id = pcall(C_Container.GetContainerItemID, bag, slot)
+            if ok and type(id) == "number" and wanted(id) then now[id] = "bag" end
+        end
+    end
 
     -- 0 = ammo, 1-19 = gear, 20-23 = equipped bags (quiver / ammo pouch)
     for invSlot = 0, 23 do
         local ok, id = pcall(GetInventoryItemID, "player", invSlot)
-        if not ok then id = nil end
-        if id then ns.Owned[id] = "equipped" end
+        if ok and id and wanted(id) then now[id] = "equipped" end
     end
+
+    -- nothing the guides care about moved: skip the redraw
+    local changed = false
+    for id, where in pairs(now) do
+        if ns.Owned[id] ~= where then changed = true break end
+    end
+    if not changed then
+        for id in pairs(ns.Owned) do
+            if now[id] == nil then changed = true break end
+        end
+    end
+    if not changed and ns.OwnedVersion > 0 then return end
+
+    wipe(ns.Owned)
+    for id, where in pairs(now) do ns.Owned[id] = where end
+    ns.OwnedVersion = ns.OwnedVersion + 1
 
     if ns.OnOwnedChanged then ns.OnOwnedChanged() end
 end

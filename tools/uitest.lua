@@ -349,7 +349,7 @@ check("quest hover tooltip", function()
   if not ns.QuestsInSource("Quest: For The Horde! / General Drakkisath's Demise") then error("multi quest") end
   UnitFactionGroup = function() return "Alliance" end
 end)
-check("saved specs: your spec first, up to 3 saved", function()
+check("saved specs: your spec first, up to 5 saved", function()
   UnitClass = function() return "Hunter", "HUNTER" end
   GetSpecialization = function() return 2 end
   GetSpecializationInfo = function() return 0, "Marksmanship" end
@@ -358,16 +358,18 @@ check("saved specs: your spec first, up to 3 saved", function()
   assert(ns.SaveSpec("PRIEST", "Holy"))
   assert(ns.SaveSpec("WARRIOR", "Protection"))
   assert(ns.SaveSpec("MAGE", "Fire"))
-  if ns.SaveSpec("DRUID", "Balance") then error("saved a 4th") end
+  assert(ns.SaveSpec("DRUID", "Balance"))
+  assert(ns.SaveSpec("ROGUE", "Combat"))
+  if ns.SaveSpec("WARLOCK", "Affliction") then error("saved a 6th") end
   if ns.SaveSpec("PRIEST", "Holy") then error("saved a duplicate") end
   local list = ns.GetMySpecList()
   local names = {}
   for _, f in ipairs(list) do names[#names+1] = f.spec .. (f.mine and "*" or "") end
   print("   your specs:", table.concat(names, ", "))
-  if not list[1].mine or #list ~= 4 then error("wrong list") end
+  if not list[1].mine or #list ~= 6 then error("wrong list") end
   ns.char.selectedClass, ns.char.selectedSpec = "MAGE", "Fire"; ns.RefreshBrowser()
   ns.RemoveSavedSpec("WARRIOR", "Protection")
-  if #ns.GetMySpecList() ~= 3 then error("remove failed") end
+  if #ns.GetMySpecList() ~= 5 then error("remove failed") end
   ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"; ns.RefreshBrowser()
 end)
 check("ticks clear when the lists change a slot", function()
@@ -385,11 +387,13 @@ check("ticks clear when the lists change a slot", function()
   -- simulate a guide update: new head item
   local old = g.items[1][2]
   g.items[1][2] = 999999
+  ns.ClearRowCache()   -- a real list update arrives with a reload
   local printed
   local savePrint = ns.Print; ns.Print = function(msg) printed = msg end
   ns.RefreshBrowser()
   ns.Print = savePrint
   g.items[1][2] = old
+  ns.ClearRowCache()
   if ns.char.done["HUNTER:Marksmanship"][key] ~= nil then error("tick not cleared") end
   print("   " .. tostring(printed))
   ns.RefreshBrowser()

@@ -317,24 +317,25 @@ end)
 ns.On("PLAYER_LOGIN", scanQuestLog)
 ns.ScanQuestLog = scanQuestLog   -- used by tools/uitest.lua
 
--- Your specs bar: class icons at the top right. The first is always your
--- own active spec (gold ring); then up to 3 saved specs; then "+" to save
--- the spec on screen.
+-- Your specs bar: class icons in the title bar, left of the close button.
+-- The first is always your own active spec (gold ring); then up to 5 saved
+-- specs; then "+" to save the spec on screen. (In the title bar they can't
+-- run into the checkboxes on the button row.)
 local function classIcon(cls)
     return "Interface\\Icons\\ClassIcon_" .. (cls:sub(1, 1) .. cls:sub(2):lower())
 end
 
 local function makeSpecButton(parent)
     local b = CreateFrame("Button", nil, parent)
-    b:SetSize(24, 24)
+    b:SetSize(18, 18)
     b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     b.ring = b:CreateTexture(nil, "BACKGROUND")
-    b.ring:SetPoint("TOPLEFT", -2, 2)
-    b.ring:SetPoint("BOTTOMRIGHT", 2, -2)
+    b.ring:SetPoint("TOPLEFT", -1, 1)
+    b.ring:SetPoint("BOTTOMRIGHT", 1, -1)
     b.icon = b:CreateTexture(nil, "ARTWORK")
     b.icon:SetAllPoints()
     b.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-    b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     b.text:SetPoint("CENTER", 0, 1)
     b:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
     return b
@@ -377,14 +378,15 @@ function ns.UpdateSpecBar()
     for i = #shown, 1, -1 do
         shown[i]:ClearAllPoints()
         shown[i]:SetPoint("TOPRIGHT", bar, "TOPRIGHT", -x, 0)
-        x = x + 30
+        x = x + 22
     end
 end
 
 local function createSpecBar()
     local bar = CreateFrame("Frame", nil, frame)
-    bar:SetSize(160, 24)
-    bar:SetPoint("TOPRIGHT", -16, -31)
+    bar:SetSize(160, 18)
+    bar:SetPoint("TOPRIGHT", -28, -3)
+    bar:SetFrameLevel(frame:GetFrameLevel() + 5)
     bar.buttons = {}
     for i = 1, ns.MAX_SAVED_SPECS + 1 do
         local b = makeSpecButton(bar)
@@ -423,7 +425,7 @@ local function createSpecBar()
     plus:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
         GameTooltip:AddLine("Save " .. (ns.char.selectedSpec or "") .. " " .. className(ns.char.selectedClass or "") .. " to your specs")
-        GameTooltip:AddLine("Keep up to 3 for quick switching. Your own spec is always first.", 1, 1, 1, true)
+        GameTooltip:AddLine("Keep up to 5 for quick switching. Your own spec is always first.", 1, 1, 1, true)
         GameTooltip:Show()
     end)
     plus:SetScript("OnLeave", function() GameTooltip:Hide() end)
