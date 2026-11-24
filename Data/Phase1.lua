@@ -1359,18 +1359,21 @@ local REALISTIC = {
 -- Hunter quiver / ammo (conquestcapped.com). The BiS bows use a quiver and
 -- arrows; the Realistic set's Deep Jungle Rifle is a gun, so it gets an ammo
 -- pouch and bullets.
+local AV_REP = "Alterac Valley: Revered with Stormpike Guard / Frostwolf Clan"
 local HUNTER_AMMO = {
     items = {
-        { "Quiver", 19319, "Alterac Valley: Revered with Stormpike Guard / Frostwolf Clan", note = "15% ranged attack speed" },
+        { "Quiver", 19319, AV_REP, note = "Best quiver (bows, crossbows), 15% ranged attack speed" },
+        { "Quiver", 19320, AV_REP, note = "Best ammo pouch (guns), 15% ranged attack speed" },
         { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Best arrows (bows, crossbows), +20 dps" },
         { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Best bullets (guns), +20.5 dps" },
     },
     alts = {
-        { "Quiver", 2662,  "Blackrock Depths: Ribbly Screwspigot", note = "14% ranged attack speed" },
-        { "Quiver", 19320, "Alterac Valley: Revered with Stormpike Guard / Frostwolf Clan", note = "Ammo pouch for guns, 15% attack speed" },
+        { "Quiver", 2662,  "Blackrock Depths: Ribbly Screwspigot", note = "Quiver, 14% attack speed" },
+        { "Quiver", 2663,  "Blackrock Depths: Ribbly Screwspigot", note = "Ammo pouch for guns, 14% attack speed" },
     },
     realistic = {
-        { "Quiver", 2663,  "Blackrock Depths: Ribbly Screwspigot", note = "Ammo pouch, 14% attack speed" },
+        { "Quiver", 19320, AV_REP, note = "Ammo pouch for guns, 15% attack speed" },
+        { "Quiver", 19319, AV_REP, note = "Quiver for bows, 15% attack speed" },
         { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Best bullets (guns), +20.5 dps" },
         { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Best arrows (bows, crossbows), +20 dps" },
     },

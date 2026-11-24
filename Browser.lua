@@ -662,7 +662,7 @@ function ns.RefreshBrowser()
     local seenSlot = {}
     for _, r in ipairs(listRows) do
         if not r.isAlt and canMark then
-            local n = r.slot == "Ammo" and 1 or ((seenSlot[r.slot] or 0) + 1)   -- one ammo slot
+            local n = (r.slot == "Ammo" or r.slot == "Quiver") and 1 or ((seenSlot[r.slot] or 0) + 1)   -- one ammo / quiver slot
             seenSlot[r.slot] = n
             r.doneKey = (mode == "enchants" and "E:" or "") .. r.slot .. "#" .. n
         end

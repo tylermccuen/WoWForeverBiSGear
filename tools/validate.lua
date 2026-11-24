@@ -31,7 +31,7 @@ local validSlot = {}
 for _, s in ipairs(ns.SlotOrder) do validSlot[s] = true end
 local validClass = {}
 for _, c in ipairs(ns.ClassOrder) do validClass[c] = true end
-local multi = { Finger = 2, Trinket = 2, Ammo = 2 }
+local multi = { Finger = 2, Trinket = 2, Ammo = 2, Quiver = 2 }
 
 local errors, warnings = 0, 0
 local function err(msg) errors = errors + 1; print("ERROR: " .. msg) end

@@ -309,7 +309,7 @@ function ns.RunRaidCheck(cb)
     local function countEquipped(rows)
         local have, total = 0, 0
         for _, r in ipairs(rows) do
-            if not r.isAlt and r.slot ~= "Ammo" then
+            if not r.isAlt and r.slot ~= "Ammo" and r.slot ~= "Quiver" then
                 total = total + 1
                 if ns.Owned[r.id] == "equipped" then have = have + 1 end
             end
