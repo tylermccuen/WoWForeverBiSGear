@@ -54,6 +54,13 @@ local function createWindow()
     win:SetScript("OnDragStart", win.StartMoving)
     win:SetScript("OnDragStop", win.StopMovingOrSizing)
     tinsert(UISpecialFrames, "ForeverBiSBossFrame")
+    -- close with a plain Hide(): the template's close button goes through the
+    -- protected panel manager, which can be blocked in combat
+    if type(win.CloseButton) == "table" then
+        win.CloseButton:SetScript("OnClick", function() win:Hide() end)
+    end
+    -- right-click anywhere closes it too
+    win:SetScript("OnMouseUp", function(self, button) if button == "RightButton" then self:Hide() end end)
 
     win.title = win:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     win.title:SetPoint("TOP", 0, -5)
@@ -67,9 +74,18 @@ local function createWindow()
     model:SetPoint("BOTTOMRIGHT", -12, 12)
     model:EnableMouse(true)
     model.facing = 0
-    model:SetScript("OnMouseDown", function(self) self.dragX = GetCursorPosition() end)
-    model:SetScript("OnMouseUp", function(self) self.dragX = nil end)
+    model:SetScript("OnMouseDown", function(self, button)
+        if button == "LeftButton" then self.dragX = GetCursorPosition() end
+    end)
+    model:SetScript("OnMouseUp", function(self, button)
+        self.dragX = nil
+        if button == "RightButton" then win:Hide() end
+    end)
+    model:SetScript("OnHide", function(self) self.dragX = nil end)
     model:SetScript("OnUpdate", function(self)
+        if self.dragX and IsMouseButtonDown and not IsMouseButtonDown("LeftButton") then
+            self.dragX = nil   -- released outside the model
+        end
         if self.dragX then
             local x = GetCursorPosition()
             self.facing = self.facing + (x - self.dragX) * 0.02
@@ -87,6 +103,11 @@ end
 function ns.ShowBoss(boss)
     if not boss then return end
     if not win then createWindow() end
+    -- clicking the boss that's already shown closes the window
+    if win:IsShown() and win.boss and win.boss.name == boss.name then
+        win:Hide()
+        return
+    end
     win.boss = boss
     win.title:SetText(boss.name)
     win.instance:SetText(boss.instance or "")

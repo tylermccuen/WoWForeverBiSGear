@@ -932,6 +932,9 @@ local function createFrame()
     frame:Hide()
     tinsert(UISpecialFrames, "ForeverBiSFrame")
 
+    if type(frame.CloseButton) == "table" then
+        frame.CloseButton:SetScript("OnClick", function() frame:Hide() end)   -- works in combat
+    end
     frame:HookScript("OnShow", function()
         ns.UpdateCompact()
         if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end
