@@ -51,7 +51,7 @@ CreateAtlasMarkup = function() return "" end
 
 local ns = {}
 local events = {}
-local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Crafting.lua","Data/DropRates.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Boss.lua","Announce.lua","Minimap.lua","Options.lua"}
+local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Crafting.lua","Data/DropRates.lua","Data/Bosses.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Boss.lua","Announce.lua","Minimap.lua","Options.lua"}
 for _,f in ipairs(files) do assert(loadfile(f))("ForeverBestInSlot", ns) end
 local function fire(ev, ...)
   for _, f in ipairs(ALLFRAMES) do
@@ -290,24 +290,21 @@ check("recipe + materials on Consumables and Enchants", function()
   ns.char.listMode = "bis"; ns.RefreshBrowser()
 end)
 check("boss lookup + window", function()
-  EJ_GetNumTiers = function() return 1 end
-  EJ_GetCurrentTier = function() return 1 end
-  EJ_SelectTier = function() end
-  EJ_GetInstanceByIndex = function(i, raid) if i == 1 and not raid then return 236, "Stratholme" end end
-  EJ_GetEncounterInfoByIndex = function(j, inst) if j == 1 then return "Baron Rivendare", "desc", 456 end end
-  EJ_GetEncounterInfo = function() return "Baron Rivendare", "The master of Stratholme." end
-  EJ_GetCreatureInfo = function() return 1, "Baron Rivendare", "", 10729 end
   local tests = {
     ["Stratholme: Baron Rivendare"] = true,
-    ["Drop: Baron Rivendare (Stratholme)"] = true,
-    ["Stratholme: Baron Rivendare / Madam Swyndle (vendor)"] = true,
+    ["Drop: Gyth (Upper Blackrock Spire)"] = true,
+    ["Upper Blackrock Spire: General Drakkisath / Madam Swyndle (vendor)"] = true,
     ["Quest: Baron Rivendare"] = false,
     ["Random trash drop (Stratholme, Scholomance, Blackrock Spire)"] = false,
+    ["Crafted: Leatherworking"] = false,
   }
   for src, want in pairs(tests) do
     if (ns.FindBoss(src) ~= nil) ~= want then error("wrong for " .. src) end
   end
-  ns.ShowBoss(ns.FindBoss("Stratholme: Baron Rivendare"))
+  local b = ns.FindBoss("Stratholme: Baron Rivendare")
+  print("   Baron Rivendare: npc", b.npc, "model", b.display, b.instance)
+  ns.ShowBoss(b)
+  ns.ShowBoss(ns.FindBoss("Lower Blackrock Spire: Shadow Hunter Vosh'gajin"))   -- NPC ID only
   ns.RefreshBrowser()
 end)
 check("dungeon / boss split and sorting", function()

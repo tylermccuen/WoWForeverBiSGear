@@ -2,49 +2,30 @@ local _, ns = ...
 
 --[[
     Boss popup: clicking a boss in "Where to get it" shows a small window with
-    the boss's model, dungeon, Dungeon Journal description and the items on
-    your lists that drop from it, plus a button to open the Dungeon Journal.
+    the boss's 3D model (so you recognise it in the dungeon), its dungeon and
+    the items on your lists that drop from it.
 
     Boss names come from the source text ("Stratholme: Baron Rivendare",
-    "Drop: Gyth (Upper Blackrock Spire)") and are matched against the
-    Dungeon Journal's encounters, so only real journal bosses are clickable.
+    "Drop: Gyth (Upper Blackrock Spire)") and are matched against the boss
+    list in Data/Bosses.lua (NPC and model IDs from kovarel.com / wowhead.com).
+    WoW Forever has no Dungeon Journal, so the model is shown directly.
 ]]
 
-local bossIndex          -- lower-case boss name -> { encounterID, instanceID, instance }
+local bossIndex          -- lower-case boss name -> entry from ns.Bosses
 local SKULL = "|TInterface\\TargetingFrame\\UI-TargetingFrame-Skull:14:14|t "
 
 local function buildIndex()
     bossIndex = {}
-    if not (EJ_GetNumTiers and EJ_SelectTier and EJ_GetInstanceByIndex and EJ_GetEncounterInfoByIndex) then return end
-    local okCur, current = pcall(EJ_GetCurrentTier)
-    local okN, tiers = pcall(EJ_GetNumTiers)
-    for tier = 1, (okN and tiers or 0) do
-        pcall(EJ_SelectTier, tier)
-        for _, isRaid in ipairs({ false, true }) do
-            local i = 1
-            while true do
-                local ok, instanceID, instanceName = pcall(EJ_GetInstanceByIndex, i, isRaid)
-                if not ok or not instanceID then break end
-                local j = 1
-                while true do
-                    local okE, name, _, encounterID = pcall(EJ_GetEncounterInfoByIndex, j, instanceID)
-                    if not okE or not name then break end
-                    bossIndex[name:lower()] = bossIndex[name:lower()]
-                        or { encounterID = encounterID, instanceID = instanceID, instance = instanceName, name = name }
-                    j = j + 1
-                end
-                i = i + 1
-            end
-        end
+    for name, b in pairs(ns.Bosses or {}) do
+        bossIndex[name:lower()] = { name = name, npc = b[1], display = b[2], instance = b[3] }
     end
-    if okCur and current then pcall(EJ_SelectTier, current) end
 end
 
--- Boss named in a source string, if the Dungeon Journal knows it
+-- Boss named in a source string, if it is in the boss list
 function ns.FindBoss(source)
     if type(source) ~= "string" or source == "" then return nil end
     if source:find("[Qq]uest") or source:find("^Vendor") then return nil end
-    if not bossIndex or next(bossIndex) == nil then buildIndex() end   -- retry until the journal answers
+    if not bossIndex then buildIndex() end
     -- "Zone: Boss / Other", "Drop: Boss (Zone)", "Zone: Boss (or ...)"
     local after = source:match(":%s*(.+)$") or source
     for name in (after .. " / "):gmatch("(.-) / ") do
@@ -81,7 +62,7 @@ end
 
 local function createWindow()
     win = CreateFrame("Frame", "ForeverBiSBossFrame", UIParent, "BasicFrameTemplateWithInset")
-    win:SetSize(320, 470)
+    win:SetSize(320, 440)
     win:SetPoint("CENTER", 0, 40)
     win:SetFrameStrata("DIALOG")
     win:SetToplevel(true)
@@ -123,7 +104,7 @@ local function createWindow()
 
     local scroll = CreateFrame("ScrollFrame", nil, win, "UIPanelScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", model, "BOTTOMLEFT", 0, -8)
-    scroll:SetPoint("BOTTOMRIGHT", -32, 44)
+    scroll:SetPoint("BOTTOMRIGHT", -32, 14)
     local child = CreateFrame("Frame", nil, scroll)
     child:SetSize(260, 200)
     scroll:SetScrollChild(child)
@@ -134,23 +115,6 @@ local function createWindow()
     win.text:SetSpacing(3)
     win.child = child
 
-    local open = CreateFrame("Button", nil, win, "UIPanelButtonTemplate")
-    open:SetSize(200, 24)
-    open:SetPoint("BOTTOM", 0, 12)
-    open:SetText("Open in Dungeon Journal")
-    open:SetScript("OnClick", function()
-        local b = win.boss
-        if not b then return end
-        if not EncounterJournal_OpenJournal then
-            local load = (C_AddOns and C_AddOns.LoadAddOn) or LoadAddOn
-            if load then pcall(load, "Blizzard_EncounterJournal") end
-        end
-        if EncounterJournal_OpenJournal then
-            pcall(EncounterJournal_OpenJournal, nil, b.instanceID, b.encounterID)
-        elseif ToggleEncounterJournal then
-            ToggleEncounterJournal()
-        end
-    end)
 end
 
 function ns.ShowBoss(boss)
@@ -160,19 +124,17 @@ function ns.ShowBoss(boss)
     win.title:SetText(boss.name)
     win.instance:SetText(boss.instance or "")
 
-    -- model: first creature of the encounter
+    -- model: by model (display) ID, or by NPC ID
     win.model:ClearModel()
-    local ok, _, _, _, displayInfo = pcall(EJ_GetCreatureInfo, 1, boss.encounterID)
-    if ok and displayInfo then
-        win.model:SetDisplayInfo(displayInfo)
-        win.model.facing = 0
-        win.model:SetFacing(0)
+    if boss.display then
+        win.model:SetDisplayInfo(boss.display)
+    elseif boss.npc then
+        win.model:SetCreature(boss.npc)
     end
+    win.model.facing = 0
+    win.model:SetFacing(0)
 
     local parts = {}
-    local okI, _, description = pcall(EJ_GetEncounterInfo, boss.encounterID)
-    if okI and description and description ~= "" then table.insert(parts, description) end
-
     local items = itemsFromBoss(boss)
     if #items > 0 then
         table.insert(parts, "\n|cffffd100On your lists from this boss:|r")
@@ -188,7 +150,3 @@ function ns.ShowBoss(boss)
     win:Raise()
 end
 
--- Rebuild the boss list if the journal loads later
-ns.On("ADDON_LOADED", function(_, name)
-    if name == "Blizzard_EncounterJournal" then bossIndex = nil end
-end)

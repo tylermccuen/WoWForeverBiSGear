@@ -15,6 +15,7 @@ Data\Phases.lua
 Data\Phase1.lua
 Data\Crafting.lua
 Data\DropRates.lua
+Data\Bosses.lua
 # Add new phases here, e.g.:
 # Data\Phase2.lua
 Items.lua
