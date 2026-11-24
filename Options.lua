@@ -75,8 +75,8 @@ local function buildPanel()
         "When you open your character window, the raid check panel opens beside it. You can also see it any time on the browser's Raid Check tab.",
         function() return ns.db.raidWithCharacter end,
         function(v) ns.db.raidWithCharacter = v; if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end end, c5)
-    local c6 = checkbox(panel, "Announce new BiS items in guild chat",
-        "When you loot or receive an item that's on your spec's BiS list for the first time, posts it with the item link in guild chat.",
+    local c6 = checkbox(panel, "Announce new BiS and Realistic items in guild chat",
+        "When you get an item from your spec's BiS or Realistic list for the first time, posts \"I just got [item] to replace my [item].\" in guild chat.",
         function() return ns.db.announceGuild end,
         function(v) ns.db.announceGuild = v end, c5b)
 

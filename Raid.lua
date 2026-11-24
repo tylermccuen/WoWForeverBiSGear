@@ -228,7 +228,8 @@ function ns.RunRaidCheck(cb)
     local class, spec = ns.GetMySpec()
     local guide = spec and ns.GetGuide(class, spec, ns.LatestPhase())
     local role = ns.SpecRole(class, spec)
-    local report = { class = class, spec = spec, role = role, lines = {}, passed = 0, failed = 0 }
+    local report = { class = class, spec = spec, role = role, lines = {}, passed = 0, failed = 0,
+                     tiles = {}, enchants = {}, bars = {} }
     local function line(status, text)
         table.insert(report.lines, { status = status, text = text })
         if status == "pass" then report.passed = report.passed + 1
@@ -259,8 +260,11 @@ function ns.RunRaidCheck(cb)
         if hit then
             local txt = string.format("%s hit %.2f%% (raid bosses need %d%%)", kind, hit, need)
             line(hit + 0.001 >= need and "pass" or "fail", txt)
+            table.insert(report.tiles, { label = kind .. " hit", value = string.format("%.1f%%", hit),
+                progress = hit / need, ok = hit + 0.001 >= need, note = string.format("Need %d%% for raid bosses", need) })
         else
             line("info", string.format("Hit: couldn't read it. Raid bosses need %d%%: check the Hit Chance tooltip in your character panel.", need))
+            table.insert(report.tiles, { label = kind .. " hit", value = "?", note = string.format("Need %d%%: see character panel", need) })
         end
         if role == "melee" and isWeaponOffhand(equipped[17]) then
             line("info", string.format("Dual wielding: special attacks need %d%%, auto attacks about %d%% to never miss.", T.hitMelee, T.hitDualWieldWhite))
@@ -271,6 +275,8 @@ function ns.RunRaidCheck(cb)
         if st.defense then
             line(st.defense >= T.defense and "pass" or "fail",
                 string.format("Defense %d (uncrittable by raid bosses at %d)", st.defense, T.defense))
+            table.insert(report.tiles, { label = "Defense", value = tostring(st.defense), progress = st.defense / T.defense,
+                ok = st.defense >= T.defense, note = string.format("Need %d to be uncrittable", T.defense) })
         else
             line("info", "Defense: couldn't read it. Tanks need 440 to be uncrittable by raid bosses.")
         end
@@ -286,6 +292,8 @@ function ns.RunRaidCheck(cb)
         end
     end
     line(#empty == 0 and "pass" or "fail", #empty == 0 and "No empty gear slots" or ("Empty slots: " .. table.concat(empty, ", ")))
+    report.emptyTile = { label = "Gear slots", value = #empty == 0 and "All filled" or (#empty .. " empty"), ok = #empty == 0,
+        bad = #empty > 0, note = #empty == 0 and "No empty slots" or table.concat(empty, ", ") }
     -- Enchants, one line per slot on the spec's enchant list
     if guide.enchants then
         line("head", "Enchants")
@@ -297,8 +305,11 @@ function ns.RunRaidCheck(cb)
                 local text, enchanted = enchantText(inv, equipped[inv])
                 if enchanted then
                     line("pass", slot .. ": " .. (text or "enchanted"))
+                    table.insert(report.enchants, { slot = slot, ok = true, text = text or "enchanted" })
                 else
-                    line("fail", slot .. ": not enchanted  |cff999999(BiS: " .. itemNameOf(row[2]) .. ")|r")
+                    local bisName = itemNameOf(row[2]):gsub("^Enchant ", "")
+                    line("fail", slot .. ": not enchanted  |cff999999(BiS: " .. bisName .. ")|r")
+                    table.insert(report.enchants, { slot = slot, ok = false, text = "needs " .. bisName })
                 end
             end
         end
@@ -318,9 +329,11 @@ function ns.RunRaidCheck(cb)
     end
     local h, t = countEquipped(ns.GetGuideRows(guide, false, "bis"))
     line("info", string.format("BiS items equipped: %d / %d", h, t))
+    table.insert(report.bars, { label = "BiS items equipped", text = h .. " / " .. t, progress = t > 0 and h / t or 0, kind = "count" })
     if guide.realistic then
         local rh, rt = countEquipped(ns.GetGuideRows(guide, false, "realistic"))
         line("info", string.format("Realistic items equipped: %d / %d", rh, rt))
+        table.insert(report.bars, { label = "Realistic items equipped", text = rh .. " / " .. rt, progress = rt > 0 and rh / rt or 0, kind = "count" })
     end
 
     -- live stats
@@ -334,6 +347,19 @@ function ns.RunRaidCheck(cb)
     if (role == "healer" or role == "caster") and st.mana and st.mana > 0 then table.insert(shown, "Mana " .. st.mana) end
     if role == "tank" and st.armor then table.insert(shown, "Armor " .. st.armor) end
     if #shown > 0 then line("info", table.concat(shown, "  |  ")) end
+    -- tiles for the live numbers
+    if st.crit then table.insert(report.tiles, { label = "Crit", value = string.format("%.1f%%", st.crit), note = "No cap" }) end
+    local powerLabel, power
+    if role == "healer" then powerLabel, power = "Healing", st.heal
+    elseif role == "caster" then powerLabel, power = "Spell damage", st.spell
+    elseif role == "ranged" then powerLabel, power = "Ranged attack power", st.rap
+    else powerLabel, power = "Attack power", st.ap end
+    if power then table.insert(report.tiles, { label = powerLabel, value = tostring(power), note = "Live from your character" }) end
+    if role == "tank" and st.health then table.insert(report.tiles, { label = "Health", value = tostring(st.health), note = "Live from your character" }) end
+    if (role == "healer" or role == "caster") and st.mana and st.mana > 0 then
+        table.insert(report.tiles, { label = "Mana", value = tostring(st.mana), note = "Live from your character" })
+    end
+    table.insert(report.tiles, report.emptyTile)
 
     -- Gear stats vs the BiS set (async: BiS item data may need loading)
     local bisIds = {}
@@ -366,6 +392,7 @@ function ns.RunRaidCheck(cb)
                 local label
                 for _, g in ipairs(STAT_GROUPS) do if g.key == key then label = g.label end end
                 line(pct >= 90 and "pass" or "info", string.format("%s: %d of %d (%d%%)", label, m, b, pct))
+                table.insert(report.bars, { label = label, text = string.format("%d / %d", m, b), progress = m / b, kind = "stat" })
             end
         end
         if not any then
@@ -400,23 +427,195 @@ local ICON = {
 local views = {}
 local panel   -- the character-window panel
 
+local READY_ICON = "Interface\\RaidFrame\\ReadyCheck-Ready"
+local NOT_ICON = "Interface\\RaidFrame\\ReadyCheck-NotReady"
+local GOLD = { 1, 0.82, 0 }
+
+local function barColor(p, kind)
+    if kind == "count" then return 0.25, 0.55, 1 end
+    if p >= 0.9 then return 0.2, 0.8, 0.2 end
+    if p >= 0.5 then return 1, 0.75, 0.1 end
+    return 0.9, 0.25, 0.2
+end
+
+local function newBar(parent)
+    local bg = parent:CreateTexture(nil, "ARTWORK")
+    bg:SetColorTexture(0, 0, 0, 0.55)
+    bg:SetHeight(6)
+    local fill = parent:CreateTexture(nil, "OVERLAY")
+    fill:SetHeight(6)
+    fill:SetPoint("TOPLEFT", bg, "TOPLEFT")
+    return { bg = bg, fill = fill,
+        set = function(self, p, r, g, b, width)
+            p = math.max(0, math.min(1, p or 0))
+            self.fill:SetColorTexture(r, g, b, 0.95)
+            self.fill:SetWidth(math.max(1, width * p))
+            self.fill:SetShown(p > 0)
+        end }
+end
+
+-- Widgets are created once per view and re-used; get(pool, i, make) returns the i-th
+local function get(pool, i, make)
+    if not pool[i] then pool[i] = make() end
+    return pool[i]
+end
+
 local function render(view, report)
-    local parts = {}
-    for _, l in ipairs(report.lines) do
-        if l.status == "head" then
-            table.insert(parts, (#parts > 0 and "\n" or "") .. "|cffffd100" .. l.text .. "|r")
+    local c = view.child
+    local W = math.max(260, view.width or 600)
+    local wide = W >= 520
+    local y = -2
+
+    -- banner
+    local b = view.banner
+    local ready = report.failed == 0
+    b.bg:SetColorTexture(ready and 0.1 or 0.55, ready and 0.45 or 0.08, ready and 0.1 or 0.08, 0.45)
+    b.icon:SetTexture(ready and READY_ICON or NOT_ICON)
+    if ready then
+        b.title:SetText("|cff33ff33Raid ready|r")
+    else
+        b.title:SetText(string.format("|cffff5555%d thing%s to fix before raid|r", report.failed, report.failed == 1 and "" or "s"))
+    end
+    local className = report.class and ((LOCALIZED_CLASS_NAMES_MALE and LOCALIZED_CLASS_NAMES_MALE[report.class]) or report.class) or ""
+    b.sub:SetText(((report.spec or "?") .. " " .. className):gsub("^%s+", "") .. ", " .. (report.role or "?"))
+    b:ClearAllPoints()
+    b:SetPoint("TOPLEFT", c, "TOPLEFT", 0, y)
+    b:SetSize(W, 46)
+    y = y - 46 - 10
+
+    -- tiles
+    local tiles = report.tiles or {}
+    local perRow = wide and math.min(math.max(#tiles, 1), 5) or 2
+    local gap = 8
+    local tileW = (W - gap * (perRow - 1)) / perRow
+    local tileH = 74
+    for i, t in ipairs(tiles) do
+        local tile = get(view.tiles, i, function()
+            local f = CreateFrame("Frame", nil, c)
+            f.bg = f:CreateTexture(nil, "BACKGROUND")
+            f.bg:SetAllPoints()
+            f.bg:SetColorTexture(1, 1, 1, 0.06)
+            f.label = f:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+            f.label:SetPoint("TOPLEFT", 8, -6)
+            f.label:SetTextColor(0.75, 0.75, 0.75)
+            f.value = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+            f.value:SetPoint("TOPLEFT", 8, -22)
+            f.note = f:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+            f.note:SetPoint("BOTTOMLEFT", 8, 6)
+            f.note:SetJustifyH("LEFT")
+            f.note:SetWordWrap(false)
+            f.bar = newBar(f)
+            f.bar.bg:SetPoint("TOPLEFT", 8, -46)
+            return f
+        end)
+        local row, col = math.floor((i - 1) / perRow), (i - 1) % perRow
+        tile:ClearAllPoints()
+        tile:SetPoint("TOPLEFT", c, "TOPLEFT", col * (tileW + gap), y - row * (tileH + gap))
+        tile:SetSize(tileW, tileH)
+        tile.label:SetText(t.label)
+        tile.label:SetWidth(tileW - 16)
+        tile.value:SetText(t.value)
+        if t.ok then tile.value:SetTextColor(0.2, 1, 0.2)
+        elseif t.bad or (t.progress and not t.ok) then tile.value:SetTextColor(1, 0.35, 0.3)
+        else tile.value:SetTextColor(1, 1, 1) end
+        tile.note:SetText(t.note or "")
+        tile.note:SetWidth(tileW - 16)
+        tile.bar.bg:SetWidth(tileW - 16)
+        if t.progress then
+            tile.bar.bg:Show()
+            local r, g, bb = t.ok and 0.2 or 0.9, t.ok and 0.8 or 0.25, t.ok and 0.2 or 0.2
+            tile.bar:set(t.progress, r, g, bb, tileW - 16)
         else
-            table.insert(parts, (ICON[l.status] or "") .. l.text)
+            tile.bar.bg:Hide(); tile.bar.fill:Hide()
+        end
+        tile:Show()
+    end
+    for i = #tiles + 1, #view.tiles do view.tiles[i]:Hide() end
+    local tileRows = math.ceil(#tiles / perRow)
+    y = y - tileRows * (tileH + gap) - 6
+
+    -- two sections: enchants and gear vs BiS (side by side when wide)
+    local colW = wide and (W - 16) / 2 or W
+    local leftY, rightY = y, y
+    local rightX = wide and (colW + 16) or 0
+    local function heading(fs, text, x, yy)
+        fs:ClearAllPoints()
+        fs:SetPoint("TOPLEFT", c, "TOPLEFT", x, yy)
+        fs:SetText(text)
+        fs:Show()
+        return yy - 20
+    end
+
+    -- enchants
+    local ench = report.enchants or {}
+    local done = 0
+    for _, e in ipairs(ench) do if e.ok then done = done + 1 end end
+    view.enchHead:SetShown(#ench > 0)
+    if #ench > 0 then
+        leftY = heading(view.enchHead, "Enchants  |cffaaaaaa" .. done .. " / " .. #ench .. "|r", 0, leftY)
+    end
+    -- unenchanted first
+    table.sort(ench, function(a, bb) if a.ok ~= bb.ok then return not a.ok end return false end)
+    for i, e in ipairs(ench) do
+        local fs = get(view.enchLines, i, function()
+            local f = c:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+            f:SetJustifyH("LEFT")
+            f:SetWordWrap(false)
+            return f
+        end)
+        fs:ClearAllPoints()
+        fs:SetPoint("TOPLEFT", c, "TOPLEFT", 0, leftY)
+        fs:SetWidth(colW)
+        local icon = "|T" .. (e.ok and READY_ICON or NOT_ICON) .. ":14:14|t "
+        fs:SetText(icon .. e.slot .. "  " .. (e.ok and "|cffaaaaaa" or "|cff888888") .. e.text .. "|r")
+        fs:Show()
+        leftY = leftY - 18
+    end
+    for i = #ench + 1, #view.enchLines do view.enchLines[i]:Hide() end
+
+    -- gear vs BiS
+    if not wide then rightY = leftY - 10 end
+    local bars = report.bars or {}
+    view.gearHead:SetShown(#bars > 0)
+    if #bars > 0 then rightY = heading(view.gearHead, "Gear vs pre-raid BiS", rightX, rightY) end
+    for i, bar in ipairs(bars) do
+        local row = get(view.bars, i, function()
+            local f = { label = c:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall"),
+                        value = c:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall") }
+            f.value:SetJustifyH("RIGHT")
+            f.value:SetTextColor(0.7, 0.7, 0.7)
+            f.bar = newBar(c)
+            return f
+        end)
+        row.label:ClearAllPoints(); row.label:SetPoint("TOPLEFT", c, "TOPLEFT", rightX, rightY)
+        row.label:SetText(bar.label); row.label:Show()
+        row.value:ClearAllPoints(); row.value:SetPoint("TOPRIGHT", c, "TOPLEFT", rightX + colW, rightY)
+        row.value:SetText(bar.text); row.value:Show()
+        row.bar.bg:ClearAllPoints(); row.bar.bg:SetPoint("TOPLEFT", c, "TOPLEFT", rightX, rightY - 15)
+        row.bar.bg:SetWidth(colW); row.bar.bg:Show()
+        local r, g, bb = barColor(bar.progress or 0, bar.kind)
+        row.bar:set(bar.progress, r, g, bb, colW)
+        rightY = rightY - 30
+    end
+    for i = #bars + 1, #view.bars do
+        local row = view.bars[i]
+        row.label:Hide(); row.value:Hide(); row.bar.bg:Hide(); row.bar.fill:Hide()
+    end
+
+    -- notes that don't fit a tile (dual wield, can't-read messages)
+    local notes = {}
+    for _, l in ipairs(report.lines) do
+        if l.status == "info" and (l.text:find("^Dual wielding") or l.text:find("couldn't read") or l.text:find("^Loading") or l.text:find("^No BiS list")) then
+            table.insert(notes, l.text)
         end
     end
-    view.body:SetText(table.concat(parts, "\n"))
-    local who = (report.spec or "?") .. " (" .. (report.role or "?") .. ")"
-    if report.failed == 0 then
-        view.summary:SetText("|cff33ff33Raid ready|r  -  " .. who)
-    else
-        view.summary:SetText(string.format("|cffff5555%d thing%s to fix|r  -  %s", report.failed, report.failed == 1 and "" or "s", who))
-    end
-    view.child:SetHeight((view.body:GetStringHeight() or 0) + 20)
+    local bottom = math.min(leftY, rightY) - 8
+    view.notes:ClearAllPoints()
+    view.notes:SetPoint("TOPLEFT", c, "TOPLEFT", 0, bottom)
+    view.notes:SetWidth(W)
+    view.notes:SetText(table.concat(notes, "\n"))
+    bottom = bottom - (view.notes:GetStringHeight() or 0) - 10
+    c:SetHeight(-bottom + 10)
 end
 
 local function refreshView(view)
@@ -426,7 +625,9 @@ local function refreshView(view)
     local token = view.runToken
     local ok, err = pcall(ns.RunRaidCheck, function(report)
         if view.runToken ~= token then return end
+        view.last = report
         local ok2, err2 = pcall(render, view, report)
+        view.lastError = (not ok2) and tostring(err2) or nil
         if not ok2 then view.body:SetText("|cffff5555Raid check error:|r " .. tostring(err2)) end
     end)
     if not ok then
@@ -442,31 +643,43 @@ end
 -- Build a report view inside a frame: summary line, Refresh button, scrolling
 -- body and a footer with the targets' sources.
 function ns.CreateRaidView(parent, top, bottom, width)
-    local view = { frame = parent }
-    view.summary = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    view.summary:SetPoint("TOPLEFT", 16, top)
-    view.summary:SetPoint("RIGHT", -100, 0)
-    view.summary:SetJustifyH("LEFT")
-
-    local refresh = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-    refresh:SetSize(80, 22)
-    refresh:SetPoint("TOPRIGHT", -14, top + 6)
-    refresh:SetText("Refresh")
-    refresh:SetScript("OnClick", function() refreshView(view) end)
+    local view = { frame = parent, width = width, tiles = {}, enchLines = {}, bars = {} }
 
     local scroll = CreateFrame("ScrollFrame", nil, parent, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", 14, top - 26)
+    scroll:SetPoint("TOPLEFT", 14, top)
     scroll:SetPoint("BOTTOMRIGHT", -32, bottom + 22)
     view.child = CreateFrame("Frame", nil, scroll)
     view.child:SetSize(width, 400)
     scroll:SetScrollChild(view.child)
 
-    view.body = view.child:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    view.body:SetPoint("TOPLEFT", 2, -2)
-    view.body:SetWidth(width - 4)
-    view.body:SetJustifyH("LEFT")
-    view.body:SetJustifyV("TOP")
-    view.body:SetSpacing(4)
+    -- banner (status + Refresh)
+    local b = CreateFrame("Frame", nil, view.child)
+    b.bg = b:CreateTexture(nil, "BACKGROUND")
+    b.bg:SetAllPoints()
+    b.icon = b:CreateTexture(nil, "ARTWORK")
+    b.icon:SetSize(26, 26)
+    b.icon:SetPoint("LEFT", 10, 0)
+    b.title = b:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    b.title:SetPoint("TOPLEFT", 44, -7)
+    b.sub = b:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    b.sub:SetPoint("TOPLEFT", 44, -27)
+    b.sub:SetTextColor(0.8, 0.8, 0.8)
+    local refresh = CreateFrame("Button", nil, b, "UIPanelButtonTemplate")
+    refresh:SetSize(80, 22)
+    refresh:SetPoint("RIGHT", -10, 0)
+    refresh:SetText("Refresh")
+    refresh:SetScript("OnClick", function() view.refresh() end)
+    view.banner = b
+    -- the summary line some code still writes to
+    view.summary = b.title
+
+    view.enchHead = view.child:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    view.gearHead = view.child:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    view.notes = view.child:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    view.notes:SetJustifyH("LEFT")
+    view.notes:SetTextColor(0.75, 0.75, 0.75)
+    -- plain text area for errors
+    view.body = view.notes
 
     local foot = parent:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     foot:SetPoint("BOTTOMLEFT", 16, bottom)
@@ -477,8 +690,12 @@ function ns.CreateRaidView(parent, top, bottom, width)
 
     view.refresh = function() refreshView(view) end
     view.setWidth = function(w)
+        view.width = w
         view.child:SetWidth(w)
-        view.body:SetWidth(w - 4)
+        if view.last then
+            local ok, err = pcall(render, view, view.last)
+            view.lastError = (not ok) and tostring(err) or nil
+        end
     end
     table.insert(views, view)
     return view
@@ -503,7 +720,7 @@ local function createPanel()
     local title = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", 0, -5)
     title:SetText("Raid check")
-    panel.view = ns.CreateRaidView(panel, -36, 12, 330)
+    panel.view = ns.CreateRaidView(panel, -30, 12, 330)
     panel:SetScript("OnShow", function() panel.view.refresh() end)
 end
 

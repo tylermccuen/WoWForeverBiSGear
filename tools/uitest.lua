@@ -179,6 +179,20 @@ end)
 check("raid check tab", function()
   ns.char.listMode = "raid"; ns.RefreshBrowser()
   if not _G.ForeverBiSFrame.raidPane:IsShown() then error("raid pane not shown") end
+  local v = _G.ForeverBiSFrame.raidPane.view
+  for _, cls in ipairs(ns.ClassOrder) do for _, sp in ipairs(ns.GetSpecsForClass(cls)) do
+    ns.char.selectedClass, ns.char.selectedSpec = cls, sp
+    UnitClass = function() return cls, cls end
+    v.refresh()
+    if v.lastError then error(cls .. " " .. sp .. ": " .. v.lastError) end
+    v.setWidth(300)   -- narrow layout too
+    if v.lastError then error(cls .. " " .. sp .. " narrow: " .. v.lastError) end
+    v.setWidth(700)
+    if v.lastError then error(cls .. " " .. sp .. " wide: " .. v.lastError) end
+  end end
+  ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"
+  UnitClass = function() return "Hunter", "HUNTER" end
+  print("   dashboard rendered for every spec, wide and narrow")
   ns.char.listMode = "bis"; ns.RefreshBrowser()
 end)
 check("raid panel with the character window", function()
