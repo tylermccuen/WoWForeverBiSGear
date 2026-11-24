@@ -14,13 +14,15 @@ local function savedWidth()
 end
 
 -- Column positions follow the window width
-local COMPACT_W = 600   -- width beside the character window
+local COMPACT_W = 660   -- width beside the character window
 
 local function columnLayout(contentWidth)
     if frame and frame.compact then
-        -- compact: no source / avoid columns; the source goes under the item name
-        local nameW = math.max(200, contentWidth - 250)
-        return nameW + 50, nameW, 0, nameW + 50, 0
+        -- compact: item, where to get it (two lines), then done / link; no enchant column
+        local nameW = 180
+        local sourceX = nameW + 50
+        local sourceW = math.max(160, contentWidth - sourceX - 130)
+        return sourceX, nameW, sourceW, sourceX + sourceW, 0
     end
     local sourceX = math.max(250, math.floor(contentWidth * 0.30))
     local nameW = sourceX - 50
@@ -42,7 +44,6 @@ local function layoutRow(row)
     row.avoid:ClearAllPoints()
     row.avoid:SetPoint("LEFT", avoidX, 0)
     row.avoid:SetWidth(avoidW)
-    row.source:SetShown(not frame.compact)
     row.avoid:SetShown(not frame.compact)
 end
 
@@ -304,9 +305,7 @@ local function fillRow(row, data)
     if data.isNew then slotText = "|cff1eff00NEW|r  " .. slotText end
     if data.faction then slotText = slotText .. "  |cffffd100(" .. data.faction .. ")|r" end
     local onQuest = ns.OnSourceQuest(data.source)
-    if frame.compact and data.source then
-        slotText = slotText .. (onQuest and "  |cff33ff33" or "  |cff999999") .. data.source .. "|r"
-    end
+
     row.slot:SetText(slotText)
     local src = data.source or ""
     if onQuest then src = "|cff33ff33" .. src .. "  (On quest)|r" end
@@ -315,6 +314,7 @@ local function fillRow(row, data)
     row.enchantID = data.enchantID
     enchantCell(row, data)
     local ownedText = OWNED_ICON[ns.Owned[data.id]] or ""
+    if frame.compact then ownedText = ownedText:match("^(|T.-|t)") or ownedText end   -- icon only
     if ownedText == "" and data.isDone then ownedText = "|cff33ff33Done|r" end
     row.owned:SetText(ownedText)
     row.doneKey, row.specKey, row.autoDone = data.doneKey, data.specKey, data.autoDone
@@ -711,7 +711,7 @@ local function createFrame()
     doneLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     doneLabel:SetPoint("LEFT", doneCheck, "RIGHT", 2, 0)
     doneLabel:SetText("Hide finished")
-    frame.wideOnly = { missingCheck, mcLabel, altCheck, altLabel, doneCheck, doneLabel }
+    frame.wideOnly = { missingCheck, mcLabel, altCheck, altLabel, doneCheck, doneLabel }   -- "where to get it" stays
 
     local raidButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     raidButton:SetSize(96, 20)
@@ -740,7 +740,6 @@ local function createFrame()
     headerAvoid = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     headerAvoid:SetPoint("TOPLEFT", 560, -64)
     headerAvoid:SetText("ENCHANT")
-    table.insert(frame.wideOnly, headerSource)
     table.insert(frame.wideOnly, headerAvoid)
 
     local scroll = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
