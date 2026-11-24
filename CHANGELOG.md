@@ -5,6 +5,8 @@
 - **Sorting:** click the ITEM, DUNGEON, BOSS / SOURCE or DROP header to sort the list; click again to reverse it. Sort by dungeon to see everything one run can give you, or by drop to see the best odds first. Alternatives and Tier 0 pieces stay under their item.
 - **Boss window:** bosses get a skull icon; click one to see the boss's 3D model (drag to turn it) so you recognise it in the dungeon, and its dungeon. Recipes that drop from a boss (like Flask of the Titans from General Drakkisath) work too. 73 dungeon bosses are included.
 
+- **Quest pickup info:** hover a quest in Boss / Source to see who gives it, where (zone and map coordinates, your faction first) and the level needed. Tier 0.5 set quests also say which Tier 0 pieces they upgrade, and the Dungeon column now says "Tier 0.5 set" instead of "Dungeon Set 2".
+
 ## 1.7.1
 - **Recipes and materials:** the Consumables and Enchants tabs now show how each item is made: the profession and skill, the recipe and where it comes from (for example "Recipe: Flask of the Titans: Drop: General Drakkisath"), and a Materials column ("30 Gromsblood, 10 Stonescale Oil, 1 Black Lotus, 1 Crystal Vial"). Hover the materials to see how many of each you already have. Data from kovarel.com's and Wowhead's WoW Forever databases.
 - **Ready to enchant:** on the Enchants tab, a yellow check means you have that slot's BiS or Realistic item, so you could enchant it now; a green check means the equipped item is already enchanted (and the slot is ticked done).

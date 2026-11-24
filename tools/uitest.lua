@@ -51,7 +51,7 @@ CreateAtlasMarkup = function() return "" end
 
 local ns = {}
 local events = {}
-local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Crafting.lua","Data/DropRates.lua","Data/Bosses.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Boss.lua","Announce.lua","Minimap.lua","Options.lua"}
+local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Crafting.lua","Data/DropRates.lua","Data/Bosses.lua","Data/Quests.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Boss.lua","Quests.lua","Announce.lua","Minimap.lua","Options.lua"}
 for _,f in ipairs(files) do assert(loadfile(f))("ForeverBestInSlot", ns) end
 local function fire(ev, ...)
   for _, f in ipairs(ALLFRAMES) do
@@ -311,7 +311,7 @@ check("dungeon / boss split and sorting", function()
   local cases = {
     { "Stratholme: Baron Rivendare", "Stratholme", "Baron Rivendare" },
     { "Quest: The Princess Saved? (Blackrock Depths)", "Blackrock Depths", "Quest: The Princess Saved?" },
-    { "Dungeon Set 2 quest: Saving the Best for Last", "Dungeon Set 2", "Quest: Saving the Best for Last" },
+    { "Dungeon Set 2 quest: Saving the Best for Last", "Tier 0.5 set", "Quest: Saving the Best for Last" },
     { "Crafted: Leatherworking", "Crafted", "Leatherworking" },
     { "Random trash drop (Stratholme, Scholomance, Blackrock Spire)", "Stratholme, Scholomance, Blackrock Spire", "Trash drop" },
     { "Stormpike Guard / Frostwolf Clan (Exalted)", "", "Stormpike Guard / Frostwolf Clan (Exalted)" },
@@ -337,5 +337,17 @@ check("dungeon / boss split and sorting", function()
   print("   by dungeon:", table.concat(ids, ","))
   ns.char.sortBy, ns.char.sortDesc = "slot", false
   ns.char.listMode = "bis"; ns.RefreshBrowser()
+end)
+check("quest hover tooltip", function()
+  local lines = {}
+  local tt = { AddLine = function(_, t) lines[#lines+1] = t end,
+               AddDoubleLine = function(_, a, b) lines[#lines+1] = a .. "  |  " .. b end }
+  UnitFactionGroup = function() return "Horde" end
+  local q = ns.QuestsInSource("Dungeon Set 2 quest: Saving the Best for Last")
+  if not q then error("quest not found") end
+  ns.AddQuestTooltip(tt, q)
+  for _, l in ipairs(lines) do print("   " .. l) end
+  if not ns.QuestsInSource("Quest: For The Horde! / General Drakkisath's Demise") then error("multi quest") end
+  UnitFactionGroup = function() return "Alliance" end
 end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

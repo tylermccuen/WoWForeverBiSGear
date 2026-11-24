@@ -65,7 +65,10 @@ function ns.SplitSource(source)
         return zone or "Quest", "Quest: " .. (name or q)
     end
     local prefix, qname = source:match("^(.-) quest: (.+)$")
-    if prefix then return prefix, "Quest: " .. qname end
+    if prefix then
+        if prefix == "Dungeon Set 2" then prefix = "Tier 0.5 set" end
+        return prefix, "Quest: " .. qname
+    end
     local prof = source:match("^Crafted: (.+)$")
     if prof then return "Crafted", prof end
     local trash = source:match("^Random trash drop %((.-)%)$")
@@ -388,12 +391,17 @@ local function createRow(i)
     srcHit:SetPoint("BOTTOMRIGHT", row.source, "BOTTOMRIGHT", 2, -4)
     srcHit:SetScript("OnClick", function() if row.boss then ns.ShowBoss(row.boss) end end)
     srcHit:SetScript("OnEnter", function(self)
-        if not row.boss then return end
-        GameTooltip:SetOwner(self, "ANCHOR_TOP")
-        GameTooltip:AddLine(row.boss.name)
-        GameTooltip:AddLine(row.boss.instance or "", 1, 1, 1)
-        GameTooltip:AddLine("Click to see the boss", 0.2, 1, 0.2)
-        GameTooltip:Show()
+        if row.boss then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(row.boss.name)
+            GameTooltip:AddLine(row.boss.instance or "", 1, 1, 1)
+            GameTooltip:AddLine("Click to see the boss", 0.2, 1, 0.2)
+            GameTooltip:Show()
+        elseif row.quests then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            ns.AddQuestTooltip(GameTooltip, row.quests)
+            GameTooltip:Show()
+        end
     end)
     srcHit:SetScript("OnLeave", function() GameTooltip:Hide() end)
     row.srcHit = srcHit
@@ -551,7 +559,8 @@ local function fillRow(row, data)
     -- a Dungeon Journal boss: skull icon, click to view it
     local boss = ns.FindBoss and ns.FindBoss(data.craft and data.craft.from or data.source)
     row.boss = boss
-    row.srcHit:SetShown(boss ~= nil)
+    row.quests = (not boss) and ns.QuestsInSource and ns.QuestsInSource(data.craft and data.craft.from or data.source) or nil
+    row.srcHit:SetShown(boss ~= nil or row.quests ~= nil)
     if boss then src = ns.BOSS_ICON .. src end
     if data.note and not data.isPre then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
     row.source:SetText(src)

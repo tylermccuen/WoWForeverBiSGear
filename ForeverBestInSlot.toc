@@ -16,6 +16,7 @@ Data\Phase1.lua
 Data\Crafting.lua
 Data\DropRates.lua
 Data\Bosses.lua
+Data\Quests.lua
 # Add new phases here, e.g.:
 # Data\Phase2.lua
 Items.lua
@@ -24,6 +25,7 @@ Tooltip.lua
 Browser.lua
 Raid.lua
 Boss.lua
+Quests.lua
 Announce.lua
 Minimap.lua
 Options.lua
