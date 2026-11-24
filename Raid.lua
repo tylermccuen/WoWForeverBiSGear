@@ -190,6 +190,16 @@ local function enchantText(inv, link)
     return nil, false
 end
 
+-- Equipped item's enchant for an inventory slot: text (or nil), enchanted
+local INV_OF = INV
+function ns.SlotEnchant(slot)
+    local inv = INV_OF[slot]
+    if not inv then return nil, false end
+    local ok, link = pcall(GetInventoryItemLink, "player", inv)
+    if not ok or not link then return nil, false end
+    return enchantText(inv, link)
+end
+
 local function itemNameOf(id)
     local name = C_Item.GetItemNameByID and C_Item.GetItemNameByID(id)
     if not name and GetItemInfo then name = GetItemInfo(id) end

@@ -1,5 +1,8 @@
 # Forever Best In Slot
 
+## 1.7.1
+- **Enchant column:** the "Avoid grouping with" column is gone. In its place, the BiS and Realistic tabs show your spec's enchant for each item's slot, so gear and enchants read as one checklist. The enchant gets a green tick when that item is equipped and already enchanted.
+
 ## 1.7.0
 - **Beside the character window:** opening your character window shrinks the browser and moves it right next to it so you can compare your gear; closing the character window puts it back. Turn it off in Settings.
 - **Guild announcements (optional):** turn on "Announce new BiS items in guild chat" in Settings and the addon posts in guild chat, with the item link, when you get an item from your spec's BiS list for the first time. Items you already had are never announced.

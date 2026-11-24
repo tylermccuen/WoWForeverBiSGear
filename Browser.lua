@@ -2,10 +2,11 @@ local _, ns = ...
 
 local ROW_HEIGHT = 40
 local frame, scrollChild, rows = nil, nil, {}
+local CHECK_ICON = "|TInterface\\RaidFrame\\ReadyCheck-Ready:12:12|t "
 local lastRaidSpec
 local WIDTH, HEIGHT = 900, 540          -- default size
 local MIN_W, MIN_H, MAX_W, MAX_H = 880, 320, 1500, 1100
-local headerSource, headerAvoid        -- "WHERE TO GET IT" / "AVOID GROUPING WITH" headers
+local headerSource, headerAvoid        -- "WHERE TO GET IT" / "ENCHANT" headers
 
 -- saved window width, never narrower than the controls need
 local function savedWidth()
@@ -101,24 +102,34 @@ local function ensureSelection()
     end
 end
 
--- Other specs with this item as a main BiS pick (they'd roll against you).
--- Class-coloured spec names; alternatives, Realistic picks, enchants and
--- consumables don't count.
-local function competitorsText(itemID, phase)
-    local entries = ns.ItemIndex[itemID]
-    if not entries then return "" end
-    local seen, parts = {}, {}
-    for _, e in ipairs(entries) do
-        local g = e.guide
-        local key = g.class .. ":" .. g.spec
-        if not (e.alt or e.realistic or e.enchant or e.consumable or e.pre)
-            and ns.EntryActiveIn(e, phase) and not seen[key]
-            and not (g.class == ns.char.selectedClass and g.spec == ns.char.selectedSpec) then
-            seen[key] = true
-            table.insert(parts, classColorHex(g.class) .. g.spec .. "|r")
-        end
+-- The spec's enchant for a gear row's slot, with a green tick when the
+-- equipped item in that slot is already enchanted.
+local function enchantFor(guide, slot)
+    if not guide.enchants then return nil end
+    for _, e in ipairs(guide.enchants) do
+        if e[1] == slot then return e[2] end
     end
-    return table.concat(parts, ", ")
+end
+
+local function setEnchantText(row, data, name)
+    name = name:gsub("^Enchant ", "")
+    if ns.Owned[data.id] == "equipped" and ns.SlotEnchant and select(2, ns.SlotEnchant(data.slot)) then
+        row.avoid:SetText("|cff33ff33" .. CHECK_ICON .. name .. "|r")
+    else
+        row.avoid:SetText("|cffffffff" .. name .. "|r")
+    end
+end
+
+local function enchantCell(row, data)
+    local id = data.enchantID
+    if not id then row.avoid:SetText("") return end
+    local name = C_Item.GetItemNameByID and C_Item.GetItemNameByID(id)
+    if name then setEnchantText(row, data, name) return end
+    row.avoid:SetText("|cff999999...|r")
+    ns.WithItem(id, function(item)
+        local loaded = item and item.GetItemName and item:GetItemName()
+        if loaded and row.enchantID == id then setEnchantText(row, data, loaded) end
+    end)
 end
 
 ----------------------------------------------------------------------
@@ -175,8 +186,7 @@ local function createRow(i)
 
     row.avoid = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     row.avoid:SetJustifyH("LEFT")
-    row.avoid:SetWordWrap(true)
-    row.avoid:SetMaxLines(2)
+    row.avoid:SetWordWrap(false)
 
 
     local link = CreateFrame("Button", nil, row, "UIPanelButtonTemplate")
@@ -261,7 +271,8 @@ local function fillRow(row, data)
     local src = data.source or ""
     if data.note then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
     row.source:SetText(src)
-    row.avoid:SetText(data.avoid or "")
+    row.enchantID = data.enchantID
+    enchantCell(row, data)
     local ownedText = OWNED_ICON[ns.Owned[data.id]] or ""
     if ownedText == "" and data.isDone then ownedText = "|cff33ff33Done|r" end
     row.owned:SetText(ownedText)
@@ -323,6 +334,7 @@ function ns.RefreshBrowser()
     local gearList = mode == "bis" or mode == "realistic"
     local realistic = mode == "realistic"
     ns.UpdateListTabs(mode, guide)
+    if headerAvoid then headerAvoid:SetShown(gearList and not frame.compact) end
     -- alternatives belong to the BiS list; "hide finished slots" to the gear lists
     if mode ~= "bis" then altCheck:Disable(); altLabel:SetAlpha(0.4) else altCheck:Enable(); altLabel:SetAlpha(1) end
     if mode == "consumables" then doneCheck:Disable(); doneLabel:SetAlpha(0.4) else doneCheck:Enable(); doneLabel:SetAlpha(1) end
@@ -392,7 +404,7 @@ function ns.RefreshBrowser()
         if slotOk and not hidden and not (ns.char.missingOnly and owned) then
             r.isNew = mode == "bis" and (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
             r.specKey = specKey
-            r.avoid = gearList and competitorsText(r.id, phase) or nil
+            r.enchantID = gearList and not r.isAlt and enchantFor(guide, r.slot) or nil
             table.insert(list, r)
         end
     end
@@ -686,7 +698,7 @@ local function createFrame()
     h2:SetText("WHERE TO GET IT")
     headerAvoid = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     headerAvoid:SetPoint("TOPLEFT", 560, -64)
-    headerAvoid:SetText("AVOID GROUPING WITH")
+    headerAvoid:SetText("ENCHANT")
     table.insert(frame.wideOnly, headerSource)
     table.insert(frame.wideOnly, headerAvoid)
 
