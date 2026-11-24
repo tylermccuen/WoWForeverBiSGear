@@ -375,6 +375,14 @@ check("saved specs: your spec first, up to 5 saved", function()
   if #ns.GetMySpecList() ~= 5 then error("remove failed") end
   ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"; ns.RefreshBrowser()
 end)
+check("raid panel sits past the character window's side buttons", function()
+  local saved = CharacterFrame
+  local side = { IsShown = function() return true end, GetLeft = function() return 402 end, GetRight = function() return 446 end }
+  CharacterFrame = { GetRight = function() return 400 end, GetChildren = function() return side end }
+  local gap = ns.CharacterOverhang()
+  CharacterFrame = saved
+  if math.abs(gap - 46) > 0.01 then error("gap " .. tostring(gap)) end
+end)
 check("your spec comes from talent points", function()
   UnitClass = function() return "Hunter", "HUNTER" end
   GetSpecialization = function() return 1 end

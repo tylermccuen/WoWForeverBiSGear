@@ -748,6 +748,49 @@ function ns.RaidPanelShown()
     return panel ~= nil and panel:IsShown()
 end
 
+-- How far things stick out past the character window's right edge (Forever
+-- puts a column of side buttons there), so our windows sit beyond them.
+local function rightOverhang(char)
+    local edge = char.GetRight and char:GetRight()
+    if not edge then return 0 end
+    local far = edge
+    local function look(f)
+        if f == panel or f == _G.ForeverBiSFrame then return end
+        if f.IsShown and f:IsShown() and f.GetRight then
+            local r = f:GetRight()
+            local l = f.GetLeft and f:GetLeft()
+            -- only things that start at or near the edge (not huge overlays)
+            if r and l and r > far and l > edge - 60 and r - edge < 160 then far = r end
+        end
+    end
+    local function scan(parent, depth)
+        if not parent.GetChildren then return end
+        for _, f in ipairs({ parent:GetChildren() }) do
+            look(f)
+            if depth > 0 then scan(f, depth - 1) end
+        end
+    end
+    pcall(scan, char, 1)
+    -- side buttons parented elsewhere but anchored to the character window
+    if UIParent and UIParent.GetChildren then
+        pcall(function()
+            for _, f in ipairs({ UIParent:GetChildren() }) do
+                if f.GetNumPoints and (f:GetNumPoints() or 0) > 0 then
+                    local _, rel = f:GetPoint(1)
+                    if rel == char then look(f) end
+                end
+            end
+        end)
+    end
+    return math.max(0, far - edge)
+end
+ns.CharacterOverhang = function() return CharacterFrame and rightOverhang(CharacterFrame) or 0 end
+
+local function placePanel(char)
+    panel:ClearAllPoints()
+    panel:SetPoint("TOPLEFT", char, "TOPRIGHT", 4 + rightOverhang(char), 0)
+end
+
 -- Show beside the character window while it's open (setting on by default)
 function ns.UpdateRaidCompanion()
     local char = CharacterFrame
@@ -756,8 +799,14 @@ function ns.UpdateRaidCompanion()
     if want then
         if not panel then createPanel() end
         panel:SetScale(ns.db.windowScale or 1)
-        panel:ClearAllPoints()
-        panel:SetPoint("TOPLEFT", char, "TOPRIGHT", 4, 0)
+        placePanel(char)
+        -- the side buttons may be laid out a moment after the window opens
+        C_Timer.After(0.05, function()
+            if panel:IsShown() and char:IsShown() then
+                placePanel(char)
+                if ns.UpdateCompact then ns.UpdateCompact() end
+            end
+        end)
         local cs, ps = char:GetEffectiveScale(), panel:GetEffectiveScale()
         local ratio = (cs and ps and ps > 0) and cs / ps or 1
         panel:SetHeight(math.max(420, (char:GetHeight() or 420) * ratio))

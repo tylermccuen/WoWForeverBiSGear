@@ -1403,8 +1403,10 @@ end
 local function anchorCompact()
     local raid = _G.ForeverBiSRaidFrame
     local anchor = (ns.RaidPanelShown and ns.RaidPanelShown() and raid) or CharacterFrame
+    local gap = 4
+    if anchor == CharacterFrame and ns.CharacterOverhang then gap = gap + ns.CharacterOverhang() end   -- past its side buttons
     frame:ClearAllPoints()
-    frame:SetPoint("TOPLEFT", anchor, "TOPRIGHT", 4, 0)
+    frame:SetPoint("TOPLEFT", anchor, "TOPRIGHT", gap, 0)
 end
 
 -- Compact while both windows are open (and the setting is on)
