@@ -75,6 +75,16 @@ function ns.SplitSource(source)
         if prefix == "Dungeon Set 2" then prefix = "Tier 0.5 set" end
         return prefix, "Quest: " .. qname
     end
+    -- faction rewards: "Darkspear Raiders (Exalted)", "X reputation (Revered)"
+    local faction, standing = source:match("^([^:]-) %((%a+)%)$")
+    if faction and (standing == "Exalted" or standing == "Revered" or standing == "Honored" or standing == "Friendly") then
+        faction = faction:gsub(" reputation$", "")
+        local place = faction:find("Stormpike") and "Alterac Valley" or "Reputation"
+        return place, faction .. " (" .. standing .. ")"
+    end
+    if source:match("^World drop") then
+        return "World drop", source:match("%((.-)%)") and ("Any mob (" .. source:match("%((.-)%)") .. ")") or "Any mob"
+    end
     local prof = source:match("^Crafted: (.+)$")
     if prof then return "Crafted", prof end
     local trash = source:match("^Random trash drop %((.-)%)$")

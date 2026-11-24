@@ -313,7 +313,10 @@ check("dungeon / boss split and sorting", function()
     { "Dungeon Set 2 quest: Saving the Best for Last", "Tier 0.5 set", "Quest: Saving the Best for Last" },
     { "Crafted: Leatherworking", "Crafted", "Leatherworking" },
     { "Random trash drop (Stratholme, Scholomance, Blackrock Spire)", "Stratholme, Scholomance, Blackrock Spire", "Trash drop" },
-    { "Stormpike Guard / Frostwolf Clan (Exalted)", "", "Stormpike Guard / Frostwolf Clan (Exalted)" },
+    { "Stormpike Guard / Frostwolf Clan (Exalted)", "Alterac Valley", "Stormpike Guard / Frostwolf Clan (Exalted)" },
+    { "Darkspear Raiders (Exalted)", "Reputation", "Darkspear Raiders (Exalted)" },
+    { "Barkskin Burrow reputation (Revered)", "Reputation", "Barkskin Burrow (Revered)" },
+    { "World drop (BoE)", "World drop", "Any mob (BoE)" },
   }
   for _, c in ipairs(cases) do
     local d, b = ns.SplitSource(c[1])
