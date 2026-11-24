@@ -62,7 +62,13 @@ function ns.SplitSource(source)
     local q = source:match("^Quest: (.+)$")
     if q then
         local name, zone = q:match("^(.-)%s*%(([^()]*)%)$")
-        return zone or "Quest", "Quest: " .. (name or q)
+        if not zone and ns.Quests then
+            -- no place in the source: use where the quest is picked up
+            local first = q:match("^(.-)%s*/") or q
+            local e = ns.Quests[first] and ns.Quests[first][1]
+            zone = e and e[3] ~= "" and e[3] or nil
+        end
+        return zone or "", "Quest: " .. (name or q)
     end
     local prefix, qname = source:match("^(.-) quest: (.+)$")
     if prefix then

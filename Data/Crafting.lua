@@ -44,7 +44,7 @@ ns.Crafting = {
         mats = { { 8831, 3, "Purple Lotus" }, { 14344, 2, "Large Brilliant Shard" }, { 18256, 1, "Imbued Vial" } } },
     [20749] = { prof = "Enchanting", skill = 300, recipe = "Formula: Brilliant Wizard Oil", from = "Vendor: Rin'wosho the Trader (Zandalar Tribe rep)",
         mats = { { 4625, 3, "Firebloom" }, { 14344, 2, "Large Brilliant Shard" }, { 18256, 1, "Imbued Vial" } } },
-    [246948] = { prof = "Alchemy", skill = 250, recipe = "Recipe: Distilled Firewater", from = "Quest: Running Firewater",
+    [246948] = { prof = "Alchemy", skill = 250, recipe = "Recipe: Distilled Firewater", from = "Quest: Running Firewater (Azshara)",
         mats = { { 3372, 1, "Leaded Vial" }, { 3819, 4, "Wintersbite" }, { 8846, 2, "Gromsblood" } } },
     [249870] = { prof = "Cooking", skill = 250, recipe = "Recipe: Sage's Tea", from = "Drop: Deadwind Ogre Mage (Deadwind Pass)",
         mats = { { 8766, 1, "Morning Glory Dew" }, { 13465, 2, "Mountain Silversage" } } },

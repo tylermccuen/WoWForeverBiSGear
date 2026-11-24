@@ -46,9 +46,9 @@ local CHANNELER   = { "Finger",  272406, PIX75 }
 local RUNEBAND    = { "Finger",  22339,  "Upper Blackrock Spire: Lord Valthalak" }
 local MENDING     = { "Finger",  22334,  "Stratholme: Grand Crusader Dathrohan" }
 local FORDRING    = { "Finger",  16058,  "Quest: In Dreams (Western Plaguelands)" }
-local BREADTH     = { "Trinket", 13965,  "Quest: For The Horde! / General Drakkisath's Demise" }
+local BREADTH     = { "Trinket", 13965,  "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" }
 local WYRMTHALAK  = { "Trinket", 22321,  "Lower Blackrock Spire: Overlord Wyrmthalak" }
-local EYE_BEAST   = { "Trinket", 13968,  "Quest: For The Horde! / General Drakkisath's Demise" }
+local EYE_BEAST   = { "Trinket", 13968,  "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" }
 local WEAKNESS    = { "Trinket", 272438, PIX125 }
 local SERENITY    = { "Trinket", 272439, PIX125 }
 local ADAPTIVE    = { "Trinket", 272437, PIX125 }
@@ -600,7 +600,7 @@ local guides = {
         { "Waist",    287040, "World drop" },
         { "Legs",     226799, D2_LEGS },
         { "Feet",     226803, D2_LEGS },
-        { "Finger",   15855,  "Quest: Hidden Treasures" },
+        { "Finger",   15855,  "Quest: Hidden Treasures (Eastern Plaguelands)" },
         { "Finger",   260216, "Quest: Blackmaw Reclamation (Blackmaw Hold)" },
         ADAPTIVE,
         WYRMTHALAK,
@@ -697,7 +697,7 @@ local ALTS = {
     },
     ["PALADIN:Protection"] = {
         { "Head",  226989, D2_HEAD, note = "Protection version" },
-        { "Neck",  281636, "Quest: Greater Friend of the Library" },
+        { "Neck",  281636, "Quest: Greater Friend of the Library (Stormwind City)" },
         MANTLE,
         { "Back",  18495,  "Dire Maul North: Mizzle the Crafty (tribute)", note = "7 defense" },
         { "Waist", 250573, BS, note = "10 defense" },
@@ -843,7 +843,7 @@ local REALISTIC = {
         { "Feet", 226881, D2_LEGS },                                                               -- Beastmaster's Treads
         { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
         { "Finger", 18500, "Dire Maul North: Mizzle the Crafty (tribute)", note = "1% hit" },      -- Tarnished Elven Ring
-        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
         { "Two Hand", 279910, "Quest: Mapping the Way Forward (The Shaper's Terrace)", 279910, "Quest: The Dark Crystal (The Shaper's Terrace)", note = "1.6% hit" }, -- Beastslayer's Trident
         { "Ranged", 280020, "The Shaper's Terrace: Thunderhoof", note = "0.5% hit" },              -- Deep Jungle Rifle
@@ -862,7 +862,7 @@ local REALISTIC = {
         { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
         { "Finger", 18500, "Dire Maul North: Mizzle the Crafty (tribute)", note = "1% hit" },      -- Tarnished Elven Ring
         { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
-        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Two Hand", 279910, "Quest: Mapping the Way Forward (The Shaper's Terrace)", 279910, "Quest: The Dark Crystal (The Shaper's Terrace)", note = "1.6% hit" }, -- Beastslayer's Trident
         { "Ranged", 280020, "The Shaper's Terrace: Thunderhoof", note = "0.5% hit" },              -- Deep Jungle Rifle
     },
@@ -880,7 +880,7 @@ local REALISTIC = {
         { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
         { "Finger", 18500, "Dire Maul North: Mizzle the Crafty (tribute)", note = "1% hit" },      -- Tarnished Elven Ring
         { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
-        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Main Hand", 12940, "Upper Blackrock Spire: Warchief Rend Blackhand" },                  -- Dal'Rend's Sacred Charge
         { "Off Hand", 12939, "Upper Blackrock Spire: Warchief Rend Blackhand" },                   -- Dal'Rend's Tribal Guardian
         { "Ranged", 280020, "The Shaper's Terrace: Thunderhoof", note = "0.5% hit" },              -- Deep Jungle Rifle
@@ -899,7 +899,7 @@ local REALISTIC = {
         { "Finger", 17713, "Maraudon: Princess Theradras", note = "1% hit" },                      -- Blackstone Ring
         { "Finger", 18500, "Dire Maul North: Mizzle the Crafty (tribute)", note = "1% hit" },      -- Tarnished Elven Ring
         { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
-        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Two Hand", 280018, "The Shaper's Terrace: Thunderhoof" },                               -- Hammer of Thundering Hooves
         { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
     },
@@ -917,7 +917,7 @@ local REALISTIC = {
         { "Finger", 17713, "Maraudon: Princess Theradras", note = "1% hit" },                      -- Blackstone Ring
         { "Finger", 18500, "Dire Maul North: Mizzle the Crafty (tribute)", note = "1% hit" },      -- Tarnished Elven Ring
         { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
-        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Main Hand", 12940, "Upper Blackrock Spire: Warchief Rend Blackhand" },                  -- Dal'Rend's Sacred Charge
         { "Off Hand", 12939, "Upper Blackrock Spire: Warchief Rend Blackhand" },                   -- Dal'Rend's Tribal Guardian
         { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
@@ -1011,7 +1011,7 @@ local REALISTIC = {
         { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
         { "Finger", 13098, "Upper Blackrock Spire: General Drakkisath" },                          -- Painweaver Band
         { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
-        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Main Hand", 13984, "Quest: The Lich, Ras Frostwhisper (Scholomance)" },                 -- Darrowspike
         { "Off Hand", 18392, "Dire Maul West: Prince Tortheldrin" },                               -- Distracting Dagger
         { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
@@ -1030,7 +1030,7 @@ local REALISTIC = {
         { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
         { "Finger", 13098, "Upper Blackrock Spire: General Drakkisath" },                          -- Painweaver Band
         { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
-        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Main Hand", 12940, "Upper Blackrock Spire: Warchief Rend Blackhand" },                  -- Dal'Rend's Sacred Charge
         { "Off Hand", 12939, "Upper Blackrock Spire: Warchief Rend Blackhand" },                   -- Dal'Rend's Tribal Guardian
         { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
@@ -1049,7 +1049,7 @@ local REALISTIC = {
         { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
         { "Finger", 13098, "Upper Blackrock Spire: General Drakkisath" },                          -- Painweaver Band
         { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
-        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Main Hand", 18758, "Scholomance: Death Knight Darkreaver (summoned)" },                 -- Specter's Blade
         { "Off Hand", 18392, "Dire Maul West: Prince Tortheldrin" },                               -- Distracting Dagger
         { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
@@ -1105,7 +1105,7 @@ local REALISTIC = {
         { "Feet", 226959, D2_LEGS },                                                               -- Virtuous Slippers
         { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
         { "Finger", 22433, "Scholomance: Darkmaster Gandling" },                                   -- Don Mauricio's Band of Domination
-        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
         { "Trinket", 12930, "Upper Blackrock Spire: Jed Runewatcher" },                            -- Briarwood Reed
         { "Main Hand", 18372, "Dire Maul West: Immol'thar" },                                      -- Blade of the New Moon
         { "Off Hand", 18316, "Dire Maul East: Pusillin" },                                         -- Obsidian Bauble
@@ -1124,7 +1124,7 @@ local REALISTIC = {
         { "Feet", 227007, D2_LEGS },                                                               -- Slippers of The Five Thunders
         { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
         { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
-        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
         { "Trinket", 18471, "Quest: Frost Shock and You (Dire Maul)" },                            -- Royal Seal (Shaman)
         { "Main Hand", 13964, "Scholomance: Darkmaster Gandling" },                                -- Witchblade
         { "Off Hand", 22336, "Upper Blackrock Spire: Lord Valthalak" },                            -- Draconian Aegis of the Legion
@@ -1144,7 +1144,7 @@ local REALISTIC = {
         { "Finger", 17713, "Maraudon: Princess Theradras", note = "1% hit" },                      -- Blackstone Ring
         { "Finger", 18314, "Dire Maul East: Alzzin the Wildshaper", note = "1% hit" },             -- Ring of Demonic Guile
         { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
-        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Two Hand", 280018, "The Shaper's Terrace: Thunderhoof" },                               -- Hammer of Thundering Hooves
         { "Relic", 22395, "Blackrock Depths: Magmus" },                                            -- Totem of Rage
     },
@@ -1180,7 +1180,7 @@ local REALISTIC = {
         { "Feet", 226931, D2_LEGS },                                                               -- Sorcerer's Sandals
         { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
         { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
-        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
         { "Trinket", 18468, "Quest: The Arcanist's Cookbook (Dire Maul)" },                        -- Royal Seal (Mage)
         { "Two Hand", 22335, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },           -- Lord Valthalak's Staff of Command
         { "Wand", 13938, "Scholomance: Darkmaster Gandling" },                                     -- Bonecreeper Stylus
@@ -1198,7 +1198,7 @@ local REALISTIC = {
         { "Feet", 226931, D2_LEGS },                                                               -- Sorcerer's Sandals
         { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
         { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
-        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
         { "Trinket", 13213, "Lower Blackrock Spire: Mother Smolderweb", note = "1% hit" },         -- Smolderweb's Eye
         { "Main Hand", 13964, "Scholomance: Darkmaster Gandling" },                                -- Witchblade
         { "Off Hand", 18316, "Dire Maul East: Pusillin" },                                         -- Obsidian Bauble
@@ -1217,7 +1217,7 @@ local REALISTIC = {
         { "Feet", 226931, D2_LEGS },                                                               -- Sorcerer's Sandals
         { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
         { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
-        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
         { "Trinket", 12930, "Upper Blackrock Spire: Jed Runewatcher" },                            -- Briarwood Reed
         { "Main Hand", 13964, "Scholomance: Darkmaster Gandling" },                                -- Witchblade
         { "Off Hand", 11904, "Quest: It's Dangerous to Go Alone (Un'Goro Crater)" },               -- Spirit of Aquementas
@@ -1236,7 +1236,7 @@ local REALISTIC = {
         { "Feet", 11822, "Blackrock Depths: Golem Lord Argelmach" },                               -- Omnicast Boots
         { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
         { "Finger", 18314, "Dire Maul East: Alzzin the Wildshaper", note = "1% hit" },             -- Ring of Demonic Guile
-        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
         { "Trinket", 18467, "Quest: Harnessing Shadows (Dire Maul)" },                             -- Royal Seal (Warlock)
         { "Main Hand", 18372, "Dire Maul West: Immol'thar" },                                      -- Blade of the New Moon
         { "Off Hand", 18316, "Dire Maul East: Pusillin" },                                         -- Obsidian Bauble
@@ -1255,7 +1255,7 @@ local REALISTIC = {
         { "Feet", 226908, D2_LEGS },                                                               -- Deathmist Sandals
         { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
         { "Finger", 18314, "Dire Maul East: Alzzin the Wildshaper", note = "1% hit" },             -- Ring of Demonic Guile
-        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
         { "Trinket", 18467, "Quest: Harnessing Shadows (Dire Maul)" },                             -- Royal Seal (Warlock)
         { "Main Hand", 18372, "Dire Maul West: Immol'thar" },                                      -- Blade of the New Moon
         { "Off Hand", 11904, "Quest: It's Dangerous to Go Alone (Un'Goro Crater)" },               -- Spirit of Aquementas
@@ -1275,7 +1275,7 @@ local REALISTIC = {
         { "Finger", 18314, "Dire Maul East: Alzzin the Wildshaper", note = "1% hit" },             -- Ring of Demonic Guile
         { "Finger", 22433, "Scholomance: Darkmaster Gandling" },                                   -- Don Mauricio's Band of Domination
         { "Trinket", 18467, "Quest: Harnessing Shadows (Dire Maul)" },                             -- Royal Seal (Warlock)
-        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
         { "Main Hand", 18396, "Dire Maul West: Prince Tortheldrin" },                              -- Mind Carver
         { "Off Hand", 18316, "Dire Maul East: Pusillin" },                                         -- Obsidian Bauble
         { "Wand", 13938, "Scholomance: Darkmaster Gandling" },                                     -- Bonecreeper Stylus
@@ -1293,7 +1293,7 @@ local REALISTIC = {
         { "Feet", 226774, D2_LEGS },                                                               -- Feralheart Galoshes
         { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
         { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
-        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Eye of the Beast
+        { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
         { "Trinket", 13213, "Lower Blackrock Spire: Mother Smolderweb", note = "1% hit" },         -- Smolderweb's Eye
         { "Main Hand", 13964, "Scholomance: Darkmaster Gandling" },                                -- Witchblade
         { "Off Hand", 18316, "Dire Maul East: Pusillin" },                                         -- Obsidian Bauble
@@ -1312,7 +1312,7 @@ local REALISTIC = {
         { "Feet", 226794, D2_LEGS },                                                               -- Feralheart Walkers
         { "Finger", 272408, PIX75, note = "1% hit" },                                              -- Cutthroat's Signet
         { "Finger", 22255, "Blackrock Depths: Secret Safe" },                                      -- Magma Forged Band
-        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise" },               -- Blackhand's Breadth
+        { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Trinket", 11815, "Blackrock Depths: Emperor Dagran Thaurissan" },                       -- Hand of Justice
         { "Two Hand", 18420, "Quest: The Treasure of the Shen'dralar (Dire Maul)" },               -- Bonecrusher
         { "Relic", 22397, "Blackrock Depths: Lord Roccor" },                                       -- Idol of Ferocity
@@ -1329,7 +1329,7 @@ local REALISTIC = {
         { "Legs", 226799, D2_LEGS },                                                               -- Feralheart Legguards
         { "Feet", 226803, D2_LEGS },                                                               -- Feralheart Treads
         { "Finger", 260216, "Quest: Blackmaw Reclamation (Blackmaw Hold)" },                       -- Ouroboros Ring
-        { "Finger", 15855, "Quest: Hidden Treasures" },                                            -- Ring of Protection
+        { "Finger", 15855, "Quest: Hidden Treasures (Eastern Plaguelands)" },                                            -- Ring of Protection
         { "Trinket", 17774, "Quest: The Pariah's Instructions (Maraudon)" },                       -- Mark of the Chosen
         { "Trinket", 11810, "Blackrock Depths: General Angerforge" },                              -- Force of Will
         { "Two Hand", 18531, "Dire Maul North: Mizzle the Crafty (tribute)" },                     -- Unyielding Maul
