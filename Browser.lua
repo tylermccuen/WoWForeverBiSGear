@@ -7,7 +7,7 @@ local YELLOW_CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16:16:0:0:64:64:0
 local GREEN_CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16:16|t"
 local lastRaidSpec
 local WIDTH, HEIGHT = 1040, 540          -- default size
-local MIN_W, MIN_H, MAX_W, MAX_H = 880, 320, 1500, 1100
+local MIN_W, MIN_H, MAX_W, MAX_H = 920, 320, 1500, 1100
 local headerSource, headerAvoid        -- "WHERE TO GET IT" / "ENCHANT" headers
 
 -- saved window width, never narrower than the controls need
@@ -316,6 +316,120 @@ ns.On("QUEST_LOG_UPDATE", function()
 end)
 ns.On("PLAYER_LOGIN", scanQuestLog)
 ns.ScanQuestLog = scanQuestLog   -- used by tools/uitest.lua
+
+-- Your specs bar: class icons at the top right. The first is always your
+-- own active spec (gold ring); then up to 3 saved specs; then "+" to save
+-- the spec on screen.
+local function classIcon(cls)
+    return "Interface\\Icons\\ClassIcon_" .. (cls:sub(1, 1) .. cls:sub(2):lower())
+end
+
+local function makeSpecButton(parent)
+    local b = CreateFrame("Button", nil, parent)
+    b:SetSize(24, 24)
+    b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    b.ring = b:CreateTexture(nil, "BACKGROUND")
+    b.ring:SetPoint("TOPLEFT", -2, 2)
+    b.ring:SetPoint("BOTTOMRIGHT", 2, -2)
+    b.icon = b:CreateTexture(nil, "ARTWORK")
+    b.icon:SetAllPoints()
+    b.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    b.text = b:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    b.text:SetPoint("CENTER", 0, 1)
+    b:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+    return b
+end
+
+function ns.UpdateSpecBar()
+    if not frame or not frame.specBar then return end
+    local bar = frame.specBar
+    local list = ns.GetMySpecList()
+    local selCls, selSpec = ns.char.selectedClass, ns.char.selectedSpec
+    for i = 1, ns.MAX_SAVED_SPECS + 1 do
+        local b = bar.buttons[i]
+        local f = list[i]
+        if f then
+            b.entry = f
+            b.icon:SetTexture(classIcon(f.class))
+            b.icon:Show()
+            b.text:SetText("")
+            local selected = f.class == selCls and f.spec == selSpec
+            if f.mine then b.ring:SetColorTexture(1, 0.82, 0, 1)
+            elseif selected then b.ring:SetColorTexture(1, 1, 1, 0.9)
+            else b.ring:SetColorTexture(0, 0, 0, 0.6) end
+            b.icon:SetDesaturated(not selected)
+            b:Show()
+        else
+            b:Hide()
+        end
+    end
+    -- "+" to save the spec on screen
+    local plus = bar.plus
+    local mc, ms = ns.GetActiveSpec()
+    local canSave = selCls and selSpec and not (selCls == mc and selSpec == ms)
+        and not ns.IsSavedSpec(selCls, selSpec) and #ns.GetSavedSpecs() < ns.MAX_SAVED_SPECS
+    plus:SetShown(canSave and true or false)
+    -- lay out right to left: "+" last
+    local x = 0
+    local shown = {}
+    for i = 1, ns.MAX_SAVED_SPECS + 1 do if bar.buttons[i]:IsShown() then table.insert(shown, bar.buttons[i]) end end
+    if plus:IsShown() then table.insert(shown, plus) end
+    for i = #shown, 1, -1 do
+        shown[i]:ClearAllPoints()
+        shown[i]:SetPoint("TOPRIGHT", bar, "TOPRIGHT", -x, 0)
+        x = x + 30
+    end
+end
+
+local function createSpecBar()
+    local bar = CreateFrame("Frame", nil, frame)
+    bar:SetSize(160, 24)
+    bar:SetPoint("TOPRIGHT", -16, -31)
+    bar.buttons = {}
+    for i = 1, ns.MAX_SAVED_SPECS + 1 do
+        local b = makeSpecButton(bar)
+        b:SetScript("OnClick", function(self, button)
+            local f = self.entry
+            if not f then return end
+            if button == "RightButton" then
+                if not f.mine then ns.RemoveSavedSpec(f.class, f.spec); ns.RefreshBrowser() end
+                return
+            end
+            ns.char.selectedClass, ns.char.selectedSpec = f.class, f.spec
+            ns.RefreshBrowser()
+        end)
+        b:SetScript("OnEnter", function(self)
+            local f = self.entry
+            if not f then return end
+            GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+            GameTooltip:AddLine(classColorHex(f.class) .. f.spec .. " " .. className(f.class) .. "|r")
+            if f.mine then
+                GameTooltip:AddLine("Your spec. Always first.", 1, 0.82, 0)
+            else
+                GameTooltip:AddLine("Saved spec. Right-click to remove.", 0.8, 0.8, 0.8)
+            end
+            GameTooltip:Show()
+        end)
+        b:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        bar.buttons[i] = b
+    end
+    local plus = makeSpecButton(bar)
+    plus.icon:Hide()
+    plus.ring:SetColorTexture(1, 1, 1, 0.12)
+    plus.text:SetText("+")
+    plus:SetScript("OnClick", function()
+        if ns.SaveSpec(ns.char.selectedClass, ns.char.selectedSpec) then ns.RefreshBrowser() end
+    end)
+    plus:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:AddLine("Save " .. (ns.char.selectedSpec or "") .. " " .. className(ns.char.selectedClass or "") .. " to your specs")
+        GameTooltip:AddLine("Keep up to 3 for quick switching. Your own spec is always first.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    plus:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    bar.plus = plus
+    frame.specBar = bar
+end
 
 ----------------------------------------------------------------------
 -- Rows
@@ -626,6 +740,7 @@ function ns.RefreshBrowser()
         if prevGuide then prevSet = ns.GuideItemSet(prevGuide) end
     end
 
+    ns.UpdateSpecBar()
     phaseButton:SetText(ns.PhaseLabel(phase))
     classButton:SetText(classColorHex(ns.char.selectedClass) .. className(ns.char.selectedClass) .. "|r")
     specButton:SetText(ns.char.selectedSpec or "")
@@ -817,6 +932,25 @@ end
 
 local function specMenu(owner)
     openMenu(owner, function(_, root)
+        root:CreateTitle("Your specs")
+        for _, f in ipairs(ns.GetMySpecList()) do
+            local label = classColorHex(f.class) .. f.spec .. " " .. className(f.class) .. "|r" .. (f.mine and "  |cffffd100(you)|r" or "")
+            root:CreateRadio(label,
+                function() return ns.char.selectedClass == f.class and ns.char.selectedSpec == f.spec end,
+                function() ns.char.selectedClass, ns.char.selectedSpec = f.class, f.spec; ns.RefreshBrowser() end)
+        end
+        local cls, spec = ns.char.selectedClass, ns.char.selectedSpec
+        local mc, ms = ns.GetActiveSpec()
+        if cls and spec and not (cls == mc and spec == ms) then
+            if ns.IsSavedSpec(cls, spec) then
+                root:CreateButton("Remove " .. spec .. " " .. className(cls) .. " from your specs",
+                    function() ns.RemoveSavedSpec(cls, spec); ns.RefreshBrowser() end)
+            elseif #ns.GetSavedSpecs() < ns.MAX_SAVED_SPECS then
+                root:CreateButton("Save " .. spec .. " " .. className(cls) .. " to your specs",
+                    function() ns.SaveSpec(cls, spec); ns.RefreshBrowser() end)
+            end
+        end
+        root:CreateDivider()
         root:CreateTitle("Specialization")
         for _, spec in ipairs(ns.GetSpecsForClass(ns.char.selectedClass)) do
             root:CreateRadio(spec,
@@ -971,6 +1105,7 @@ local function createFrame()
 
     slotButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     createListTabs()
+    createSpecBar()
 
     slotButton:SetSize(95, 24)
     slotButton:SetPoint("LEFT", specButton, "RIGHT", 6, 0)

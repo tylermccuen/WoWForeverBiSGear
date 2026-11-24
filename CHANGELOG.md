@@ -16,6 +16,8 @@
 - **Raid check redesign:** a status banner (green "Raid ready" or red "N things to fix"), tiles for your key numbers with progress bars toward the hit and defense targets, an enchant checklist (unenchanted slots first, with what to put on them) and coloured bars comparing your gear with the pre-raid BiS set. Side by side on the Raid Check tab, stacked in the panel beside the character window.
 - **Guild announcements removed:** the addon no longer posts in guild chat, and the setting is gone.
 
+- **Your specs:** class icons at the top right of the browser for quick switching. The first is always your own current spec (gold ring); save up to 3 more with the "+" icon (any class and spec, e.g. an alt or an off-spec) and right-click one to remove it. The same list is at the top of the Spec menu.
+
 ## 1.7.1
 - **Recipes and materials:** the Consumables and Enchants tabs now show how each item is made: the profession and skill, the recipe and where it comes from (for example "Recipe: Flask of the Titans: Drop: General Drakkisath"), and a Materials column ("30 Gromsblood, 10 Stonescale Oil, 1 Black Lotus, 1 Crystal Vial"). Hover the materials to see how many of each you already have. Data from kovarel.com's and Wowhead's WoW Forever databases.
 - **Ready to enchant:** on the Enchants tab, a yellow check means you have that slot's BiS or Realistic item, so you could enchant it now; a green check means the equipped item is already enchanted (and the slot is ticked done).

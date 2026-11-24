@@ -125,6 +125,64 @@ function ns.GetMySpec()
     return playerClass, specs[1]
 end
 
+-- The character's real class and active spec (ignores what the browser shows)
+function ns.GetActiveSpec()
+    local _, playerClass = UnitClass("player")
+    local specs = ns.GetSpecsForClass(playerClass)
+    if #specs == 0 then return playerClass, nil end
+    local ok, idx = pcall(GetSpecialization)
+    if ok and idx and GetSpecializationInfo then
+        local _, specName = GetSpecializationInfo(idx)
+        if specName then
+            for _, s in ipairs(specs) do
+                if s:lower() == specName:lower() then return playerClass, s end
+            end
+        end
+    end
+    return playerClass, specs[1]
+end
+
+-- Your specs: your active spec first, then up to 3 saved class / spec pairs
+ns.MAX_SAVED_SPECS = 3
+function ns.GetSavedSpecs()
+    ns.char.savedSpecs = ns.char.savedSpecs or {}
+    return ns.char.savedSpecs
+end
+
+function ns.GetMySpecList()
+    local list = {}
+    local cls, spec = ns.GetActiveSpec()
+    if spec then table.insert(list, { class = cls, spec = spec, mine = true }) end
+    for _, key in ipairs(ns.GetSavedSpecs()) do
+        local c, s = key:match("^(%u+):(.+)$")
+        if c and not (c == cls and s == spec) then table.insert(list, { class = c, spec = s }) end
+    end
+    return list
+end
+
+function ns.IsSavedSpec(class, spec)
+    for _, key in ipairs(ns.GetSavedSpecs()) do
+        if key == class .. ":" .. spec then return true end
+    end
+    return false
+end
+
+function ns.SaveSpec(class, spec)
+    local saved = ns.GetSavedSpecs()
+    local mc, ms = ns.GetActiveSpec()
+    if (class == mc and spec == ms) or ns.IsSavedSpec(class, spec) or #saved >= ns.MAX_SAVED_SPECS then return false end
+    table.insert(saved, class .. ":" .. spec)
+    return true
+end
+
+function ns.RemoveSavedSpec(class, spec)
+    local saved = ns.GetSavedSpecs()
+    for i, key in ipairs(saved) do
+        if key == class .. ":" .. spec then table.remove(saved, i) return true end
+    end
+    return false
+end
+
 -- Equip location -> slot names used in the guides
 ns.EquipLocSlots = {
     INVTYPE_HEAD = { "Head" },         INVTYPE_NECK = { "Neck" },

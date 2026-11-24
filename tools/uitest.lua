@@ -349,4 +349,25 @@ check("quest hover tooltip", function()
   if not ns.QuestsInSource("Quest: For The Horde! / General Drakkisath's Demise") then error("multi quest") end
   UnitFactionGroup = function() return "Alliance" end
 end)
+check("saved specs: your spec first, up to 3 saved", function()
+  UnitClass = function() return "Hunter", "HUNTER" end
+  GetSpecialization = function() return 2 end
+  GetSpecializationInfo = function() return 0, "Marksmanship" end
+  ns.char.savedSpecs = {}
+  if ns.SaveSpec("HUNTER", "Marksmanship") then error("saved your own spec") end
+  assert(ns.SaveSpec("PRIEST", "Holy"))
+  assert(ns.SaveSpec("WARRIOR", "Protection"))
+  assert(ns.SaveSpec("MAGE", "Fire"))
+  if ns.SaveSpec("DRUID", "Balance") then error("saved a 4th") end
+  if ns.SaveSpec("PRIEST", "Holy") then error("saved a duplicate") end
+  local list = ns.GetMySpecList()
+  local names = {}
+  for _, f in ipairs(list) do names[#names+1] = f.spec .. (f.mine and "*" or "") end
+  print("   your specs:", table.concat(names, ", "))
+  if not list[1].mine or #list ~= 4 then error("wrong list") end
+  ns.char.selectedClass, ns.char.selectedSpec = "MAGE", "Fire"; ns.RefreshBrowser()
+  ns.RemoveSavedSpec("WARRIOR", "Protection")
+  if #ns.GetMySpecList() ~= 3 then error("remove failed") end
+  ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"; ns.RefreshBrowser()
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
