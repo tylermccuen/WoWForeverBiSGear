@@ -1,5 +1,8 @@
 # Forever Best In Slot
 
+## 1.7.3
+- **Done ticks follow list updates:** a slot you ticked done is remembered together with the items the BiS and Realistic lists had for it (or the enchant). If a later update changes that slot's pick, the tick is cleared and a chat message says which slots changed, so you can check the new items. Slots you own the item for still tick themselves.
+
 ## 1.7.2
 - **Dungeon, Boss and Drop columns:** on the BiS and Realistic tabs, "Where to get it" is split into a Dungeon column, a Boss / Source column and a Drop column with the drop chance (from kovarel.com's WoW Forever database).
 - **Sorting:** click the ITEM, DUNGEON, BOSS / SOURCE or DROP header to sort the list; click again to reverse it. Sort by dungeon to see everything one run can give you, or by drop to see the best odds first. Alternatives and Tier 0 pieces stay under their item.

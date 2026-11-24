@@ -370,10 +370,30 @@ function ns.GetDoneMarks(specKey)
     return ns.char.done[specKey] or {}
 end
 
-function ns.SetDoneMark(specKey, key, on)
+-- A tick is saved with a signature of the items the slot had on the lists
+-- when it was ticked ({ on = true/false, sig = "..." }). If a list update
+-- changes the slot's items, the tick no longer matches and is cleared.
+function ns.SetDoneMark(specKey, key, on, sig)
     if not specKey or not key then return end
     ns.char.done = ns.char.done or {}
     local t = ns.char.done[specKey]
     if not t then t = {}; ns.char.done[specKey] = t end
-    t[key] = on   -- true = done, false = not done, nil = automatic
+    if on == nil then t[key] = nil else t[key] = { on = on, sig = sig } end   -- nil = automatic
+end
+
+-- Returns true / false for a valid tick, nil for automatic. Second return:
+-- true when an outdated tick was just cleared.
+function ns.ResolveDoneMark(specKey, key, sig)
+    local t = ns.char.done and ns.char.done[specKey]
+    local m = t and t[key]
+    if m == nil then return nil end
+    if type(m) ~= "table" then          -- tick from before signatures: adopt the current lists
+        t[key] = { on = m, sig = sig }
+        return m
+    end
+    if sig and m.sig and m.sig ~= sig then
+        t[key] = nil
+        return nil, true
+    end
+    return m.on
 end

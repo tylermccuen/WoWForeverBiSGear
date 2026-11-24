@@ -370,4 +370,28 @@ check("saved specs: your spec first, up to 3 saved", function()
   if #ns.GetMySpecList() ~= 3 then error("remove failed") end
   ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"; ns.RefreshBrowser()
 end)
+check("ticks clear when the lists change a slot", function()
+  ns.char.selectedClass, ns.char.selectedSpec, ns.char.listMode = "HUNTER", "Marksmanship", "bis"
+  ns.char.done = {}
+  ns.RefreshBrowser()
+  local g = ns.GetGuide("HUNTER", "Marksmanship", 1)
+  local sig = g.items[1][2] .. "|"   -- rough: the real signature is built by the browser
+  -- tick Head through the browser's own signature
+  local key = "Head#1"
+  ns.char.done["HUNTER:Marksmanship"] = { [key] = true }   -- an old-style tick
+  ns.RefreshBrowser()
+  local m = ns.char.done["HUNTER:Marksmanship"][key]
+  if type(m) ~= "table" or not m.sig then error("old tick not migrated") end
+  -- simulate a guide update: new head item
+  local old = g.items[1][2]
+  g.items[1][2] = 999999
+  local printed
+  local savePrint = ns.Print; ns.Print = function(msg) printed = msg end
+  ns.RefreshBrowser()
+  ns.Print = savePrint
+  g.items[1][2] = old
+  if ns.char.done["HUNTER:Marksmanship"][key] ~= nil then error("tick not cleared") end
+  print("   " .. tostring(printed))
+  ns.RefreshBrowser()
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

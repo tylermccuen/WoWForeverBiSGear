@@ -587,7 +587,7 @@ local function createRow(i)
             local on = self:GetChecked() and true or false
             -- back to automatic when the tick matches what ownership says
             if on == (row.autoDone or false) then on = nil end
-            ns.SetDoneMark(row.specKey, row.doneKey, on)
+            ns.SetDoneMark(row.specKey, row.doneKey, on, row.doneSig)
             ns.RefreshBrowser()
         end
     end)
@@ -693,7 +693,7 @@ local function fillRow(row, data)
     if frame.compact then ownedText = ownedText:match("^(|T.-|t)") or ownedText end   -- icon only
     if ownedText == "" and data.isDone then ownedText = "|cff33ff33Done|r" end
     row.owned:SetText(ownedText)
-    row.doneKey, row.specKey, row.autoDone = data.doneKey, data.specKey, data.autoDone
+    row.doneKey, row.specKey, row.autoDone, row.doneSig = data.doneKey, data.specKey, data.autoDone, data.doneSig
     if data.doneKey then
         row.done:Show()
         row.done:SetChecked(data.isDone and true or false)
@@ -785,7 +785,6 @@ function ns.RefreshBrowser()
     -- you own enough of that slot's BiS / Realistic picks.
     local specKey = (ns.char.selectedClass or "") .. ":" .. (ns.char.selectedSpec or "")
     local canMark = gearList or mode == "enchants"
-    local marks = ns.GetDoneMarks(specKey)
     local listRows = ns.GetGuideRows(guide, mode == "bis" and ns.char.showAlts ~= false, mode)
     local seenSlot = {}
     for _, r in ipairs(listRows) do
@@ -793,6 +792,31 @@ function ns.RefreshBrowser()
             local n = (r.slot == "Ammo" or r.slot == "Quiver") and 1 or ((seenSlot[r.slot] or 0) + 1)   -- one ammo / quiver slot
             seenSlot[r.slot] = n
             r.doneKey = (mode == "enchants" and "E:" or "") .. r.slot .. "#" .. n
+        end
+    end
+    -- signature per key: the items the BiS and Realistic lists (or the enchant
+    -- list) have for that slot, so a list update clears outdated ticks
+    local sigs = {}
+    if canMark then
+        local function collect(rows, prefix, into)
+            local seen = {}
+            for _, r in ipairs(rows) do
+                if not r.isAlt then
+                    local n = (r.slot == "Ammo" or r.slot == "Quiver") and 1 or ((seen[r.slot] or 0) + 1)
+                    seen[r.slot] = n
+                    local key = prefix .. r.slot .. "#" .. n
+                    into[key] = (into[key] and (into[key] .. ",") or "") .. r.id
+                end
+            end
+        end
+        if gearList then
+            local b, rl = {}, {}
+            collect(ns.GetGuideRows(guide, false, "bis"), "", b)
+            if guide.realistic then collect(ns.GetGuideRows(guide, false, "realistic"), "", rl) end
+            for key, ids in pairs(b) do sigs[key] = ids .. "|" .. (rl[key] or "") end
+            for key, ids in pairs(rl) do sigs[key] = sigs[key] or ("|" .. ids) end
+        else
+            collect(ns.GetGuideRows(guide, false, "enchants"), "E:", sigs)
         end
     end
     local auto = {}
@@ -817,14 +841,22 @@ function ns.RefreshBrowser()
         end
     end
     local slotKeys, slotDone = {}, {}
+    local clearedSlots = {}
     for _, r in ipairs(listRows) do
         if r.doneKey then
             r.autoDone = auto[r.doneKey] or false
             -- a tick (true) or untick (false) overrides the automatic state
-            if marks[r.doneKey] ~= nil then r.isDone = marks[r.doneKey] else r.isDone = r.autoDone end
+            r.doneSig = sigs[r.doneKey]
+            local mark, cleared = ns.ResolveDoneMark(specKey, r.doneKey, r.doneSig)
+            if cleared then table.insert(clearedSlots, r.slot) end
+            if mark ~= nil then r.isDone = mark else r.isDone = r.autoDone end
             slotKeys[r.slot] = slotKeys[r.slot] or {}
             table.insert(slotKeys[r.slot], r)
         end
+    end
+    if #clearedSlots > 0 and ns.Print then
+        ns.Print("The lists changed for " .. table.concat(clearedSlots, ", ")
+            .. ": those slots were unticked so you can check the new picks.")
     end
     for slot, list in pairs(slotKeys) do
         local all = true
