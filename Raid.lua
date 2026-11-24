@@ -86,9 +86,17 @@ end
 -- Live character stats (each call guarded: the Forever API may differ)
 function ns.PlayerRaidStats()
     local s = {}
-    local crBonus = GetCombatRatingBonus
-    s.hit = maxOf(num(GetHitModifier), num(GetSpellHitModifier),
-                  CR_HIT_MELEE and num(crBonus, CR_HIT_MELEE), CR_HIT_SPELL and num(crBonus, CR_HIT_SPELL))
+    -- Hit = "+x% hit" effects (Get*HitModifier) + hit stat on gear (combat
+    -- rating), per attack type, like the character panel's Hit Chance tooltip.
+    local function hitFor(modifierFn, rating)
+        local mod = num(modifierFn)
+        local cr = rating and num(GetCombatRatingBonus, rating)
+        if mod == nil and cr == nil then return nil end
+        return (mod or 0) + (cr or 0)
+    end
+    s.hitMelee  = hitFor(GetHitModifier, CR_HIT_MELEE)
+    s.hitRanged = hitFor(GetHitModifier, CR_HIT_RANGED)
+    s.hitSpell  = hitFor(GetSpellHitModifier or GetHitModifier, CR_HIT_SPELL)
     local spellCrit, spellDmg
     for school = 2, 7 do
         spellCrit = maxOf(spellCrit, num(GetSpellCritChance, school))
@@ -215,9 +223,11 @@ function ns.RunRaidCheck(cb)
     -- Hit
     if role ~= "healer" then
         local need = role == "caster" and T.hitSpell or T.hitMelee
-        if st.hit then
-            local txt = string.format("Hit chance %.1f%% (raid bosses need %d%%)", st.hit, need)
-            line(st.hit + 0.001 >= need and "pass" or "fail", txt)
+        local kind = role == "caster" and "Spell" or role == "ranged" and "Ranged" or "Melee"
+        local hit = role == "caster" and st.hitSpell or role == "ranged" and st.hitRanged or st.hitMelee
+        if hit then
+            local txt = string.format("%s hit %.2f%% (raid bosses need %d%%)", kind, hit, need)
+            line(hit + 0.001 >= need and "pass" or "fail", txt)
         else
             line("info", string.format("Hit: couldn't read it. Raid bosses need %d%%: check the Hit Chance tooltip in your character panel.", need))
         end
