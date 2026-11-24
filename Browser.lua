@@ -3,6 +3,8 @@ local _, ns = ...
 local ROW_HEIGHT = 40
 local frame, scrollChild, rows = nil, nil, {}
 local CHECK_ICON = "|TInterface\\RaidFrame\\ReadyCheck-Ready:12:12|t "
+local YELLOW_CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16:16:0:0:64:64:0:64:0:64:255:210:0|t"
+local GREEN_CHECK = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16:16|t"
 local lastRaidSpec
 local WIDTH, HEIGHT = 960, 540          -- default size
 local MIN_W, MIN_H, MAX_W, MAX_H = 880, 320, 1500, 1100
@@ -28,6 +30,9 @@ local function columnLayout(contentWidth)
     local nameW = sourceX - 50
     local rest = math.max(300, contentWidth - sourceX - 200)   -- 200 = owned / done / link
     local avoidFixed = 150                                     -- enchant column
+    if frame and (frame.layoutMode == "consumables" or frame.layoutMode == "enchants") then
+        avoidFixed = math.floor(rest * 0.45)                   -- materials column
+    end
     local sourceW = math.max(180, rest - avoidFixed - 10)
     local avoidX = sourceX + sourceW + 10
     local avoidW = rest - sourceW - 10
@@ -122,7 +127,20 @@ local function setEnchantText(row, data, name)
     end
 end
 
+-- "30 Gromsblood, 1 Crystal Vial" for crafted consumables / enchants
+local function materialsText(craft)
+    local parts = {}
+    for _, m in ipairs(craft.mats or {}) do
+        table.insert(parts, m[2] .. " " .. m[3])
+    end
+    return table.concat(parts, ", ")
+end
+
 local function enchantCell(row, data)
+    if data.craft then
+        row.avoid:SetText("|cffffffff" .. materialsText(data.craft) .. "|r")
+        return
+    end
     local id = data.enchantID
     if not id then row.avoid:SetText("") return end
     local name = C_Item.GetItemNameByID and C_Item.GetItemNameByID(id)
@@ -224,7 +242,8 @@ local function createRow(i)
 
     row.avoid = row:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
     row.avoid:SetJustifyH("LEFT")
-    row.avoid:SetWordWrap(false)
+    row.avoid:SetWordWrap(true)
+    if row.avoid.SetMaxLines then row.avoid:SetMaxLines(2) end
 
     -- hover area over the enchant name: shows what the enchant does
     local enchHit = CreateFrame("Frame", nil, row)
@@ -232,6 +251,23 @@ local function createRow(i)
     enchHit:SetPoint("BOTTOMRIGHT", row.avoid, "BOTTOMRIGHT", 2, -6)
     enchHit:EnableMouse(true)
     enchHit:SetScript("OnEnter", function(self)
+        if row.craft then
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:AddLine("Materials")
+            for _, m in ipairs(row.craft.mats or {}) do
+                local have = (C_Item.GetItemCount and C_Item.GetItemCount(m[1], true)) or 0
+                local r, g, b = 1, 0.4, 0.4
+                if have >= m[2] then r, g, b = 0.2, 1, 0.2 end
+                GameTooltip:AddDoubleLine(m[2] .. "x " .. m[3], "have " .. have, 1, 1, 1, r, g, b)
+            end
+            if row.craft.recipe then
+                GameTooltip:AddLine(" ")
+                GameTooltip:AddLine(row.craft.recipe, 1, 0.82, 0)
+                if row.craft.from then GameTooltip:AddLine(row.craft.from, 1, 1, 1, true) end
+            end
+            GameTooltip:Show()
+            return
+        end
         if not row.enchantID then return end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:SetItemByID(row.enchantID)
@@ -332,15 +368,31 @@ local function fillRow(row, data)
 
     row.slot:SetText(slotText)
     local src = data.source or ""
+    if data.craft then
+        local c = data.craft
+        if c.prof then
+            src = "|cffffd100" .. c.prof .. (c.skill and (" " .. c.skill) or "") .. "|r"
+            if c.recipe then src = src .. "  " .. c.recipe .. (c.from and (": " .. c.from) or "") end
+            if not c.recipe then src = src .. "  (learned from a trainer or quest)" end
+        elseif c.from then
+            src = c.from
+        end
+    end
     if onQuest then src = "|cff33ff33" .. src .. "  (On quest)|r" end
     if data.note and not data.isPre then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
     row.source:SetText(src)
     row.enchantID = data.enchantID
     row.enchantNote, row.enchantSource = data.enchantNote, data.enchantSource
     row.slotName, row.itemID = data.slot, data.id
-    row.enchHit:SetShown(data.enchantID ~= nil and not frame.compact)
+    row.craft = data.craft
+    row.enchHit:SetShown((data.enchantID ~= nil or data.craft ~= nil) and not frame.compact)
     enchantCell(row, data)
     local ownedText = OWNED_ICON[ns.Owned[data.id]] or ""
+    if data.enchanted then
+        ownedText = GREEN_CHECK .. " |cff33ff33Enchanted|r"
+    elseif data.gearReady then
+        ownedText = YELLOW_CHECK .. " |cffffd100Ready|r"
+    end
     if frame.compact then ownedText = ownedText:match("^(|T.-|t)") or ownedText end   -- icon only
     if ownedText == "" and data.isDone then ownedText = "|cff33ff33Done|r" end
     row.owned:SetText(ownedText)
@@ -402,7 +454,17 @@ function ns.RefreshBrowser()
     local gearList = mode == "bis" or mode == "realistic"
     local realistic = mode == "realistic"
     ns.UpdateListTabs(mode, guide)
-    if headerAvoid then headerAvoid:SetShown(gearList and not frame.compact) end
+    if headerAvoid then
+        local crafting = mode == "consumables" or mode == "enchants"
+        headerSource:SetText(crafting and "RECIPE / WHERE TO GET IT" or "WHERE TO GET IT")
+        headerAvoid:SetText(crafting and "MATERIALS" or "ENCHANT")
+        headerAvoid:SetShown(not frame.compact)
+    end
+    if frame.layoutMode ~= mode then
+        frame.layoutMode = mode
+        local onSize = frame:GetScript("OnSizeChanged")
+        if onSize then onSize(frame, frame:GetWidth(), frame:GetHeight()) end
+    end
     -- alternatives belong to the BiS list; "hide finished slots" to the gear lists
     if mode ~= "bis" then altCheck:Disable(); altLabel:SetAlpha(0.4) else altCheck:Enable(); altLabel:SetAlpha(1) end
     if mode == "consumables" then doneCheck:Disable(); doneLabel:SetAlpha(0.4) else doneCheck:Enable(); doneLabel:SetAlpha(1) end
@@ -441,6 +503,12 @@ function ns.RefreshBrowser()
             for k = 1, n do auto[slot .. "#" .. k] = true end
         end
     end
+    if mode == "enchants" and ns.SlotEnchant then
+        -- an enchanted slot counts as done
+        for _, r in ipairs(listRows) do
+            if r.doneKey and select(2, ns.SlotEnchant(r.slot)) then auto[r.doneKey] = true end
+        end
+    end
     local slotKeys, slotDone = {}, {}
     for _, r in ipairs(listRows) do
         if r.doneKey then
@@ -455,6 +523,17 @@ function ns.RefreshBrowser()
         local all = true
         for _, r in ipairs(list) do if not r.isDone then all = false end end
         slotDone[slot] = all
+    end
+
+    -- Enchants tab: slots where you have the BiS or Realistic item (any of
+    -- equipped / bags / bank), i.e. you could enchant it now
+    local gearForSlot = {}
+    if mode == "enchants" then
+        for _, m in ipairs({ "bis", "realistic" }) do
+            for _, r in ipairs(ns.GetGuideRows(guide, false, m)) do
+                if not r.isAlt and ns.Owned[r.id] then gearForSlot[r.slot] = true end
+            end
+        end
     end
 
     local list = {}
@@ -476,6 +555,11 @@ function ns.RefreshBrowser()
                 r.enchantID, r.enchantNote, r.enchantSource = enchantFor(guide, r.slot)
             else
                 r.enchantID, r.enchantNote, r.enchantSource = nil, nil, nil
+            end
+            r.craft = (mode == "consumables" or mode == "enchants") and ns.Crafting and ns.Crafting[r.id] or nil
+            if mode == "enchants" then
+                r.gearReady = gearForSlot[r.slot] or false
+                r.enchanted = r.gearReady and ns.SlotEnchant and select(2, ns.SlotEnchant(r.slot)) or false
             end
             table.insert(list, r)
         end

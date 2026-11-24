@@ -1,6 +1,8 @@
 # Forever Best In Slot
 
 ## 1.7.1
+- **Recipes and materials:** the Consumables and Enchants tabs now show how each item is made: the profession and skill, the recipe and where it comes from (for example "Recipe: Flask of the Titans: Drop: General Drakkisath"), and a Materials column ("30 Gromsblood, 10 Stonescale Oil, 1 Black Lotus, 1 Crystal Vial"). Hover the materials to see how many of each you already have. Data from kovarel.com's WoW Forever database.
+- **Ready to enchant:** on the Enchants tab, a yellow check means you have that slot's BiS or Realistic item, so you could enchant it now; a green check means the equipped item is already enchanted (and the slot is ticked done).
 - **Easier to read:** "Where to get it" uses a larger font, gets more room and wraps onto a second line instead of being cut off. The Tier 0 "Needs:" rows drop the long turn-in note (the "For T0.5 quest" label already says it), and the window is a little wider by default. The same goes for the narrower window beside the character window, which now keeps a proper two-line "Where to get it" column.
 - **On quest:** when an item comes from a quest that's in your quest log, its "where to get it" text turns green and says "On quest".
 - **Enchant column:** the "Avoid grouping with" column is gone. In its place, the BiS and Realistic tabs show your spec's enchant for each item's slot, so gear and enchants read as one checklist. The enchant gets a green tick when that item is equipped and already enchanted. Hover an enchant to see what it does, where to get it and what's currently on your equipped item.

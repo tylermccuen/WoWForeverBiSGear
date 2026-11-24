@@ -51,7 +51,7 @@ CreateAtlasMarkup = function() return "" end
 
 local ns = {}
 local events = {}
-local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Announce.lua","Minimap.lua","Options.lua"}
+local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Crafting.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Announce.lua","Minimap.lua","Options.lua"}
 for _,f in ipairs(files) do assert(loadfile(f))("ForeverBestInSlot", ns) end
 local function fire(ev, ...)
   for _, f in ipairs(ALLFRAMES) do
@@ -276,5 +276,17 @@ check("quest highlight", function()
     if ns.OnSourceQuest(src) ~= want then error("wrong for " .. src) end
   end
   ns.RefreshBrowser()
+end)
+check("recipe + materials on Consumables and Enchants", function()
+  ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"
+  for _, m in ipairs({ "consumables", "enchants" }) do
+    ns.char.listMode = m; ns.RefreshBrowser()
+    local g = ns.GetGuide("HUNTER","Marksmanship",1)
+    local set = m == "consumables" and g.consumables or g.enchants
+    local crafted = 0
+    for _, r in ipairs(set) do if ns.Crafting[r[2]] then crafted = crafted + 1 end end
+    print("   " .. m .. ": crafting data for " .. crafted .. " / " .. #set)
+  end
+  ns.char.listMode = "bis"; ns.RefreshBrowser()
 end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
