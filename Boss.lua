@@ -2,8 +2,7 @@ local _, ns = ...
 
 --[[
     Boss popup: clicking a boss in "Where to get it" shows a small window with
-    the boss's 3D model (so you recognise it in the dungeon), its dungeon and
-    the items on your lists that drop from it.
+    the boss's 3D model (so you recognise it in the dungeon) and its dungeon.
 
     Boss names come from the source text ("Stratholme: Baron Rivendare",
     "Drop: Gyth (Upper Blackrock Spire)") and are matched against the boss
@@ -42,27 +41,9 @@ ns.BOSS_ICON = SKULL
 ----------------------------------------------------------------------
 local win
 
-local function itemsFromBoss(boss)
-    local out = {}
-    local class, spec = ns.char.selectedClass, ns.char.selectedSpec
-    local guide = class and spec and ns.GetGuide(class, spec, ns.LatestPhase())
-    if not guide then return out end
-    local seen = {}
-    for _, mode in ipairs({ "bis", "realistic" }) do
-        for _, r in ipairs(ns.GetGuideRows(guide, true, mode)) do
-            local b = ns.FindBoss(r.source)
-            if b and b.encounterID == boss.encounterID and not seen[r.id] then
-                seen[r.id] = true
-                table.insert(out, r)
-            end
-        end
-    end
-    return out
-end
-
 local function createWindow()
     win = CreateFrame("Frame", "ForeverBiSBossFrame", UIParent, "BasicFrameTemplateWithInset")
-    win:SetSize(320, 440)
+    win:SetSize(320, 360)
     win:SetPoint("CENTER", 0, 40)
     win:SetFrameStrata("DIALOG")
     win:SetToplevel(true)
@@ -82,9 +63,8 @@ local function createWindow()
 
     -- model (drag to turn)
     local model = CreateFrame("PlayerModel", nil, win)
-    model:SetPoint("TOPLEFT", 14, -52)
-    model:SetPoint("TOPRIGHT", -14, -52)
-    model:SetHeight(200)
+    model:SetPoint("TOPLEFT", 12, -52)
+    model:SetPoint("BOTTOMRIGHT", -12, 12)
     model:EnableMouse(true)
     model.facing = 0
     model:SetScript("OnMouseDown", function(self) self.dragX = GetCursorPosition() end)
@@ -101,19 +81,6 @@ local function createWindow()
     local bg = model:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
     bg:SetColorTexture(0, 0, 0, 0.35)
-
-    local scroll = CreateFrame("ScrollFrame", nil, win, "UIPanelScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT", model, "BOTTOMLEFT", 0, -8)
-    scroll:SetPoint("BOTTOMRIGHT", -32, 14)
-    local child = CreateFrame("Frame", nil, scroll)
-    child:SetSize(260, 200)
-    scroll:SetScrollChild(child)
-    win.text = child:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    win.text:SetPoint("TOPLEFT")
-    win.text:SetWidth(258)
-    win.text:SetJustifyH("LEFT")
-    win.text:SetSpacing(3)
-    win.child = child
 
 end
 
@@ -134,18 +101,6 @@ function ns.ShowBoss(boss)
     win.model.facing = 0
     win.model:SetFacing(0)
 
-    local parts = {}
-    local items = itemsFromBoss(boss)
-    if #items > 0 then
-        table.insert(parts, "\n|cffffd100On your lists from this boss:|r")
-        for _, r in ipairs(items) do
-            local name = C_Item.GetItemNameByID and C_Item.GetItemNameByID(r.id) or ("item " .. r.id)
-            local mark = ns.Owned[r.id] and "  |cff33ff33(have it)|r" or ""
-            table.insert(parts, "  " .. r.slot .. ": " .. name .. mark)
-        end
-    end
-    win.text:SetText(table.concat(parts, "\n"))
-    win.child:SetHeight((win.text:GetStringHeight() or 0) + 10)
     win:Show()
     win:Raise()
 end

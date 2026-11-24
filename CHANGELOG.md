@@ -3,7 +3,7 @@
 ## 1.7.2
 - **Dungeon, Boss and Drop columns:** on the BiS and Realistic tabs, "Where to get it" is split into a Dungeon column, a Boss / Source column and a Drop column with the drop chance (from kovarel.com's WoW Forever database).
 - **Sorting:** click the ITEM, DUNGEON, BOSS / SOURCE or DROP header to sort the list; click again to reverse it. Sort by dungeon to see everything one run can give you, or by drop to see the best odds first. Alternatives and Tier 0 pieces stay under their item.
-- **Boss window:** bosses get a skull icon; click one to see the boss's 3D model (drag to turn it) so you recognise it in the dungeon, plus its dungeon and the items on your lists that it drops. Recipes that drop from a boss (like Flask of the Titans from General Drakkisath) work too. 73 dungeon bosses are included.
+- **Boss window:** bosses get a skull icon; click one to see the boss's 3D model (drag to turn it) so you recognise it in the dungeon, and its dungeon. Recipes that drop from a boss (like Flask of the Titans from General Drakkisath) work too. 73 dungeon bosses are included.
 
 ## 1.7.1
 - **Recipes and materials:** the Consumables and Enchants tabs now show how each item is made: the profession and skill, the recipe and where it comes from (for example "Recipe: Flask of the Titans: Drop: General Drakkisath"), and a Materials column ("30 Gromsblood, 10 Stonescale Oil, 1 Black Lotus, 1 Crystal Vial"). Hover the materials to see how many of each you already have. Data from kovarel.com's and Wowhead's WoW Forever databases.
