@@ -46,15 +46,6 @@ local function columnLayout(contentWidth)
         L.sourceW = inner - L.dungeonW
         L.dropX, L.dropW = L.sourceX + L.sourceW + 10, dropW
         L.avoidX, L.avoidW = L.dropX + dropW + 10, enchantW
-        if enchantW == 0 then
-            -- give the room to the dungeon and boss columns
-            local spare = 150
-            L.dungeonW = L.dungeonW + math.floor(spare * 0.4)
-            L.sourceX = L.dungeonX + L.dungeonW + 10
-            L.sourceW = L.sourceW + spare - math.floor(spare * 0.4)
-            L.dropX = L.sourceX + L.sourceW + 10
-            L.avoidX = L.dropX + dropW + 10
-        end
     else
         -- Enchants / Consumables: skill | where to get the recipe | materials
         local matsW = math.floor(rest * 0.42)
@@ -543,8 +534,8 @@ end
 -- Sparkle around 1st place items: a pulsing gold glow and twinkling stars
 ----------------------------------------------------------------------
 local SPARK_SPOTS = {   -- point on the icon, x, y, size, delay
-    { "TOPLEFT", -3, 3, 18, 0 }, { "TOPRIGHT", 3, 2, 14, 0.5 }, { "BOTTOMLEFT", -2, -2, 13, 1.0 },
-    { "RIGHT", 6, -3, 11, 0.3 }, { "TOP", 2, 7, 10, 0.8 }, { "LEFT", -7, 2, 9, 1.3 },
+    { "TOPLEFT", 0, 0, 12, 0 }, { "TOPRIGHT", 0, 0, 10, 0.6 }, { "BOTTOMLEFT", 0, 0, 9, 1.1 },
+    { "LEFT", -1, 4, 7, 0.3 },
 }
 
 function ns.CreateSparkle(parent, anchor)
@@ -576,7 +567,7 @@ function ns.CreateSparkle(parent, anchor)
     local g = glow:CreateAnimationGroup()
     g:SetLooping("BOUNCE")
     local pulse = g:CreateAnimation("Alpha")
-    pulse:SetFromAlpha(0.55)
+    pulse:SetFromAlpha(0.45)
     pulse:SetToAlpha(1)
     pulse:SetDuration(1.1)
     table.insert(f.groups, g)
@@ -610,8 +601,10 @@ end
 function ns.ShowSparkle(f, on, iconSize)
     if not f then return end
     if on then
-        f.glow:SetSize((iconSize or 32) * 1.95, (iconSize or 32) * 1.95)
-        f.rays:SetSize((iconSize or 32) * 2.3, (iconSize or 32) * 2.3)
+        -- the gold ring sits on the icon's edge and fades out within a few pixels
+        f.glow:SetSize((iconSize or 32) * 1.45, (iconSize or 32) * 1.45)
+        f.rays:SetSize((iconSize or 32) * 1.9, (iconSize or 32) * 1.9)
+        f.rays:SetShown(f.withRays and true or false)
         f:Show()
         for _, g in ipairs(f.groups) do
             if not g:IsPlaying() then g:Play() end
@@ -1215,7 +1208,10 @@ local function createCard(i)
         st.trophy = card:CreateTexture(nil, "ARTWORK")
         st.trophy:SetSize(place == 1 and 28 or 22, place == 1 and 28 or 22)
         st.trophy:SetPoint("BOTTOM", btn, "TOP", 0, 3)
-        if place == 1 then st.sparkle = ns.CreateSparkle(card, btn) end
+        if place == 1 then
+            st.sparkle = ns.CreateSparkle(card, btn)
+            st.sparkle.withRays = true   -- room for the turning rays on a card
+        end
         st.empty = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         st.empty:SetPoint("BOTTOM", st.block, "TOP", 0, 8)
         st.empty:SetText("No " .. ns.PLACE_NAMES[place] .. " pick")
