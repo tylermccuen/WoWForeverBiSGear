@@ -686,6 +686,61 @@ end
 -- Rows
 ----------------------------------------------------------------------
 
+local function sourceClick(self, row)
+    if row.boss then ns.ShowBoss(row.boss) return end
+    -- a quest you have: open it in the quest log (Shift-click still pins the giver)
+    if row.questInLog and not IsShiftKeyDown() then ns.OpenQuestLog(row.questInLog) return end
+    -- quest: pin the quest giver on the map
+    local pins = row.quests and ns.QuestPins and ns.QuestPins(row.quests) or {}
+    if #pins == 1 then
+        ns.PinOnMap(pins[1].zone, pins[1].coords, pins[1].giver)
+    elseif #pins > 1 and MenuUtil and MenuUtil.CreateContextMenu then
+        MenuUtil.CreateContextMenu(self, function(_, root)
+            root:CreateTitle("Pin on map")
+            for _, p in ipairs(pins) do
+                root:CreateButton(p.giver .. "  |cffaaaaaa(" .. p.quest .. ", " .. p.zone .. ")|r",
+                    function() ns.PinOnMap(p.zone, p.coords, p.giver) end)
+            end
+        end)
+    end
+end
+
+local function sourceEnter(self, row)
+    -- podium cards add where it drops and how often
+    local function extra()
+        if row.dungeonName and row.dungeonName ~= "" then
+            GameTooltip:AddDoubleLine("Dungeon", row.dungeonName, 0.8, 0.8, 0.8, 1, 1, 1)
+        end
+        if row.dropRate then GameTooltip:AddDoubleLine("Drop", row.dropRate, 0.8, 0.8, 0.8, 1, 1, 1) end
+    end
+    if row.boss then
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine(row.boss.name)
+        GameTooltip:AddLine(row.boss.instance or "", 1, 1, 1)
+        if row.dropRate then GameTooltip:AddDoubleLine("Drop", row.dropRate, 0.8, 0.8, 0.8, 1, 1, 1) end
+        GameTooltip:AddLine("Click to see the boss", 0.2, 1, 0.2)
+        GameTooltip:Show()
+    elseif row.quests then
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        ns.AddQuestTooltip(GameTooltip, row.quests)
+        extra()
+        local canPin = ns.QuestPins and #ns.QuestPins(row.quests) > 0
+        if row.questInLog or canPin then GameTooltip:AddLine(" ") end
+        if row.questInLog then
+            GameTooltip:AddLine("Click to open " .. row.questInLog.title .. " in your quest log", 0.2, 1, 0.2)
+            if canPin then GameTooltip:AddLine("Shift-click to pin the quest giver on your map", 0.2, 1, 0.2) end
+        elseif canPin then
+            GameTooltip:AddLine("Click to pin the quest giver on your map", 0.2, 1, 0.2)
+        end
+        GameTooltip:Show()
+    elseif row.questInLog then
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine(row.questInLog.title, 1, 0.82, 0)
+        GameTooltip:AddLine("Click to open it in your quest log", 0.2, 1, 0.2)
+        GameTooltip:Show()
+    end
+end
+
 local function createRow(i)
     local row = CreateFrame("Frame", nil, scrollChild)
     row:SetHeight(ROW_HEIGHT)
@@ -838,50 +893,8 @@ local function createRow(i)
     local srcHit = CreateFrame("Button", nil, row)
     srcHit:SetPoint("TOPLEFT", row.source, "TOPLEFT", -2, 4)
     srcHit:SetPoint("BOTTOMRIGHT", row.source, "BOTTOMRIGHT", 2, -4)
-    srcHit:SetScript("OnClick", function(self)
-        if row.boss then ns.ShowBoss(row.boss) return end
-        -- a quest you have: open it in the quest log (Shift-click still pins the giver)
-        if row.questInLog and not IsShiftKeyDown() then ns.OpenQuestLog(row.questInLog) return end
-        -- quest: pin the quest giver on the map
-        local pins = row.quests and ns.QuestPins and ns.QuestPins(row.quests) or {}
-        if #pins == 1 then
-            ns.PinOnMap(pins[1].zone, pins[1].coords, pins[1].giver)
-        elseif #pins > 1 and MenuUtil and MenuUtil.CreateContextMenu then
-            MenuUtil.CreateContextMenu(self, function(_, root)
-                root:CreateTitle("Pin on map")
-                for _, p in ipairs(pins) do
-                    root:CreateButton(p.giver .. "  |cffaaaaaa(" .. p.quest .. ", " .. p.zone .. ")|r",
-                        function() ns.PinOnMap(p.zone, p.coords, p.giver) end)
-                end
-            end)
-        end
-    end)
-    srcHit:SetScript("OnEnter", function(self)
-        if row.boss then
-            GameTooltip:SetOwner(self, "ANCHOR_TOP")
-            GameTooltip:AddLine(row.boss.name)
-            GameTooltip:AddLine(row.boss.instance or "", 1, 1, 1)
-            GameTooltip:AddLine("Click to see the boss", 0.2, 1, 0.2)
-            GameTooltip:Show()
-        elseif row.quests then
-            GameTooltip:SetOwner(self, "ANCHOR_TOP")
-            ns.AddQuestTooltip(GameTooltip, row.quests)
-            local canPin = ns.QuestPins and #ns.QuestPins(row.quests) > 0
-            if row.questInLog or canPin then GameTooltip:AddLine(" ") end
-            if row.questInLog then
-                GameTooltip:AddLine("Click to open " .. row.questInLog.title .. " in your quest log", 0.2, 1, 0.2)
-                if canPin then GameTooltip:AddLine("Shift-click to pin the quest giver on your map", 0.2, 1, 0.2) end
-            elseif canPin then
-                GameTooltip:AddLine("Click to pin the quest giver on your map", 0.2, 1, 0.2)
-            end
-            GameTooltip:Show()
-        elseif row.questInLog then
-            GameTooltip:SetOwner(self, "ANCHOR_TOP")
-            GameTooltip:AddLine(row.questInLog.title, 1, 0.82, 0)
-            GameTooltip:AddLine("Click to open it in your quest log", 0.2, 1, 0.2)
-            GameTooltip:Show()
-        end
-    end)
+    srcHit:SetScript("OnClick", function(self) sourceClick(self, row) end)
+    srcHit:SetScript("OnEnter", function(self) sourceEnter(self, row) end)
     srcHit:SetScript("OnLeave", function() GameTooltip:Hide() end)
     row.srcHit = srcHit
 
@@ -1221,7 +1234,7 @@ end
 -- Podium view (Gear tab): one card per slot with 2nd, 1st and 3rd place
 -- standing on podium steps
 ----------------------------------------------------------------------
-local CARD_W, CARD_H, CARD_GAP = 300, 186, 10
+local CARD_W, CARD_H, CARD_GAP = 300, 198, 10
 local STEP_H = { 30, 20, 12 }                     -- block height by place
 local STEP_COLOR = { { 1, 0.78, 0.2 }, { 0.78, 0.82, 0.86 }, { 0.8, 0.5, 0.26 } }
 local STEP_ORDER = { 2, 1, 3 }                    -- left to right
@@ -1299,10 +1312,21 @@ local function createCard(i)
         st.num:SetPoint("CENTER", st.block, "CENTER", 0, 0)
         st.num:SetText(place)
         st.num:SetTextColor(0.15, 0.1, 0.05)
-        st.src = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        -- boss / quest: brighter, up to two lines, click for details
+        st.src = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         st.src:SetPoint("BOTTOM", st.block, "TOP", 0, 3)
-        st.src:SetHeight(12)
-        st.src:SetWordWrap(false)
+        st.src:SetHeight(22)
+        st.src:SetJustifyH("CENTER")
+        st.src:SetJustifyV("BOTTOM")
+        st.src:SetWordWrap(true)
+        if st.src.SetMaxLines then st.src:SetMaxLines(2) end
+        st.src:SetTextColor(0.85, 0.82, 0.74)
+        st.srcHit = CreateFrame("Button", nil, card)
+        st.srcHit:SetPoint("TOPLEFT", st.src, "TOPLEFT", -2, 2)
+        st.srcHit:SetPoint("BOTTOMRIGHT", st.src, "BOTTOMRIGHT", 2, -2)
+        st.srcHit:SetScript("OnClick", function(self) sourceClick(self, st) end)
+        st.srcHit:SetScript("OnEnter", function(self) sourceEnter(self, st) end)
+        st.srcHit:SetScript("OnLeave", function() GameTooltip:Hide() end)
         st.name = card:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         st.name:SetPoint("BOTTOM", st.src, "TOP", 0, 1)
         st.name:SetJustifyH("CENTER")
@@ -1395,7 +1419,7 @@ local function fillStep(card, st, place, d, holiday, d2)
         if not two then st.btn2.data = nil end
     end
     if st.sparkle then ns.ShowSparkle(st.sparkle, on, two and 32 or 36) end
-    if not on then st.btn.data = nil return end
+    if not on then st.btn.data = nil; st.srcHit:Hide() return end
     st.trophy:ClearAllPoints()
     st.trophy:SetPoint("BOTTOM", st.btn, "TOP", two and 19 or 0, 3)
     st.trophy:SetTexture(ns.PlaceIcon(place))
@@ -1405,10 +1429,23 @@ local function fillStep(card, st, place, d, holiday, d2)
         st.src:SetText("Wear both")
         if st.sparkle2 == nil then st.sparkle2 = ns.CreateSparkle(card, st.btn2) end
     else
-        local _, boss = ns.SplitSource(d.source)
+        local dungeon, bossText = ns.SplitSource(d.source)
         local rate = ns.DropChance(d.id, d.source)
-        st.src:SetText(boss .. (rate and (" - " .. ns.FormatChance(rate)) or ""))
+        local from = d.craft and d.craft.from or d.source
+        st.boss = ns.FindBoss and ns.FindBoss(from) or nil
+        st.quests = (not st.boss) and ns.QuestsInSource and ns.QuestsInSource(from) or nil
+        st.questInLog = (not st.boss) and ns.QuestInLog and ns.QuestInLog(from) or nil
+        st.dungeonName, st.dropRate = dungeon, rate and ns.FormatChance(rate) or nil
+        local text = bossText ~= "" and bossText or dungeon
+        local isQuest = text:find("^Quest: ") ~= nil
+        if isQuest then text = text:sub(8) end
+        if isQuest or st.quests or st.questInLog then text = "|cffffd100Quest:|r " .. text end
+        if st.boss then text = ns.BOSS_ICON .. text end
+        if rate then text = text .. " |cffaaaaaa" .. ns.FormatChance(rate) .. "|r" end
+        st.src:SetText(text)
     end
+    local clickable = not two and (st.boss or st.quests or st.questInLog) ~= nil
+    st.srcHit:SetShown(on and clickable)
     if st.sparkle2 then ns.ShowSparkle(st.sparkle2, two, 32) end
     st.name:SetText("|cff888888...|r")
     fillItemButton(st, st.btn, d, "n1")
