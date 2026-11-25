@@ -674,7 +674,15 @@ local function createRow(i)
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
         GameTooltip:AddLine("Done")
         if row.autoDone then
-            GameTooltip:AddLine("Ticked because you own a BiS or Realistic item for this slot. Untick it if the slot isn't finished.", 1, 1, 1, true)
+            if row.doneBy then
+                local e = row.doneBy
+                local name = (C_Item.GetItemNameByID and C_Item.GetItemNameByID(e.id)) or ("item " .. e.id)
+                GameTooltip:AddLine("Ticked because you have " .. name .. " from the "
+                    .. (e.list == "bis" and "BiS" or "Realistic") .. " list.", 1, 1, 1, true)
+                GameTooltip:AddLine("Untick it if the slot isn't finished.", 0.8, 0.8, 0.8, true)
+            else
+                GameTooltip:AddLine("Ticked because you own a BiS or Realistic item for this slot. Untick it if the slot isn't finished.", 1, 1, 1, true)
+            end
         else
             GameTooltip:AddLine("Tick when this slot is finished, with this item or one from the other list. It counts in both the BiS and Realistic lists.", 1, 1, 1, true)
         end
@@ -831,6 +839,14 @@ local function fillRow(row, data)
     end
     row.haveHit:SetShown(row.stock ~= nil)
     if frame.compact and not row.stock then ownedText = ownedText:match("^(|T.-|t)") or ownedText end   -- icon only
+    row.doneBy = nil
+    if ownedText == "" and data.isDone and data.doneBy and not frame.compact then
+        -- done through another item: say which list and where it is
+        local e = data.doneBy
+        local where = ({ equipped = "equipped", bag = "in bags", bank = "in bank" })[ns.Owned[e.id]] or "owned"
+        ownedText = "|cff33ff33" .. (e.list == "bis" and "BiS" or "Realistic") .. " " .. where .. "|r"
+        row.doneBy = e
+    end
     if ownedText == "" and data.isDone then ownedText = "|cff33ff33Done|r" end
     row.owned:SetText(ownedText)
     row.doneKey, row.specKey, row.autoDone, row.doneSig = data.doneKey, data.specKey, data.autoDone, data.doneSig
@@ -960,18 +976,34 @@ function ns.RefreshBrowser()
         end
     end
     local auto = {}
+    local ownedForSlot = {}   -- [slot] = { { id, list = "bis"/"realistic" }, ... } you own
     if gearList then
-        local got, seen = {}, {}
+        local seen = {}
         for _, m in ipairs({ "bis", "realistic" }) do
             for _, r in ipairs(ns.GetGuideRows(guide, false, m)) do
                 if not r.isAlt and ns.Owned[r.id] and not seen[r.id] then
                     seen[r.id] = true
-                    got[r.slot] = (got[r.slot] or 0) + 1
+                    ownedForSlot[r.slot] = ownedForSlot[r.slot] or {}
+                    table.insert(ownedForSlot[r.slot], { id = r.id, list = m })
                 end
             end
         end
-        for slot, n in pairs(got) do
-            for k = 1, n do auto[slot .. "#" .. k] = true end
+        for slot, list in pairs(ownedForSlot) do
+            for k = 1, #list do auto[slot .. "#" .. k] = true end
+        end
+        -- which owned item makes each row done: its own item if you have it,
+        -- otherwise one from the other list (e.g. BiS equipped, seen on Realistic)
+        local used = {}
+        for _, r in ipairs(listRows) do
+            if r.doneKey then r.doneBy = nil end
+            if r.doneKey and ns.Owned[r.id] then used[r.id] = true end
+        end
+        for _, r in ipairs(listRows) do
+            if r.doneKey and not ns.Owned[r.id] and auto[r.doneKey] then
+                for _, e in ipairs(ownedForSlot[r.slot] or {}) do
+                    if not used[e.id] then used[e.id] = true; r.doneBy = e; break end
+                end
+            end
         end
     end
     if mode == "enchants" and ns.SlotEnchant then

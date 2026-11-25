@@ -488,4 +488,25 @@ check("consumables: have / keep counts and targets", function()
   C_Item.GetItemCount = saveCount
   ns.char.listMode = "bis"; ns.RefreshBrowser()
 end)
+check("realistic tab says when the BiS item is what you have", function()
+  ns.char.selectedClass, ns.char.selectedSpec, ns.char.listMode = "HUNTER", "Marksmanship", "realistic"
+  ns.char.done = {}
+  local g = ns.GetGuide("HUNTER", "Marksmanship", 1)
+  local bisHead
+  for _, r in ipairs(ns.GetGuideRows(g, false, "bis")) do if r.slot == "Head" then bisHead = r.id break end end
+  local realHead
+  for _, r in ipairs(ns.GetGuideRows(g, false, "realistic")) do if r.slot == "Head" and not r.isAlt then realHead = r break end end
+  if not (bisHead and realHead) or realHead.id == bisHead then print("   (same head on both lists, skipped)") ns.char.listMode = "bis" return end
+  local saveRO = ns.RefreshOwned; ns.RefreshOwned = function() end   -- keep the fake ownership
+  ns.Owned[bisHead] = "equipped"; ns.OwnedVersion = ns.OwnedVersion + 1
+  ns.RefreshBrowser()
+  ns.RefreshOwned = saveRO
+  for _, r in ipairs(ns.GetGuideRows(g, false, "realistic")) do
+    if r.slot == "Head" and not r.isAlt then
+      if not (r.doneBy and r.doneBy.id == bisHead and r.doneBy.list == "bis") then error("doneBy not set: mode=" .. tostring(_G.ForeverBiSFrame.layoutMode) .. " sel=" .. tostring(ns.char.selectedSpec) .. " lm=" .. tostring(ns.char.listMode) .. " shown=" .. tostring(_G.ForeverBiSFrame and _G.ForeverBiSFrame:IsShown()) .. " key=" .. tostring(r.doneKey) .. " auto=" .. tostring(r.autoDone)) end
+    end
+  end
+  ns.Owned[bisHead] = nil; ns.OwnedVersion = ns.OwnedVersion + 1
+  ns.char.listMode = "bis"; ns.RefreshBrowser()
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

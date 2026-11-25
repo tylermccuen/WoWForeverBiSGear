@@ -395,7 +395,7 @@ function ns.GetGuideRows(guide, includeAlts, listMode)
     if not byGuide then
         -- keep only a few specs (yours for tooltips, the one on screen)
         cachedGuides = cachedGuides + 1
-        if cachedGuides > 3 then wipe(rowCache); cachedGuides = 1 end
+        if cachedGuides > 6 then wipe(rowCache); cachedGuides = 1 end
         byGuide = {}; rowCache[guide] = byGuide
     end
     local rows = byGuide[key]
