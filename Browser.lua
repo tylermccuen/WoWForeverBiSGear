@@ -624,33 +624,21 @@ function ns.CreateSparkle(parent, anchor)
     f:SetAllPoints(anchor)
     f:SetFrameLevel(parent:GetFrameLevel() + 3)
     f.groups = {}
-    -- slowly turning rays behind the glow
-    local rays = f:CreateTexture(nil, "OVERLAY", nil, 5)
-    rays:SetTexture(ns.TEXTURES .. "rays")
-    rays:SetBlendMode("ADD")
-    rays:SetPoint("CENTER")
-    rays:SetSize(70, 70)
-    rays:SetAlpha(0.8)
-    f.rays = rays
-    local spin = rays:CreateAnimationGroup()
-    spin:SetLooping("REPEAT")
-    local turn = spin:CreateAnimation("Rotation")
-    turn:SetDegrees(-360)
-    turn:SetDuration(9)
-    table.insert(f.groups, spin)
-    -- gold ring hugging the icon
-    local glow = f:CreateTexture(nil, "OVERLAY", nil, 6)
-    glow:SetTexture(ns.TEXTURES .. "glow")
+    -- soft golden halo glowing out from behind the icon (drawn on the
+    -- parent so it sits under the icon art instead of washing over it)
+    local glow = parent:CreateTexture(nil, "ARTWORK", nil, 7)
+    glow:SetTexture(ns.TEXTURES .. "halo")
     glow:SetBlendMode("ADD")
-    glow:SetPoint("CENTER")
-    glow:SetSize(62, 62)
+    glow:SetPoint("CENTER", anchor, "CENTER")
+    glow:SetSize(64, 64)
+    glow:Hide()
     f.glow = glow
     local g = glow:CreateAnimationGroup()
     g:SetLooping("BOUNCE")
     local pulse = g:CreateAnimation("Alpha")
-    pulse:SetFromAlpha(0.25)
-    pulse:SetToAlpha(0.6)
-    pulse:SetDuration(2.2)
+    pulse:SetFromAlpha(0.55)
+    pulse:SetToAlpha(1)
+    pulse:SetDuration(1.8)
     table.insert(f.groups, g)
     for _, s in ipairs(SPARK_SPOTS) do
         local t = f:CreateTexture(nil, "OVERLAY", nil, 7)
@@ -683,15 +671,15 @@ function ns.ShowSparkle(f, on, iconSize)
     if not f then return end
     if on then
         -- the gold ring sits on the icon's edge and fades out within a few pixels
-        f.glow:SetSize((iconSize or 32) * 1.3, (iconSize or 32) * 1.3)
-        f.rays:SetSize((iconSize or 32) * 1.9, (iconSize or 32) * 1.9)
-        f.rays:SetShown(f.withRays and true or false)
+        f.glow:SetSize((iconSize or 32) * 2, (iconSize or 32) * 2)
+        f.glow:Show()
         f:Show()
         for _, g in ipairs(f.groups) do
             if not g:IsPlaying() then g:Play() end
         end
     else
         for _, g in ipairs(f.groups) do g:Stop() end
+        f.glow:Hide()
         f:Hide()
     end
 end
