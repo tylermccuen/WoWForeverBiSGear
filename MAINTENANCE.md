@@ -13,7 +13,7 @@ From Blizzard's roadmap (BlizzCon 2026), as summarized by icy-veins.com/wow-fore
 | When | What | What the addon needs |
 |---|---|---|
 | Nov 4, 2026 (live) | Launch, level 60, dungeons | **Pre-raid** lists (`Data/Phase1.lua`, phase id 1). This is what the addon ships now. |
-| **Dec 9, 2026** | Raids open: Barrow Deeps (10), Hyjal Summit (20), Onyxia's Lair (40) | First raid phase: new `Data/Phase2.lua` labelled "Phase 1" once BiS lists with raid items exist; raid bosses in `Bosses.lua`; drop rates; raid check may need raid-specific targets. |
+| **Dec 9, 2026** | Raids open: Barrow Deeps (10), Hyjal Summit (20), Onyxia's Lair (40) | First raid phase: fill `guides` in `Data/Phase2.lua` (already in the addon, hidden until it has a list; shows as "Phase 1"); research so far in `tools/data/phase1_research.md`; raid bosses in `Bosses.lua`; drop rates; raid check may need raid-specific targets. |
 | Winter 2026 | Hardcore servers | Probably nothing (same items). Check whether the client reports a different interface number. |
 | Spring 2027 | 2 new raids (10 and 20), 2 new dungeons, 2 new class/race combos, new quests and zone, PvP refresh | New phase file; new class/spec combos may need new specs in the lists; new dungeon bosses; new quest givers. |
 | Summer 2027 | Revamped iconic raid, a new raid, 2 new dungeons, profession and legacy updates, PvP refresh | New phase file; recheck `Crafting.lua` (recipes / skill caps may change). |

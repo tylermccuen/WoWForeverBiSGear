@@ -13,12 +13,13 @@
 Core.lua
 Data\Phases.lua
 Data\Phase1.lua
+Data\Phase2.lua
 Data\Crafting.lua
 Data\DropRates.lua
 Data\Bosses.lua
 Data\Quests.lua
 # Add new phases here, e.g.:
-# Data\Phase2.lua
+# Data\Phase3.lua
 Items.lua
 LinkPopup.lua
 Tooltip.lua

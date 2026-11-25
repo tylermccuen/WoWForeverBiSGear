@@ -3,9 +3,9 @@
 Every phase is one file in `Data\` that registers itself. Nothing else in the addon needs changing.
 
 ## Steps
-1. Copy the template below to `Data\Phase2.lua` (or 3, 4, ...).
+1. The first raid phase already has a file: fill in `guides` in `Data\Phase2.lua` (it shows up as "Phase 1" once a spec has a list; notes in `tools/data/phase1_research.md`). For later phases, copy the template below to `Data\Phase3.lua` (4, 5, ...).
 2. Fill in the lists that changed. **Specs you leave out keep using their latest earlier list**, so a phase file can start with just a few specs and grow.
-3. Add the file to `ForeverBestInSlot.toc` under `Data\Phase1.lua` (there's a commented example line).
+3. For a new file, add it to `ForeverBestInSlot.toc` under the last phase file (there's a commented example line).
 4. Add a section for the new version at the top of `CHANGELOG.md`. CurseForge shows this text as the release notes; the version number itself comes from the release tag.
 5. Check the data: `lua tools/validate.lua` from the addon folder, then `lua tools/uitest.lua` to open the browser against mocked game frames and catch Lua errors. It flags bad slots, missing IDs and duplicate specs, and shows how many items are new per spec.
 6. `/reload` in game.
