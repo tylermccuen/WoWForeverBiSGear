@@ -1,6 +1,7 @@
 # Forever Best In Slot
 
 ## 1.7.4
+- **Open quests from the list:** click a quest you already have (the green "On quest" rows) to open it in your quest log. Shift-click still pins the quest giver on the map.
 - **Tidier source names:** "trash drop", "rare drop" and similar now read "Trash Drop", "Rare Drop", "World Drop" and so on.
 - **Says why a slot is done:** when a slot counts as done because of an item from the other list, the row now says so, for example "BiS equipped" on the Realistic tab or "Realistic in bags" on the BiS tab, instead of just "Done". Hovering the tick names the item.
 - **Spec detection:** reads more of the ways the game can report your talent trees, so Marksmanship hunters (and others) aren't shown as their class's first spec. `/bis spec` prints what the game reports, to help fix detection if it's still wrong. Right-clicking the gold-ringed icon to pick your spec still works.

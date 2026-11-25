@@ -509,4 +509,19 @@ check("realistic tab says when the BiS item is what you have", function()
   ns.Owned[bisHead] = nil; ns.OwnedVersion = ns.OwnedVersion + 1
   ns.char.listMode = "bis"; ns.RefreshBrowser()
 end)
+check("click a quest you have: opens the quest log", function()
+  local saveN, saveI = C_QuestLog.GetNumQuestLogEntries, C_QuestLog.GetInfo
+  C_QuestLog.GetNumQuestLogEntries = function() return 1 end
+  C_QuestLog.GetInfo = function() return { title = "In Dreams", questID = 5944 } end
+  ns.ScanQuestLog()
+  local q = ns.QuestInLog("Quest: In Dreams (Western Plaguelands)")
+  if not q or q.id ~= 5944 then error("not found") end
+  local opened
+  QuestMapFrame_OpenToQuestDetails = function(id) opened = id end
+  ns.OpenQuestLog(q)
+  if opened ~= 5944 then error("not opened") end
+  QuestMapFrame_OpenToQuestDetails = nil
+  C_QuestLog.GetNumQuestLogEntries, C_QuestLog.GetInfo = saveN, saveI
+  ns.ScanQuestLog()
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

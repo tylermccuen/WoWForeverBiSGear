@@ -329,7 +329,7 @@ local function scanQuestLog()
     for i = 1, (ok and n or 0) do
         local okI, info = pcall(C_QuestLog.GetInfo, i)
         if okI and type(info) == "table" and info.title and not info.isHeader then
-            questTitles[info.title:lower()] = true
+            questTitles[info.title:lower()] = { id = info.questID, index = i, title = info.title }
         end
     end
 end
@@ -344,6 +344,41 @@ function ns.OnSourceQuest(source)
         if questTitles[name:lower()] then return true end
     end
     return false
+end
+
+-- The first quest from a source that's in your quest log: { id, index, title }
+function ns.QuestInLog(source)
+    if type(source) ~= "string" then return nil end
+    local names = source:match("[Qq]uest: (.+)$")
+    if not names then return nil end
+    names = names:gsub("%s*%b()%s*$", "")
+    for name in (names .. " / "):gmatch("(.-) / ") do
+        local q = questTitles[name:lower()]
+        if q then return q end
+    end
+end
+
+-- Open the quest log on a quest (whichever quest log this client has)
+function ns.OpenQuestLog(q)
+    if not q then return end
+    local ok = false
+    if q.id and QuestMapFrame_OpenToQuestDetails then
+        ok = pcall(QuestMapFrame_OpenToQuestDetails, q.id)
+    end
+    if not ok and QuestLogFrame and q.index then
+        ok = pcall(function()
+            ShowUIPanel(QuestLogFrame)
+            if SelectQuestLogEntry then SelectQuestLogEntry(q.index) end
+            if QuestLog_Update then QuestLog_Update() end
+        end)
+    end
+    if not ok and q.id and C_QuestLog and C_QuestLog.SetSelectedQuest then
+        ok = pcall(function()
+            C_QuestLog.SetSelectedQuest(q.id)
+            if ToggleQuestLog then ToggleQuestLog() end
+        end)
+    end
+    if not ok then ns.Print("Couldn't open the quest log on " .. (q.title or "that quest") .. ".") end
 end
 
 ns.On("QUEST_LOG_UPDATE", function()
@@ -561,6 +596,8 @@ local function createRow(i)
     srcHit:SetPoint("BOTTOMRIGHT", row.source, "BOTTOMRIGHT", 2, -4)
     srcHit:SetScript("OnClick", function(self)
         if row.boss then ns.ShowBoss(row.boss) return end
+        -- a quest you have: open it in the quest log (Shift-click still pins the giver)
+        if row.questInLog and not IsShiftKeyDown() then ns.OpenQuestLog(row.questInLog) return end
         -- quest: pin the quest giver on the map
         local pins = row.quests and ns.QuestPins and ns.QuestPins(row.quests) or {}
         if #pins == 1 then
@@ -585,10 +622,19 @@ local function createRow(i)
         elseif row.quests then
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
             ns.AddQuestTooltip(GameTooltip, row.quests)
-            if ns.QuestPins and #ns.QuestPins(row.quests) > 0 then
-                GameTooltip:AddLine(" ")
+            local canPin = ns.QuestPins and #ns.QuestPins(row.quests) > 0
+            if row.questInLog or canPin then GameTooltip:AddLine(" ") end
+            if row.questInLog then
+                GameTooltip:AddLine("Click to open " .. row.questInLog.title .. " in your quest log", 0.2, 1, 0.2)
+                if canPin then GameTooltip:AddLine("Shift-click to pin the quest giver on your map", 0.2, 1, 0.2) end
+            elseif canPin then
                 GameTooltip:AddLine("Click to pin the quest giver on your map", 0.2, 1, 0.2)
             end
+            GameTooltip:Show()
+        elseif row.questInLog then
+            GameTooltip:SetOwner(self, "ANCHOR_TOP")
+            GameTooltip:AddLine(row.questInLog.title, 1, 0.82, 0)
+            GameTooltip:AddLine("Click to open it in your quest log", 0.2, 1, 0.2)
             GameTooltip:Show()
         end
     end)
@@ -808,7 +854,8 @@ local function fillRow(row, data)
     local boss = ns.FindBoss and ns.FindBoss(data.craft and data.craft.from or data.source)
     row.boss = boss
     row.quests = (not boss) and ns.QuestsInSource and ns.QuestsInSource(data.craft and data.craft.from or data.source) or nil
-    row.srcHit:SetShown(boss ~= nil or row.quests ~= nil)
+    row.questInLog = (not boss) and ns.QuestInLog(data.craft and data.craft.from or data.source) or nil
+    row.srcHit:SetShown(boss ~= nil or row.quests ~= nil or row.questInLog ~= nil)
     if boss then src = ns.BOSS_ICON .. src end
     if data.note and not data.isPre then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
     row.source:SetText(src)
