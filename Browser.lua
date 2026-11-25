@@ -1914,18 +1914,20 @@ end
 -- Holiday theme: Christmas lights along the top, holly by the title and a
 -- snowy strip of trees and a moose in the footer
 ----------------------------------------------------------------------
-local LIGHT_TILE_W, LIGHT_H = 120, 30   -- one 256x64 tile shown at 120x30: 4 bulbs on a drooping wire
+-- one 256x64 tile (4 bulbs on a drooping wire) shown at 72x18 inside the title bar
+local LIGHT_TILE_W, LIGHT_H = 72, 18
+local LIGHT_RIGHT_GAP = 64   -- keeps the lights clear of the buttons at the top right
 -- the footer scene is a wide strip (32:1); the window shows its middle part
 local SCENE_FULL_W, SCENE_H, FOOTER_RIGHT = 1280, 40, 228
 
--- a string of lights draped along the top edge of the window: the wire, and
--- two sets of bulbs that blink in turn
-local function lightLayer(d, file, level)
+-- a string of lights hung inside the title bar, on both sides of the title:
+-- the wire, and two sets of bulbs that blink in turn. side is "left" / "right";
+-- UpdateHolidayDecor places and sizes each piece around the title text.
+local function lightLayer(d, file, level, side)
     local t = d:CreateTexture(nil, "OVERLAY", nil, level)
     t:SetTexture(ns.TEXTURES .. file, "REPEAT", "CLAMP")
     t:SetHeight(LIGHT_H)
-    t:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", 4, -14)
-    t:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", -4, -14)
+    t.side = side
     return t
 end
 
@@ -1933,16 +1935,20 @@ local function createHolidayDecor()
     local d = CreateFrame("Frame", nil, frame)
     d:SetAllPoints()
     d:SetFrameLevel(frame:GetFrameLevel() + 20)
-    d.lights = { lightLayer(d, "lights_wire", 1), lightLayer(d, "lights_a", 2), lightLayer(d, "lights_b", 2) }
-    d.blinks = {}
-    for i = 2, 3 do
-        local g = d.lights[i]:CreateAnimationGroup()
-        g:SetLooping("BOUNCE")
-        local blink = g:CreateAnimation("Alpha")
-        if i == 2 then blink:SetFromAlpha(1); blink:SetToAlpha(0.25)
-        else blink:SetFromAlpha(0.25); blink:SetToAlpha(1) end
-        blink:SetDuration(0.8)
-        table.insert(d.blinks, g)
+    d.lights, d.blinks = {}, {}
+    for _, side in ipairs({ "left", "right" }) do
+        table.insert(d.lights, lightLayer(d, "lights_wire", 1, side))
+        for i, file in ipairs({ "lights_a", "lights_b" }) do
+            local t = lightLayer(d, file, 2, side)
+            table.insert(d.lights, t)
+            local g = t:CreateAnimationGroup()
+            g:SetLooping("BOUNCE")
+            local blink = g:CreateAnimation("Alpha")
+            if i == 1 then blink:SetFromAlpha(1); blink:SetToAlpha(0.25)
+            else blink:SetFromAlpha(0.25); blink:SetToAlpha(1) end
+            blink:SetDuration(0.8)
+            table.insert(d.blinks, g)
+        end
     end
     d.holly = d:CreateTexture(nil, "OVERLAY")
     d.holly:SetTexture(ns.TEXTURES .. "holly")
@@ -1979,9 +1985,20 @@ function ns.UpdateHolidayDecor()
     local d = frame.holiday
     if d then
         d:SetShown(on)
-        -- repeat the tile across the window's width
-        local reps = math.max(1, (w - 8) / LIGHT_TILE_W)
-        for _, t in ipairs(d.lights) do t:SetTexCoord(0, reps, 0, 1) end
+        -- fill the title bar on both sides of the title (and its holly)
+        local titleW = (frame.titleText and frame.titleText:GetStringWidth()) or 200
+        local leftW = math.max(0, math.floor(w / 2 - titleW / 2 - 22 - 10 - 4))
+        local rightX = math.floor(w / 2 + titleW / 2 + 10)
+        local rightW = math.max(0, math.floor(w - LIGHT_RIGHT_GAP - rightX))
+        for _, t in ipairs(d.lights) do
+            local x, tw = 4, leftW
+            if t.side == "right" then x, tw = rightX, rightW end
+            t:ClearAllPoints()
+            t:SetPoint("TOPLEFT", frame, "TOPLEFT", x, -2)
+            t:SetWidth(math.max(1, tw))
+            t:SetShown(tw >= LIGHT_TILE_W / 2)
+            t:SetTexCoord(0, math.max(0.5, tw / LIGHT_TILE_W), 0, 1)
+        end
         for _, g in ipairs(d.blinks) do
             if on then
                 if not g:IsPlaying() then g:Play() end
