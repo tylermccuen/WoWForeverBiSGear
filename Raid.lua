@@ -796,7 +796,11 @@ end
 function ns.UpdateRaidCompanion()
     local char = CharacterFrame
     if not char then return end
-    local want = char:IsShown() and ns.db.raidWithCharacter ~= false
+    -- With the browser open, the shrunk browser goes beside the character
+    -- window on its own; the raid panel only shows when the browser is closed.
+    local browser = _G.ForeverBiSFrame
+    local browserOpen = browser and browser:IsShown() and ns.db.compactWithCharacter
+    local want = char:IsShown() and ns.db.raidWithCharacter ~= false and not browserOpen
     if want then
         if not panel then createPanel() end
         panel:SetScale(ns.db.windowScale or 1)
@@ -827,27 +831,8 @@ end
 
 ns.On("PLAYER_LOGIN", function()
     if CharacterFrame and CharacterFrame.HookScript then
-        -- Opening the character window while the browser is open: the raid
-        -- check panel takes over beside it, so the browser steps aside and
-        -- comes back when the character window closes. (Opening the browser
-        -- while the character window is already open still shows it, shrunk.)
-        CharacterFrame:HookScript("OnShow", function()
-            local browser = _G.ForeverBiSFrame
-            if browser and browser:IsShown() and ns.db.raidWithCharacter ~= false then
-                ns.browserSteppedAside = true
-                browser:Hide()
-            end
-            ns.UpdateRaidCompanion()
-        end)
-        CharacterFrame:HookScript("OnHide", function()
-            ns.UpdateRaidCompanion()
-            if ns.browserSteppedAside then
-                ns.browserSteppedAside = nil
-                local browser = _G.ForeverBiSFrame
-                if browser and not browser:IsShown() then browser:Show() end
-                if ns.UpdateCompact then ns.UpdateCompact() end
-            end
-        end)
+        CharacterFrame:HookScript("OnShow", ns.UpdateRaidCompanion)
+        CharacterFrame:HookScript("OnHide", ns.UpdateRaidCompanion)
     end
 end)
 

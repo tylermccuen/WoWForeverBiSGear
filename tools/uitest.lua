@@ -201,8 +201,12 @@ check("raid panel with the character window", function()
                      GetHeight = function() return 500 end, GetEffectiveScale = function() return 1 end,
                      GetRight = function() return 400 end }
   ns.db.raidWithCharacter = true
+  local b = _G.ForeverBiSFrame
+  local wasOpen = b and b:IsShown()
+  if wasOpen then b:Hide() end   -- the panel shows when the browser is closed
   ns.UpdateRaidCompanion()
   if not ns.RaidPanelShown() then error("panel not shown with the character window") end
+  if wasOpen then b:Show() end
   shown = false
   ns.UpdateRaidCompanion()
   if ns.RaidPanelShown() then error("panel still shown after closing the character window") end
@@ -524,7 +528,7 @@ check("click a quest you have: opens the quest log", function()
   C_QuestLog.GetNumQuestLogEntries, C_QuestLog.GetInfo = saveN, saveI
   ns.ScanQuestLog()
 end)
-check("browser steps aside for the character window, then comes back", function()
+check("character window: shrunk browser, raid panel only when the browser is closed", function()
   local b = _G.ForeverBiSFrame
   if not b:IsShown() then ns.ToggleBrowser() end
   local saved, hooks, shown = CharacterFrame, {}, false
@@ -533,9 +537,13 @@ check("browser steps aside for the character window, then comes back", function(
     GetEffectiveScale = function() return 1 end }
   ns.FireEvent("PLAYER_LOGIN")
   shown = true; hooks.OnShow()
-  if b:IsShown() then error("browser still open beside the character window") end
+  if not b:IsShown() or not b.compact then error("browser should stay, shrunk") end
+  if ns.RaidPanelShown() then error("raid panel shown next to the shrunk browser") end
+  ns.ToggleBrowser()   -- close the browser: the raid panel takes its place
+  ns.UpdateRaidCompanion()   -- (the mock frames don't run OnHide hooks)
+  if not ns.RaidPanelShown() then error("raid panel missing once the browser closed") end
   shown = false; hooks.OnHide()
-  if not b:IsShown() then error("browser didn't come back") end
+  if ns.RaidPanelShown() then error("raid panel left open") end
   CharacterFrame = saved
 end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

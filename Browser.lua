@@ -1361,8 +1361,13 @@ local function createFrame()
     if type(frame.CloseButton) == "table" then
         frame.CloseButton:SetScript("OnClick", function() frame:Hide() end)   -- works in combat
     end
-    frame:HookScript("OnShow", function() ns.UpdateCompact() end)
-    frame:HookScript("OnHide", function() ns.UpdateCompact() end)   -- leave compact mode so the next open is normal size
+    -- the raid panel by the character window gives way while the browser is open
+    local function sync()
+        if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end
+        ns.UpdateCompact()   -- (on hide: leave compact mode so the next open is normal size)
+    end
+    frame:HookScript("OnShow", sync)
+    frame:HookScript("OnHide", sync)
 
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", 0, -5)
@@ -1576,7 +1581,6 @@ end
 
 function ns.ToggleBrowser()
     if not frame then createFrame() end
-    ns.browserSteppedAside = nil   -- you opened or closed it yourself
     if frame:IsShown() then frame:Hide() else frame:Show(); frame:Raise() end
 end
 
