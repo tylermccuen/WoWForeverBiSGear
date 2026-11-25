@@ -737,6 +737,32 @@ local function createRow(i)
         GameTooltip:Show()
     end)
     trophy:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    -- 1st place: a soft glow behind the icon and a twinkle on the tree's star
+    trophy.glow = trophy:CreateTexture(nil, "BACKGROUND")
+    trophy.glow:SetTexture(ns.TEXTURES .. "halo")
+    trophy.glow:SetBlendMode("ADD")
+    trophy.glow:SetPoint("CENTER")
+    trophy.glow:SetSize(40, 40)
+    trophy.glowAnim = trophy.glow:CreateAnimationGroup()
+    trophy.glowAnim:SetLooping("BOUNCE")
+    local breathe = trophy.glowAnim:CreateAnimation("Alpha")
+    breathe:SetFromAlpha(0.35); breathe:SetToAlpha(0.85); breathe:SetDuration(1.6)
+    trophy.star = trophy:CreateTexture(nil, "OVERLAY")
+    trophy.star:SetTexture(ns.TEXTURES .. "sparkle")
+    trophy.star:SetBlendMode("ADD")
+    trophy.star:SetSize(12, 12)
+    trophy.star:SetPoint("CENTER", trophy, "TOP", 0, -2)
+    trophy.star:SetAlpha(0)
+    trophy.starAnim = trophy.star:CreateAnimationGroup()
+    trophy.starAnim:SetLooping("REPEAT")
+    local tIn = trophy.starAnim:CreateAnimation("Alpha")
+    tIn:SetFromAlpha(0); tIn:SetToAlpha(1); tIn:SetDuration(0.45); tIn:SetOrder(1)
+    local tTurn = trophy.starAnim:CreateAnimation("Rotation")
+    tTurn:SetDegrees(-90); tTurn:SetDuration(0.9); tTurn:SetOrder(1)
+    local tOut = trophy.starAnim:CreateAnimation("Alpha")
+    tOut:SetFromAlpha(1); tOut:SetToAlpha(0); tOut:SetDuration(0.45); tOut:SetOrder(2)
+    local tRest = trophy.starAnim:CreateAnimation("Alpha")
+    tRest:SetFromAlpha(0); tRest:SetToAlpha(0); tRest:SetDuration(1.4 + (i % 5) * 0.3); tRest:SetOrder(3)
     trophy:Hide()
     row.trophy = trophy
     -- branch line tying a 2nd / 3rd place row to its slot
@@ -1030,6 +1056,21 @@ local function fillRow(row, data)
         row.trophy:SetSize(size, size)
         row.trophy.tex:SetTexture(placeIcon)
         row.trophy:Show()
+        local shine = data.place == 1 and not data.isAlt
+        row.trophy.glow:SetSize(size * 1.7, size * 1.7)
+        row.trophy.glow:SetShown(shine)
+        if shine then
+            if not row.trophy.glowAnim:IsPlaying() then row.trophy.glowAnim:Play() end
+        else
+            row.trophy.glowAnim:Stop()
+        end
+        local twinkle = shine and ns.HolidayOn() or false
+        row.trophy.star:SetShown(twinkle)
+        if twinkle then
+            if not row.trophy.starAnim:IsPlaying() then row.trophy.starAnim:Play() end
+        else
+            row.trophy.starAnim:Stop()
+        end
         iconX = iconX + size + 2
     else
         row.trophy:Hide()
