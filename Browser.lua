@@ -559,7 +559,22 @@ local function createRow(i)
     local srcHit = CreateFrame("Button", nil, row)
     srcHit:SetPoint("TOPLEFT", row.source, "TOPLEFT", -2, 4)
     srcHit:SetPoint("BOTTOMRIGHT", row.source, "BOTTOMRIGHT", 2, -4)
-    srcHit:SetScript("OnClick", function() if row.boss then ns.ShowBoss(row.boss) end end)
+    srcHit:SetScript("OnClick", function(self)
+        if row.boss then ns.ShowBoss(row.boss) return end
+        -- quest: pin the quest giver on the map
+        local pins = row.quests and ns.QuestPins and ns.QuestPins(row.quests) or {}
+        if #pins == 1 then
+            ns.PinOnMap(pins[1].zone, pins[1].coords, pins[1].giver)
+        elseif #pins > 1 and MenuUtil and MenuUtil.CreateContextMenu then
+            MenuUtil.CreateContextMenu(self, function(_, root)
+                root:CreateTitle("Pin on map")
+                for _, p in ipairs(pins) do
+                    root:CreateButton(p.giver .. "  |cffaaaaaa(" .. p.quest .. ", " .. p.zone .. ")|r",
+                        function() ns.PinOnMap(p.zone, p.coords, p.giver) end)
+                end
+            end)
+        end
+    end)
     srcHit:SetScript("OnEnter", function(self)
         if row.boss then
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
@@ -570,6 +585,10 @@ local function createRow(i)
         elseif row.quests then
             GameTooltip:SetOwner(self, "ANCHOR_TOP")
             ns.AddQuestTooltip(GameTooltip, row.quests)
+            if ns.QuestPins and #ns.QuestPins(row.quests) > 0 then
+                GameTooltip:AddLine(" ")
+                GameTooltip:AddLine("Click to pin the quest giver on your map", 0.2, 1, 0.2)
+            end
             GameTooltip:Show()
         end
     end)

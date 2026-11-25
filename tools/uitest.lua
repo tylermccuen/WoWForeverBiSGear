@@ -457,4 +457,18 @@ check("enchants tab: skill / where / materials columns sort", function()
   ns.char.listMode = "consumables"; ns.RefreshBrowser()
   ns.char.listMode = "bis"; ns.RefreshBrowser()
 end)
+check("pin a quest giver on the map", function()
+  local set
+  C_Map = C_Map or {}
+  C_Map.GetMapChildrenInfo = function(root) if root == 947 then return { { mapID = 1454, name = "Orgrimmar", mapType = 3 } } end return {} end
+  C_Map.CanSetUserWaypointOnMap = function() return true end
+  C_Map.SetUserWaypoint = function(p) set = p end
+  UiMapPoint = { CreateFromCoordinates = function(m, x, y) return { m = m, x = x, y = y } end }
+  UnitFactionGroup = function() return "Horde" end
+  local pins = ns.QuestPins({ "For The Horde!" })
+  if #pins ~= 1 then error("pins " .. #pins) end
+  assert(ns.PinOnMap(pins[1].zone, pins[1].coords, pins[1].giver))
+  if not set or set.m ~= 1454 or math.abs(set.x - 0.317) > 0.001 then error("wrong pin") end
+  UnitFactionGroup = function() return "Alliance" end
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
