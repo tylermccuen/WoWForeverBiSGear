@@ -633,13 +633,7 @@ function ns.CreateSparkle(parent, anchor)
     glow:SetSize(64, 64)
     glow:Hide()
     f.glow = glow
-    local g = glow:CreateAnimationGroup()
-    g:SetLooping("BOUNCE")
-    local pulse = g:CreateAnimation("Alpha")
-    pulse:SetFromAlpha(0.55)
-    pulse:SetToAlpha(1)
-    pulse:SetDuration(1.8)
-    table.insert(f.groups, g)
+    -- the glow stays steady (no fading); only the little stars twinkle
     for _, s in ipairs(SPARK_SPOTS) do
         local t = f:CreateTexture(nil, "OVERLAY", nil, 7)
         t:SetTexture(ns.TEXTURES .. "sparkle")
@@ -671,11 +665,15 @@ function ns.ShowSparkle(f, on, iconSize)
     if not f then return end
     if on then
         -- the gold ring sits on the icon's edge and fades out within a few pixels
-        f.glow:SetSize((iconSize or 32) * 2, (iconSize or 32) * 2)
+        f.glow:SetSize((iconSize or 32) * 2.1, (iconSize or 32) * 2.1)
+        f.glow:SetAlpha(1)
         f.glow:Show()
         f:Show()
+        -- restart every time: WoW can stop an animation while its card is
+        -- hidden and still report it as playing, which left the glow dark
         for _, g in ipairs(f.groups) do
-            if not g:IsPlaying() then g:Play() end
+            g:Stop()
+            g:Play()
         end
     else
         for _, g in ipairs(f.groups) do g:Stop() end
@@ -743,10 +741,7 @@ local function createRow(i)
     trophy.glow:SetBlendMode("ADD")
     trophy.glow:SetPoint("CENTER")
     trophy.glow:SetSize(40, 40)
-    trophy.glowAnim = trophy.glow:CreateAnimationGroup()
-    trophy.glowAnim:SetLooping("BOUNCE")
-    local breathe = trophy.glowAnim:CreateAnimation("Alpha")
-    breathe:SetFromAlpha(0.35); breathe:SetToAlpha(0.85); breathe:SetDuration(1.6)
+    trophy.glow:SetAlpha(0.8)   -- steady glow, no fading
     trophy.star = trophy:CreateTexture(nil, "OVERLAY")
     trophy.star:SetTexture(ns.TEXTURES .. "sparkle")
     trophy.star:SetBlendMode("ADD")
@@ -1059,11 +1054,6 @@ local function fillRow(row, data)
         local shine = data.place == 1 and not data.isAlt
         row.trophy.glow:SetSize(size * 1.7, size * 1.7)
         row.trophy.glow:SetShown(shine)
-        if shine then
-            if not row.trophy.glowAnim:IsPlaying() then row.trophy.glowAnim:Play() end
-        else
-            row.trophy.glowAnim:Stop()
-        end
         local twinkle = shine and ns.HolidayOn() or false
         row.trophy.star:SetShown(twinkle)
         if twinkle then
@@ -1430,12 +1420,13 @@ local function fillPodium(slots)
     local holiday = ns.HolidayOn()
     for i, e in ipairs(slots) do
         local card = podiumCards[i] or createCard(i)
+        card:Show()
         card.title:SetText(e.slot)
         card.wear:SetText(ns.PAIRED_SLOTS[e.slot] and "wear 2" or "")
         for place = 1, 3 do
             fillStep(card, card.steps[place], place, e.places[place], holiday, place == 1 and e.second or nil)
         end
-        card:SetAlpha(e.done and 0.6 or 1)
+        card:SetAlpha(1)   -- finished slots keep full color; the green tick shows they are done
         card:Show()
     end
     for i = #slots + 1, #podiumCards do
