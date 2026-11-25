@@ -1874,6 +1874,21 @@ local function createHolidayDecor()
     d.scene:SetTexture(ns.TEXTURES .. "scene")
     d.scene:SetSize(SCENE_W, SCENE_H)
     d.scene:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -FOOTER_RIGHT, 6)
+    -- the lights in the moose's antlers blink in two sets, like the top string
+    d.sceneLights = {}
+    for i, file in ipairs({ "scene_a", "scene_b" }) do
+        local t = d:CreateTexture(nil, "OVERLAY")
+        t:SetTexture(ns.TEXTURES .. file)
+        t:SetAllPoints(d.scene)
+        local g = t:CreateAnimationGroup()
+        g:SetLooping("BOUNCE")
+        local blink = g:CreateAnimation("Alpha")
+        if i == 1 then blink:SetFromAlpha(1); blink:SetToAlpha(0.1)
+        else blink:SetFromAlpha(0.1); blink:SetToAlpha(1) end
+        blink:SetDuration(0.8)
+        table.insert(d.blinks, g)
+        table.insert(d.sceneLights, t)
+    end
     return d
 end
 
@@ -1896,6 +1911,7 @@ function ns.UpdateHolidayDecor()
             end
         end
         d.scene:SetShown(on and not frame.compact)
+        for _, t in ipairs(d.sceneLights) do t:SetShown(on and not frame.compact) end
     end
     -- the footer text makes room for the scene
     local sceneRoom = (on and not frame.compact) and (SCENE_W + 12) or 0
