@@ -236,6 +236,12 @@ check("raid check (every spec)", function()
     local got
     ns.RunRaidCheck(function(r) got = r end)
     if not got then error("no report for " .. cls .. " " .. sp) end
+    if got.placeTotal and (got.placeTotal < 10 or #got.places ~= 3) then
+      error("gear by place looks wrong for " .. cls .. " " .. sp .. ": " .. tostring(got.placeTotal))
+    end
+    for _, b in ipairs(got.bars) do
+      if b.label:find("BiS items") or b.label:find("Realistic") then error("old BiS / Realistic bar is back") end
+    end
     if cls == "HUNTER" and sp == "Marksmanship" then
       for _, l in ipairs(got.lines) do print("   [" .. l.status .. "] " .. l.text) end
     end

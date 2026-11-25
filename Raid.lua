@@ -305,6 +305,12 @@ function ns.RunRaidCheck(cb)
     -- Enchants, one line per slot on the spec's enchant list
     if guide.enchants then
         line("head", "Enchants")
+        -- an item is ready for its enchant once it is a 1st place pick: no
+        -- upgrade is coming for that slot, so the enchant won't be wasted
+        local firstIds = {}
+        for _, r in ipairs(ns.GetRankedRows(guide)) do
+            if r.place == 1 and not r.isExtra then firstIds[r.id] = true end
+        end
         local seen = {}
         for _, row in ipairs(guide.enchants) do
             local slot, inv = row[1], INV[row[1]]
@@ -316,33 +322,51 @@ function ns.RunRaidCheck(cb)
                     table.insert(report.enchants, { slot = slot, ok = true, text = text or "enchanted" })
                 else
                     local bisName = itemNameOf(row[2]):gsub("^Enchant ", "")
-                    line("fail", slot .. ": not enchanted  |cff999999(BiS: " .. bisName .. ")|r")
-                    table.insert(report.enchants, { slot = slot, ok = false, text = "needs " .. bisName })
+                    local id = tonumber((equipped[inv] or ""):match("item:(%d+)"))
+                    if id and firstIds[id] then
+                        line("fail", slot .. ": ready to enchant  |cff999999(" .. bisName .. ")|r")
+                        table.insert(report.enchants, { slot = slot, ok = false, ready = true,
+                            text = "ready: " .. bisName })
+                    else
+                        line("info", slot .. ": not enchanted, but an upgrade is coming  |cff999999(" .. bisName .. ")|r")
+                        table.insert(report.enchants, { slot = slot, ok = false, ready = false,
+                            text = bisName .. " after your upgrade" })
+                    end
                 end
             end
         end
     end
 
-    -- BiS / Realistic pieces equipped
-    line("head", "Your gear vs the lists")
-    local function countEquipped(rows)
-        local have, total = 0, 0
-        for _, r in ipairs(rows) do
-            if not r.isAlt and r.slot ~= "Ammo" and r.slot ~= "Quiver" then
-                total = total + 1
-                if ns.Owned[r.id] == "equipped" then have = have + 1 end
+    -- Gear places: in each slot, is what you wear a 1st, 2nd or 3rd place pick?
+    -- (rings and trinkets count twice, since you wear two)
+    line("head", "Your gear by place")
+    local need, worn = {}, {}
+    for _, r in ipairs(ns.GetRankedRows(guide)) do
+        if r.slot ~= "Ammo" and r.slot ~= "Quiver" and not r.isPre then
+            if not r.isExtra and not r.isAlt then need[r.slot] = (need[r.slot] or 0) + 1 end
+            if r.place and ns.Owned[r.id] == "equipped" then
+                worn[r.slot] = worn[r.slot] or {}
+                table.insert(worn[r.slot], r.place)
             end
         end
-        return have, total
     end
-    local h, t = countEquipped(ns.GetGuideRows(guide, false, "bis"))
-    line("info", string.format("BiS items equipped: %d / %d", h, t))
-    table.insert(report.bars, { label = "BiS items equipped", text = h .. " / " .. t, progress = t > 0 and h / t or 0, kind = "count" })
-    if guide.realistic then
-        local rh, rt = countEquipped(ns.GetGuideRows(guide, false, "realistic"))
-        line("info", string.format("Realistic items equipped: %d / %d", rh, rt))
-        table.insert(report.bars, { label = "Realistic items equipped", text = rh .. " / " .. rt, progress = rt > 0 and rh / rt or 0, kind = "count" })
+    local placed, total = { 0, 0, 0 }, 0
+    for slot, n in pairs(need) do
+        total = total + n
+        local list = worn[slot] or {}
+        table.sort(list)
+        for i = 1, math.min(n, #list) do placed[list[i]] = placed[list[i]] + 1 end
     end
+    report.places, report.placeTotal = placed, total
+    for place = 1, 3 do
+        local name = ns.PLACE_NAMES[place] .. " place"
+        line(place == 1 and placed[1] == total and "pass" or "info",
+            string.format("%s items equipped: %d / %d", name, placed[place], total))
+        table.insert(report.bars, { label = name, text = placed[place] .. " / " .. total,
+            progress = total > 0 and placed[place] / total or 0, kind = "place" .. place })
+    end
+    local unranked = total - placed[1] - placed[2] - placed[3]
+    if unranked > 0 then line("info", string.format("%d slot%s with no ranked item yet", unranked, unranked == 1 and "" or "s")) end
 
     -- live stats
     local shown = {}
@@ -394,7 +418,7 @@ function ns.RunRaidCheck(cb)
         for _, key in ipairs(wanted) do
             local b = bis[key]
             if b and b > 0 then
-                if not any then line("head", "Gear stats vs pre-raid BiS"); any = true end
+                if not any then line("head", "Gear stats vs the 1st place set"); any = true end
                 local m = mine[key] or 0
                 local pct = math.floor(m / b * 100 + 0.5)
                 local label
@@ -437,10 +461,15 @@ local panel   -- the character-window panel
 
 local READY_ICON = "Interface\\RaidFrame\\ReadyCheck-Ready"
 local NOT_ICON = "Interface\\RaidFrame\\ReadyCheck-NotReady"
+local WAIT_ICON = "Interface\\RaidFrame\\ReadyCheck-Waiting"
 local GOLD = { 1, 0.82, 0 }
 
 local function barColor(p, kind)
     if kind == "count" then return 0.25, 0.55, 1 end
+    -- gold / silver / bronze, like the place trophies
+    if kind == "place1" then return 0.94, 0.71, 0.16 end
+    if kind == "place2" then return 0.76, 0.8, 0.84 end
+    if kind == "place3" then return 0.79, 0.48, 0.24 end
     if p >= 0.9 then return 0.2, 0.8, 0.2 end
     if p >= 0.5 then return 1, 0.75, 0.1 end
     return 0.9, 0.25, 0.2
@@ -561,13 +590,18 @@ local function render(view, report)
     -- enchants
     local ench = report.enchants or {}
     local done = 0
-    for _, e in ipairs(ench) do if e.ok then done = done + 1 end end
+    local ready = 0
+    for _, e in ipairs(ench) do
+        if e.ok then done = done + 1 elseif e.ready then ready = ready + 1 end
+    end
     view.enchHead:SetShown(#ench > 0)
     if #ench > 0 then
-        leftY = heading(view.enchHead, "Enchants  |cffaaaaaa" .. done .. " / " .. #ench .. "|r", 0, leftY)
+        leftY = heading(view.enchHead, "Enchants  |cffaaaaaa" .. done .. " / " .. #ench .. "|r"
+            .. (ready > 0 and ("   |cff33ff33" .. ready .. " ready to enchant|r") or ""), 0, leftY)
     end
-    -- unenchanted first
-    table.sort(ench, function(a, bb) if a.ok ~= bb.ok then return not a.ok end return false end)
+    -- ready to enchant first, then ones waiting on an upgrade, then done
+    local function rank(e) return e.ok and 3 or (e.ready and 1 or 2) end
+    table.sort(ench, function(a, bb) return rank(a) < rank(bb) end)
     for i, e in ipairs(ench) do
         local fs = get(view.enchLines, i, function()
             local f = c:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -578,8 +612,9 @@ local function render(view, report)
         fs:ClearAllPoints()
         fs:SetPoint("TOPLEFT", c, "TOPLEFT", 0, leftY)
         fs:SetWidth(colW)
-        local icon = "|T" .. (e.ok and READY_ICON or NOT_ICON) .. ":14:14|t "
-        fs:SetText(icon .. e.slot .. "  " .. (e.ok and "|cffaaaaaa" or "|cff888888") .. e.text .. "|r")
+        local icon = "|T" .. (e.ok and READY_ICON or e.ready and NOT_ICON or WAIT_ICON) .. ":14:14|t "
+        local color = e.ok and "|cffaaaaaa" or e.ready and "|cff66ff66" or "|cff888888"
+        fs:SetText(icon .. e.slot .. "  " .. color .. e.text .. "|r")
         fs:Show()
         leftY = leftY - 18
     end
@@ -589,7 +624,7 @@ local function render(view, report)
     if not wide then rightY = leftY - 10 end
     local bars = report.bars or {}
     view.gearHead:SetShown(#bars > 0)
-    if #bars > 0 then rightY = heading(view.gearHead, "Gear vs pre-raid BiS", rightX, rightY) end
+    if #bars > 0 then rightY = heading(view.gearHead, "Your gear vs 1st place", rightX, rightY) end
     for i, bar in ipairs(bars) do
         local row = get(view.bars, i, function()
             local f = { label = c:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall"),
