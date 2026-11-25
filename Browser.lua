@@ -1838,7 +1838,8 @@ end
 -- snowy strip of trees and a moose in the footer
 ----------------------------------------------------------------------
 local LIGHT_TILE_W, LIGHT_H = 120, 30   -- one 256x64 tile shown at 120x30: 4 bulbs on a drooping wire
-local SCENE_W, SCENE_H, FOOTER_RIGHT = 320, 40, 228
+-- the footer scene is a wide strip (32:1); the window shows its middle part
+local SCENE_FULL_W, SCENE_H, FOOTER_RIGHT = 1280, 40, 228
 
 -- a string of lights draped along the top edge of the window: the wire, and
 -- two sets of bulbs that blink in turn
@@ -1872,7 +1873,8 @@ local function createHolidayDecor()
     if frame.titleText then d.holly:SetPoint("RIGHT", frame.titleText, "LEFT", -4, 0) end
     d.scene = d:CreateTexture(nil, "ARTWORK")
     d.scene:SetTexture(ns.TEXTURES .. "scene")
-    d.scene:SetSize(SCENE_W, SCENE_H)
+    d.scene:SetHeight(SCENE_H)
+    d.scene:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 8, 6)
     d.scene:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -FOOTER_RIGHT, 6)
     -- the lights in the moose's antlers blink in two sets, like the top string
     d.sceneLights = {}
@@ -1910,12 +1912,16 @@ function ns.UpdateHolidayDecor()
                 g:Stop()
             end
         end
+        -- crop the strip from the middle so it fills the footer without stretching
+        local frac = math.min(1, math.max(0.1, (w - 8 - FOOTER_RIGHT) / SCENE_FULL_W))
+        local l, r = 0.5 - frac / 2, 0.5 + frac / 2
+        d.scene:SetTexCoord(l, r, 0, 1)
         d.scene:SetShown(on and not frame.compact)
-        for _, t in ipairs(d.sceneLights) do t:SetShown(on and not frame.compact) end
+        for _, t in ipairs(d.sceneLights) do
+            t:SetTexCoord(l, r, 0, 1)
+            t:SetShown(on and not frame.compact)
+        end
     end
-    -- the footer text makes room for the scene
-    local sceneRoom = (on and not frame.compact) and (SCENE_W + 12) or 0
-    if frame.sourceText then frame.sourceText:SetWidth(math.max(120, w - 240 - sceneRoom)) end
 end
 
 ----------------------------------------------------------------------
