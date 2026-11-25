@@ -22,7 +22,8 @@ local COMPACT_W = 660   -- width beside the character window
 -- Consumables / Enchants: item | recipe | materials. Compact: item | source | drop.
 local function columnLayout(contentWidth)
     local L = { dungeonW = 0, dropW = 0 }
-    local gear = frame and (frame.layoutMode == nil or frame.layoutMode == "bis" or frame.layoutMode == "realistic")
+    local gear = frame and (frame.layoutMode == nil or frame.layoutMode == "bis" or frame.layoutMode == "realistic"
+        or frame.layoutMode == "ranked")
     if frame and frame.compact then
         L.nameW = 180
         L.sourceX = L.nameW + 50
@@ -38,6 +39,7 @@ local function columnLayout(contentWidth)
     local rest = math.max(360, contentWidth - firstX - 200)   -- 200 = owned / done / link
     if gear then
         local enchantW, dropW = 140, 44
+        if frame.layoutMode == "ranked" then enchantW = 0 end   -- Gear tab: enchants have their own tab
         local inner = math.max(200, rest - enchantW - dropW - 30)
         L.dungeonX, L.dungeonW = firstX, math.floor(inner * 0.42)
         L.sourceX = L.dungeonX + L.dungeonW + 10
@@ -168,8 +170,8 @@ function ns.LayoutHeaders()
     if not frame or not frame.headers then return end
     local H = frame.headers
     local L = columnLayout(scrollChild:GetWidth())
-    local mode = frame.layoutMode or "bis"
-    local gear = mode == "bis" or mode == "realistic"
+    local mode = frame.layoutMode or "ranked"
+    local gear = mode == "bis" or mode == "realistic" or mode == "ranked"
     local crafting = mode == "consumables" or mode == "enchants"
     local function place(h, x, text, shown)
         h:ClearAllPoints()
@@ -186,16 +188,22 @@ function ns.LayoutHeaders()
     place(H.source, L.sourceX, crafting and "WHERE TO GET IT"
         or (frame.compact and "WHERE TO GET IT" or "BOSS / SOURCE"), true)
     place(H.drop, L.dropX, "DROP", gear and L.dropW > 0)
-    place(H.avoid, L.avoidX, crafting and "MATERIALS" or "ENCHANT", not frame.compact)
+    place(H.avoid, L.avoidX, crafting and "MATERIALS" or "ENCHANT", not frame.compact and L.avoidW > 0)
     -- sorting: gear tabs (all columns), Enchants / Consumables (item, skill, where)
     for _, h in pairs(H) do
         if h.sortKey then h:EnableMouse(gear or (crafting and h.sortKey ~= "drop")) end
+        if frame.podiumOn then h:Hide() end   -- podium cards have no columns
     end
 end
 
 local function layoutRow(row)
     local L = columnLayout(scrollChild:GetWidth())
-    row.name:SetWidth(L.nameW - (row.isAlt and 18 or 0))
+    row.name:SetWidth(L.nameW - (row.isAlt and 18 or 0) - (row.place and 24 or 0)
+        - (row.more and row.more:IsShown() and 62 or 0))
+    if row.more then
+        row.more:ClearAllPoints()
+        row.more:SetPoint("RIGHT", row, "LEFT", L.dungeonX - 8, 0)
+    end
     row.slot:SetWidth(L.nameW)
     row.dungeon:ClearAllPoints()
     row.dungeon:SetPoint("LEFT", L.dungeonX, 0)
@@ -211,10 +219,10 @@ local function layoutRow(row)
     row.avoid:ClearAllPoints()
     row.avoid:SetPoint("LEFT", L.avoidX, 0)
     row.avoid:SetWidth(math.max(1, L.avoidW))
-    row.avoid:SetShown(not frame.compact)
+    row.avoid:SetShown(not frame.compact and L.avoidW > 0)
 end
 
-local classButton, specButton, phaseButton, listTabs, slotButton, missingCheck, altCheck, altLabel, doneCheck, doneLabel, countText
+local classButton, specButton, phaseButton, listTabs, slotButton, missingCheck, altCheck, altLabel, doneCheck, doneLabel, countText, viewButton
 
 local OWNED_ICON = {
     equipped = "|TInterface\\RaidFrame\\ReadyCheck-Ready:16:16|t Equipped",
@@ -523,8 +531,215 @@ local function createSpecBar()
 end
 
 ----------------------------------------------------------------------
+-- Sleek window style: a flat dark panel with a thin gold border and flat
+-- buttons and tabs, in place of the stone frame and red buttons
+----------------------------------------------------------------------
+local SLEEK = {
+    bg = { 0.07, 0.06, 0.045, 0.97 }, edge = { 0.42, 0.34, 0.22, 1 }, line = { 0.3, 0.24, 0.16, 1 },
+    titleTop = { 0.17, 0.13, 0.09, 1 }, titleBottom = { 0.1, 0.08, 0.055, 1 },
+    button = { 0.13, 0.1, 0.07, 1 }, buttonEdge = { 0.45, 0.36, 0.22, 1 },
+    tab = { 0.09, 0.075, 0.055, 1 }, tabOn = { 0.24, 0.17, 0.09, 1 },
+}
+
+local function solid(parent, layer, c, sub)
+    local t = parent:CreateTexture(nil, layer, nil, sub or 0)
+    t:SetColorTexture(c[1], c[2], c[3], c[4] or 1)
+    return t
+end
+
+-- 1px lines on all four sides, inset by `inset`
+local function outline(parent, c, inset, layer)
+    inset = inset or 0
+    local top = solid(parent, layer or "BORDER", c)
+    top:SetPoint("TOPLEFT", inset, -inset); top:SetPoint("TOPRIGHT", -inset, -inset); top:SetHeight(1)
+    local bottom = solid(parent, layer or "BORDER", c)
+    bottom:SetPoint("BOTTOMLEFT", inset, inset); bottom:SetPoint("BOTTOMRIGHT", -inset, inset); bottom:SetHeight(1)
+    local left = solid(parent, layer or "BORDER", c)
+    left:SetPoint("TOPLEFT", inset, -inset); left:SetPoint("BOTTOMLEFT", inset, inset); left:SetWidth(1)
+    local right = solid(parent, layer or "BORDER", c)
+    right:SetPoint("TOPRIGHT", -inset, -inset); right:SetPoint("BOTTOMRIGHT", -inset, inset); right:SetWidth(1)
+end
+
+local function hideTemplateArt(f)
+    for _, r in ipairs({ f:GetRegions() }) do
+        if r.GetObjectType and r:GetObjectType() == "Texture" then r:SetAlpha(0) end
+    end
+end
+
+local function hline(parent, y, c)
+    local t = solid(parent, "BORDER", c or SLEEK.line)
+    t:SetPoint("TOPLEFT", 2, y); t:SetPoint("TOPRIGHT", -2, y); t:SetHeight(1)
+    return t
+end
+
+local function skinFrame(f)
+    hideTemplateArt(f)
+    for _, key in ipairs({ "NineSlice", "Inset" }) do
+        if type(f[key]) == "table" and f[key].SetAlpha then f[key]:SetAlpha(0) end
+    end
+    solid(f, "BACKGROUND", SLEEK.bg, -8):SetAllPoints()
+    outline(f, { 0, 0, 0, 1 }, 0)
+    outline(f, SLEEK.edge, 1)
+    local band = solid(f, "BACKGROUND", SLEEK.titleBottom, -7)
+    band:SetPoint("TOPLEFT", 2, -2); band:SetPoint("TOPRIGHT", -2, -2); band:SetHeight(22)
+    if band.SetGradient and CreateColor then
+        pcall(band.SetGradient, band, "VERTICAL",
+            CreateColor(unpack(SLEEK.titleBottom)), CreateColor(unpack(SLEEK.titleTop)))
+    end
+    hline(f, -24, SLEEK.edge)        -- under the title
+    hline(f, -60)                    -- under the buttons
+    local foot = solid(f, "BORDER", SLEEK.line)
+    foot:SetPoint("BOTTOMLEFT", 2, 42); foot:SetPoint("BOTTOMRIGHT", -2, 42); foot:SetHeight(1)
+end
+
+local function skinButton(b, colors)
+    if not b then return end
+    for _, key in ipairs({ "Left", "Middle", "Right", "LeftDisabled", "MiddleDisabled", "RightDisabled",
+                           "LeftActive", "MiddleActive", "RightActive", "LeftHighlight", "MiddleHighlight", "RightHighlight" }) do
+        if type(b[key]) == "table" and b[key].SetAlpha then b[key]:SetAlpha(0) end
+    end
+    for _, get in ipairs({ "GetNormalTexture", "GetPushedTexture", "GetDisabledTexture", "GetHighlightTexture" }) do
+        local t = b[get] and b[get](b)
+        if t and t.SetAlpha then t:SetAlpha(0) end
+    end
+    hideTemplateArt(b)
+    b.skinBg = solid(b, "BACKGROUND", colors or SLEEK.button, -8)
+    b.skinBg:SetAllPoints()
+    outline(b, SLEEK.buttonEdge, 0, "BACKGROUND")
+    local hl = b:CreateTexture(nil, "HIGHLIGHT")
+    hl:SetColorTexture(1, 0.82, 0, 0.12)
+    hl:SetAllPoints()
+end
+
+----------------------------------------------------------------------
+-- Treasure gleam around 1st place items: a soft breathing gold glow
+-- and two small, slow twinkles
+----------------------------------------------------------------------
+local SPARK_SPOTS = {   -- point on the icon, x, y, size, delay
+    { "TOPRIGHT", -2, -2, 9, 0 }, { "BOTTOMLEFT", 2, 2, 7, 1.6 },
+}
+
+function ns.CreateSparkle(parent, anchor)
+    local f = CreateFrame("Frame", nil, parent)
+    f:SetAllPoints(anchor)
+    f:SetFrameLevel(parent:GetFrameLevel() + 3)
+    f.groups = {}
+    -- soft golden halo glowing out from behind the icon (drawn on the
+    -- parent so it sits under the icon art instead of washing over it)
+    local glow = parent:CreateTexture(nil, "ARTWORK", nil, 7)
+    glow:SetTexture(ns.TEXTURES .. "halo")
+    glow:SetBlendMode("ADD")
+    glow:SetPoint("CENTER", anchor, "CENTER")
+    glow:SetSize(64, 64)
+    glow:Hide()
+    f.glow = glow
+    -- the glow stays steady (no fading); only the little stars twinkle
+    for _, s in ipairs(SPARK_SPOTS) do
+        local t = f:CreateTexture(nil, "OVERLAY", nil, 7)
+        t:SetTexture(ns.TEXTURES .. "sparkle")
+        t:SetBlendMode("ADD")
+        t:SetSize(s[4], s[4])
+        t:SetPoint("CENTER", f, s[1], s[2], s[3])
+        t:SetAlpha(0)
+        local sg = t:CreateAnimationGroup()
+        sg:SetLooping("REPEAT")
+        local fadeIn = sg:CreateAnimation("Alpha")
+        fadeIn:SetFromAlpha(0); fadeIn:SetToAlpha(0.85); fadeIn:SetDuration(0.6)
+        fadeIn:SetOrder(1); fadeIn:SetStartDelay(s[5])
+        local turn = sg:CreateAnimation("Rotation")
+        turn:SetDegrees(-45); turn:SetDuration(0.6)
+        turn:SetOrder(1); turn:SetStartDelay(s[5])
+        local fadeOut = sg:CreateAnimation("Alpha")
+        fadeOut:SetFromAlpha(0.85); fadeOut:SetToAlpha(0); fadeOut:SetDuration(0.8)
+        fadeOut:SetOrder(2)
+        local rest = sg:CreateAnimation("Alpha")
+        rest:SetFromAlpha(0); rest:SetToAlpha(0); rest:SetDuration(2.2)
+        rest:SetOrder(3)
+        table.insert(f.groups, sg)
+    end
+    f:Hide()
+    return f
+end
+
+function ns.ShowSparkle(f, on, iconSize)
+    if not f then return end
+    if on then
+        -- the gold ring sits on the icon's edge and fades out within a few pixels
+        f.glow:SetSize((iconSize or 32) * 2.1, (iconSize or 32) * 2.1)
+        f.glow:SetAlpha(1)
+        f.glow:Show()
+        f:Show()
+        -- restart every time: WoW can stop an animation while its card is
+        -- hidden and still report it as playing, which left the glow dark
+        for _, g in ipairs(f.groups) do
+            g:Stop()
+            g:Play()
+        end
+    else
+        for _, g in ipairs(f.groups) do g:Stop() end
+        f.glow:Hide()
+        f:Hide()
+    end
+end
+
+----------------------------------------------------------------------
 -- Rows
 ----------------------------------------------------------------------
+
+local function sourceClick(self, row)
+    if row.boss then ns.ShowBoss(row.boss) return end
+    -- a quest you have: open it in the quest log (Shift-click still pins the giver)
+    if row.questInLog and not IsShiftKeyDown() then ns.OpenQuestLog(row.questInLog) return end
+    -- quest: pin the quest giver on the map
+    local pins = row.quests and ns.QuestPins and ns.QuestPins(row.quests) or {}
+    if #pins == 1 then
+        ns.PinOnMap(pins[1].zone, pins[1].coords, pins[1].giver)
+    elseif #pins > 1 and MenuUtil and MenuUtil.CreateContextMenu then
+        MenuUtil.CreateContextMenu(self, function(_, root)
+            root:CreateTitle("Pin on map")
+            for _, p in ipairs(pins) do
+                root:CreateButton(p.giver .. "  |cffaaaaaa(" .. p.quest .. ", " .. p.zone .. ")|r",
+                    function() ns.PinOnMap(p.zone, p.coords, p.giver) end)
+            end
+        end)
+    end
+end
+
+local function sourceEnter(self, row)
+    -- podium cards add where it drops and how often
+    local function extra()
+        if row.dungeonName and row.dungeonName ~= "" then
+            GameTooltip:AddDoubleLine("Dungeon", row.dungeonName, 0.8, 0.8, 0.8, 1, 1, 1)
+        end
+        if row.dropRate then GameTooltip:AddDoubleLine("Drop", row.dropRate, 0.8, 0.8, 0.8, 1, 1, 1) end
+    end
+    if row.boss then
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine(row.boss.name)
+        GameTooltip:AddLine(row.boss.instance or "", 1, 1, 1)
+        if row.dropRate then GameTooltip:AddDoubleLine("Drop", row.dropRate, 0.8, 0.8, 0.8, 1, 1, 1) end
+        GameTooltip:AddLine("Click to see the boss", 0.2, 1, 0.2)
+        GameTooltip:Show()
+    elseif row.quests then
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        ns.AddQuestTooltip(GameTooltip, row.quests)
+        extra()
+        local canPin = ns.QuestPins and #ns.QuestPins(row.quests) > 0
+        if row.questInLog or canPin then GameTooltip:AddLine(" ") end
+        if row.questInLog then
+            GameTooltip:AddLine("Click to open " .. row.questInLog.title .. " in your quest log", 0.2, 1, 0.2)
+            if canPin then GameTooltip:AddLine("Shift-click to pin the quest giver on your map", 0.2, 1, 0.2) end
+        elseif canPin then
+            GameTooltip:AddLine("Click to pin the quest giver on your map", 0.2, 1, 0.2)
+        end
+        GameTooltip:Show()
+    elseif row.questInLog then
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine(row.questInLog.title, 1, 0.82, 0)
+        GameTooltip:AddLine("Click to open it in your quest log", 0.2, 1, 0.2)
+        GameTooltip:Show()
+    end
+end
 
 local function createRow(i)
     local row = CreateFrame("Frame", nil, scrollChild)
@@ -554,6 +769,90 @@ local function createRow(i)
         if row.itemLink then HandleModifiedItemClick(row.itemLink) end
     end)
     row.icon = icon
+
+    -- 1st / 2nd / 3rd place icon left of the item icon (Gear tab)
+    local trophy = CreateFrame("Frame", nil, row)
+    trophy:SetSize(24, 24)
+    trophy.tex = trophy:CreateTexture(nil, "ARTWORK")
+    trophy.tex:SetAllPoints()
+    trophy:EnableMouse(true)
+    trophy:SetScript("OnEnter", function(self)
+        if not row.place then return end
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine((ns.PLACE_NAMES[row.place] or "") .. " place for " .. (row.slotName or "this slot"), 1, 0.82, 0)
+        if row.paired and row.place == 1 and not row.isExtra then
+            GameTooltip:AddLine("You wear two, so both of these best picks are 1st place.", 1, 1, 1, true)
+        elseif row.place == 1 then
+            GameTooltip:AddLine("The best pick for this slot.", 1, 1, 1, true)
+        else
+            GameTooltip:AddLine("A good pick while you work on the places above it.", 1, 1, 1, true)
+        end
+        GameTooltip:Show()
+    end)
+    trophy:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    -- 1st place: a soft glow behind the icon and a twinkle on the tree's star
+    trophy.glow = trophy:CreateTexture(nil, "BACKGROUND")
+    trophy.glow:SetTexture(ns.TEXTURES .. "halo")
+    trophy.glow:SetBlendMode("ADD")
+    trophy.glow:SetPoint("CENTER")
+    trophy.glow:SetSize(40, 40)
+    trophy.glow:SetAlpha(0.8)   -- steady glow, no fading
+    trophy.star = trophy:CreateTexture(nil, "OVERLAY")
+    trophy.star:SetTexture(ns.TEXTURES .. "sparkle")
+    trophy.star:SetBlendMode("ADD")
+    trophy.star:SetSize(12, 12)
+    trophy.star:SetPoint("CENTER", trophy, "TOP", 0, -2)
+    trophy.star:SetAlpha(0)
+    trophy.starAnim = trophy.star:CreateAnimationGroup()
+    trophy.starAnim:SetLooping("REPEAT")
+    local tIn = trophy.starAnim:CreateAnimation("Alpha")
+    tIn:SetFromAlpha(0); tIn:SetToAlpha(1); tIn:SetDuration(0.45); tIn:SetOrder(1)
+    local tTurn = trophy.starAnim:CreateAnimation("Rotation")
+    tTurn:SetDegrees(-90); tTurn:SetDuration(0.9); tTurn:SetOrder(1)
+    local tOut = trophy.starAnim:CreateAnimation("Alpha")
+    tOut:SetFromAlpha(1); tOut:SetToAlpha(0); tOut:SetDuration(0.45); tOut:SetOrder(2)
+    local tRest = trophy.starAnim:CreateAnimation("Alpha")
+    tRest:SetFromAlpha(0); tRest:SetToAlpha(0); tRest:SetDuration(1.4 + (i % 5) * 0.3); tRest:SetOrder(3)
+    trophy:Hide()
+    row.trophy = trophy
+    -- branch line tying a 2nd / 3rd place row to its slot
+    row.branchV = row:CreateTexture(nil, "ARTWORK")
+    row.branchV:SetColorTexture(0.55, 0.46, 0.32, 0.8)
+    row.branchV:SetSize(1, ROW_HEIGHT / 2)
+    row.branchV:SetPoint("TOPLEFT", 12, 0)
+    row.branchH = row:CreateTexture(nil, "ARTWORK")
+    row.branchH:SetColorTexture(0.55, 0.46, 0.32, 0.8)
+    row.branchH:SetSize(9, 1)
+    row.branchH:SetPoint("TOPLEFT", 12, -ROW_HEIGHT / 2)
+    row.branchV:Hide(); row.branchH:Hide()
+    row.sparkle = ns.CreateSparkle(row, icon)
+
+    -- "+2 more" / "Hide": opens a slot's 2nd and 3rd place (Gear tab)
+    local more = CreateFrame("Button", nil, row)
+    more:SetSize(58, 18)
+    more.bg = more:CreateTexture(nil, "BACKGROUND")
+    more.bg:SetAllPoints()
+    more.bg:SetColorTexture(0, 0, 0, 0.45)
+    more.text = more:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    more.text:SetPoint("CENTER")
+    more:SetHighlightTexture("Interface\\Buttons\\UI-Listbox-Highlight2", "ADD")
+    more:SetScript("OnClick", function()
+        if not row.slotName then return end
+        ns.char.expandedSlots = ns.char.expandedSlots or {}
+        local open = ns.char.expandedSlots
+        if open[row.slotName] then open[row.slotName] = nil else open[row.slotName] = true end
+        ns.RefreshBrowser()
+    end)
+    more:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        local open = ns.char.expandedSlots and ns.char.expandedSlots[row.slotName]
+        GameTooltip:AddLine(open and "Hide 2nd and 3rd place" or ("Show 2nd and 3rd place for " .. (row.slotName or "this slot")))
+        GameTooltip:AddLine("Tick \"2nd & 3rd\" at the top to open every slot.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    more:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    more:Hide()
+    row.more = more
 
     row.name = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     row.name:SetPoint("TOPLEFT", icon, "TOPRIGHT", 6, -1)
@@ -594,50 +893,8 @@ local function createRow(i)
     local srcHit = CreateFrame("Button", nil, row)
     srcHit:SetPoint("TOPLEFT", row.source, "TOPLEFT", -2, 4)
     srcHit:SetPoint("BOTTOMRIGHT", row.source, "BOTTOMRIGHT", 2, -4)
-    srcHit:SetScript("OnClick", function(self)
-        if row.boss then ns.ShowBoss(row.boss) return end
-        -- a quest you have: open it in the quest log (Shift-click still pins the giver)
-        if row.questInLog and not IsShiftKeyDown() then ns.OpenQuestLog(row.questInLog) return end
-        -- quest: pin the quest giver on the map
-        local pins = row.quests and ns.QuestPins and ns.QuestPins(row.quests) or {}
-        if #pins == 1 then
-            ns.PinOnMap(pins[1].zone, pins[1].coords, pins[1].giver)
-        elseif #pins > 1 and MenuUtil and MenuUtil.CreateContextMenu then
-            MenuUtil.CreateContextMenu(self, function(_, root)
-                root:CreateTitle("Pin on map")
-                for _, p in ipairs(pins) do
-                    root:CreateButton(p.giver .. "  |cffaaaaaa(" .. p.quest .. ", " .. p.zone .. ")|r",
-                        function() ns.PinOnMap(p.zone, p.coords, p.giver) end)
-                end
-            end)
-        end
-    end)
-    srcHit:SetScript("OnEnter", function(self)
-        if row.boss then
-            GameTooltip:SetOwner(self, "ANCHOR_TOP")
-            GameTooltip:AddLine(row.boss.name)
-            GameTooltip:AddLine(row.boss.instance or "", 1, 1, 1)
-            GameTooltip:AddLine("Click to see the boss", 0.2, 1, 0.2)
-            GameTooltip:Show()
-        elseif row.quests then
-            GameTooltip:SetOwner(self, "ANCHOR_TOP")
-            ns.AddQuestTooltip(GameTooltip, row.quests)
-            local canPin = ns.QuestPins and #ns.QuestPins(row.quests) > 0
-            if row.questInLog or canPin then GameTooltip:AddLine(" ") end
-            if row.questInLog then
-                GameTooltip:AddLine("Click to open " .. row.questInLog.title .. " in your quest log", 0.2, 1, 0.2)
-                if canPin then GameTooltip:AddLine("Shift-click to pin the quest giver on your map", 0.2, 1, 0.2) end
-            elseif canPin then
-                GameTooltip:AddLine("Click to pin the quest giver on your map", 0.2, 1, 0.2)
-            end
-            GameTooltip:Show()
-        elseif row.questInLog then
-            GameTooltip:SetOwner(self, "ANCHOR_TOP")
-            GameTooltip:AddLine(row.questInLog.title, 1, 0.82, 0)
-            GameTooltip:AddLine("Click to open it in your quest log", 0.2, 1, 0.2)
-            GameTooltip:Show()
-        end
-    end)
+    srcHit:SetScript("OnClick", function(self) sourceClick(self, row) end)
+    srcHit:SetScript("OnEnter", function(self) sourceEnter(self, row) end)
     srcHit:SetScript("OnLeave", function() GameTooltip:Hide() end)
     row.srcHit = srcHit
 
@@ -687,6 +944,7 @@ local function createRow(i)
     link:SetSize(64, 22)
     link:SetPoint("RIGHT", -4, 0)
     link:SetText("Link")
+    if frame.sleek then skinButton(link) end
     link:SetScript("OnClick", function()
         if row.itemID then ns.ShowLinkPopupForItem(row.itemID) end
     end)
@@ -792,10 +1050,51 @@ local function fillRow(row, data)
     -- alternatives are indented and tinted under the main pick for their slot
     row.isAlt = data.isAlt
     row.isPre = data.isPre
+    row.isExtra = data.isExtra
+    row.slotName = data.slot
+    row.paired = ns.PAIRED_SLOTS and ns.PAIRED_SLOTS[data.slot] or nil
+    -- place icon (Gear tab), then the item icon
+    local placeIcon = data.place and ns.PlaceIcon and ns.PlaceIcon(data.place)
+    row.place = placeIcon and data.place or nil
+    local iconX = data.isAlt and 22 or 4
+    if placeIcon then
+        local size = data.isAlt and 20 or 24
+        row.trophy:ClearAllPoints()
+        row.trophy:SetPoint("LEFT", iconX, 0)
+        row.trophy:SetSize(size, size)
+        row.trophy.tex:SetTexture(placeIcon)
+        row.trophy:Show()
+        local shine = data.place == 1 and not data.isAlt
+        row.trophy.glow:SetSize(size * 1.7, size * 1.7)
+        row.trophy.glow:SetShown(shine)
+        local twinkle = shine and ns.HolidayOn() or false
+        row.trophy.star:SetShown(twinkle)
+        if twinkle then
+            if not row.trophy.starAnim:IsPlaying() then row.trophy.starAnim:Play() end
+        else
+            row.trophy.starAnim:Stop()
+        end
+        iconX = iconX + size + 2
+    else
+        row.trophy:Hide()
+    end
     row.icon:ClearAllPoints()
-    row.icon:SetPoint("LEFT", data.isAlt and 22 or 4, 0)
+    row.icon:SetPoint("LEFT", iconX, 0)
     row.icon:SetSize(data.isAlt and 26 or 32, data.isAlt and 26 or 32)
-    if data.isAlt then
+    -- sparkle is saved for the podium cards; list rows stay calm
+    ns.ShowSparkle(row.sparkle, false)
+    if data.extraCount and ns.char.showAlts == false then
+        local open = ns.char.expandedSlots and ns.char.expandedSlots[data.slot]
+        row.more.text:SetText(open and "Hide" or ("+" .. data.extraCount .. " more"))
+        row.more:Show()
+    else
+        row.more:Hide()
+    end
+    row.branchV:SetShown(data.isExtra and true or false)
+    row.branchH:SetShown(data.isExtra and true or false)
+    if data.isExtra then
+        row.bg:SetColorTexture(0, 0, 0, 0.22)
+    elseif data.isAlt then
         row.bg:SetColorTexture(0.45, 0.6, 1, 0.07)
     else
         row.bg:SetColorTexture(1, 1, 1, (row.index % 2 == 0) and 0.04 or 0)
@@ -806,7 +1105,9 @@ local function fillRow(row, data)
     row.name:SetText("|cff888888Loading item " .. data.id .. "...|r")
     local slotText = data.slot
     if data.isPre then slotText = "|cffffd100For T0.5 quest|r  " .. slotText
+    elseif data.isExtra then slotText = "|cffd0d0d0" .. (ns.PLACE_NAMES[data.place] or "") .. " place|r  " .. slotText
     elseif data.isAlt then slotText = "|cff8fb8ffAlternative|r  " .. slotText end
+    if row.place and not data.isAlt and row.paired then slotText = slotText .. "  |cffffd100wear 2|r" end
     if data.isNew then slotText = "|cff1eff00NEW|r  " .. slotText end
     if data.faction then slotText = slotText .. "  |cffffd100(" .. data.faction .. ")|r" end
     local onQuest = ns.OnSourceQuest(data.source)
@@ -829,10 +1130,13 @@ local function fillRow(row, data)
     end
     -- gear tabs: dungeon in its own column, boss / source in this one
     local splitCols = not data.craft and not frame.compact
-        and (frame.layoutMode == nil or frame.layoutMode == "bis" or frame.layoutMode == "realistic")
+        and (frame.layoutMode == nil or frame.layoutMode == "bis" or frame.layoutMode == "realistic"
+             or frame.layoutMode == "ranked")
     local dungeon, bossText = ns.SplitSource(data.source)
     if splitCols then
         row.dungeon:SetText(dungeon)
+        if frame.layoutMode == "ranked" then row.dungeon:SetTextColor(0.8, 0.76, 0.66)
+        else row.dungeon:SetTextColor(1, 0.82, 0) end
         src = bossText
     elseif data.craftTab and not frame.compact then
         -- Enchants / Consumables: skill in its own column, recipe source here
@@ -863,7 +1167,7 @@ local function fillRow(row, data)
     row.enchantNote, row.enchantSource = data.enchantNote, data.enchantSource
     row.slotName, row.itemID = data.slot, data.id
     row.craft = data.craft
-    row.enchHit:SetShown((data.enchantID ~= nil or data.craft ~= nil) and not frame.compact)
+    row.enchHit:SetShown((data.enchantID ~= nil or data.craft ~= nil) and row.avoid:IsShown())
     enchantCell(row, data)
     local ownedText = OWNED_ICON[ns.Owned[data.id]] or ""
     if data.enchanted then
@@ -920,10 +1224,353 @@ local function fillRow(row, data)
         row.icon.tex:SetTexture(item:GetItemIcon())
         local text = (row.itemLink or row.itemName or ""):gsub("[%[%]]", "")
         if row.isPre then text = "|cffffd100Needs:|r " .. text
-        elseif row.isAlt then text = "|cff8fb8ffAlt:|r " .. text end
+        elseif row.isAlt and not row.isExtra then text = "|cff8fb8ffAlt:|r " .. text end
         row.name:SetText(text)
     end)
     row:Show()
+end
+
+----------------------------------------------------------------------
+-- Podium view (Gear tab): one card per slot with 2nd, 1st and 3rd place
+-- standing on podium steps
+----------------------------------------------------------------------
+local CARD_W, CARD_H, CARD_GAP = 300, 198, 10
+local STEP_H = { 30, 20, 12 }                     -- block height by place
+local STEP_COLOR = { { 1, 0.78, 0.2 }, { 0.78, 0.82, 0.86 }, { 0.8, 0.5, 0.26 } }
+local STEP_ORDER = { 2, 1, 3 }                    -- left to right
+local podiumCards = {}
+
+local function podiumItemEnter(self)
+    local d = self.data
+    if not d then return end
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetItemByID(d.id)
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine((ns.PLACE_NAMES[d.place] or "") .. " place for " .. d.slot
+        .. ((ns.PAIRED_SLOTS[d.slot] and d.place == 1) and " (you wear two)" or ""), 1, 0.82, 0)
+    local dungeon, boss = ns.SplitSource(d.source)
+    if dungeon ~= "" then GameTooltip:AddDoubleLine("Dungeon", dungeon, 0.8, 0.8, 0.8, 1, 1, 1) end
+    if boss ~= "" then GameTooltip:AddDoubleLine("Boss / source", boss, 0.8, 0.8, 0.8, 1, 1, 1) end
+    local rate = ns.DropChance(d.id, d.source)
+    if rate then GameTooltip:AddDoubleLine("Drop", ns.FormatChance(rate), 0.8, 0.8, 0.8, 1, 1, 1) end
+    if d.note then GameTooltip:AddLine(d.note, 0.67, 0.67, 0.67, true) end
+    local where = ({ equipped = "You have it equipped", bag = "It's in your bags", bank = "It's in your bank" })[ns.Owned[d.id]]
+    if where then GameTooltip:AddLine(where, 0.2, 1, 0.2) end
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("Right-click: copy web link", 0.2, 1, 0.2)
+    GameTooltip:AddLine("Shift-click: link in chat   Ctrl-click: preview", 0.2, 1, 0.2)
+    GameTooltip:Show()
+end
+
+local function edge(card, a, b, w, h)
+    local t = card:CreateTexture(nil, "BORDER")
+    t:SetColorTexture(1, 0.82, 0, 0.18)
+    t:SetPoint(a, card, a)
+    t:SetPoint(b, card, b)
+    if w then t:SetWidth(w) else t:SetHeight(h) end
+end
+
+local function makeItemButton(card, size)
+    local btn = CreateFrame("Button", nil, card)
+    btn:SetSize(size, size)
+    btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    btn.tex = btn:CreateTexture(nil, "ARTWORK")
+    btn.tex:SetAllPoints()
+    btn.own = btn:CreateTexture(nil, "OVERLAY", nil, 7)
+    btn.own:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
+    btn.own:SetSize(14, 14)
+    btn.own:SetPoint("BOTTOMRIGHT", 4, -4)
+    btn:SetScript("OnEnter", podiumItemEnter)
+    btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    btn:SetScript("OnClick", function(self, button)
+        if not self.data then return end
+        if button == "RightButton" then ns.ShowLinkPopupForItem(self.data.id) return end
+        if self.link then HandleModifiedItemClick(self.link) end
+    end)
+    return btn
+end
+
+-- "Why this place?": hovering a podium step explains the ranking from what we
+-- know for sure: which guide ranked it, how its stats compare with the place
+-- next to it, and how hard it is to get.
+local function howToGet(d)
+    local src = d.source or ""
+    local dungeon, boss = ns.SplitSource(src)
+    local rate = ns.DropChance(d.id, src)
+    if boss:find("^Quest:") then return "Quest reward, a sure thing once the quest is done" end
+    if src:find("Leatherworking") or src:find("Blacksmithing") or src:find("Tailoring")
+        or src:find("Engineering") or src:find("Crafted") then
+        return "Crafted (" .. (src:match("(%a+working)") or src:match("(%a+smithing)") or src:match("(Tailoring)") or src:match("(Engineering)") or "profession") .. "), buy it or make it"
+    end
+    if src:find("Revered") or src:find("Exalted") or src:find("Honored") or src:find("Friendly%)") then
+        return "Reputation reward, a steady grind"
+    end
+    if src:find("Trash") then return "Trash drop in " .. dungeon .. (rate and (", about " .. ns.FormatChance(rate)) or "") end
+    if rate then return "Drops from " .. boss .. (dungeon ~= "" and (" in " .. dungeon) or "") .. ", " .. ns.FormatChance(rate) .. " chance" end
+    if boss ~= "" then return boss .. (dungeon ~= "" and (" (" .. dungeon .. ")") or "") end
+    return dungeon
+end
+
+local function statDiff(a, b, role)
+    if not ns.ItemKeyStats then return {} end
+    local sa, sb = ns.ItemKeyStats(a.id), ns.ItemKeyStats(b.id)
+    local keys = {}
+    for _, k in ipairs((ns.ROLE_STATS and ns.ROLE_STATS[role]) or {}) do table.insert(keys, k) end
+    table.insert(keys, "hit"); table.insert(keys, "crit")
+    local out = {}
+    for _, k in ipairs(keys) do
+        local dv = (sa[k] or 0) - (sb[k] or 0)
+        if dv ~= 0 then
+            local pct = (k == "hit" or k == "crit") and "%" or ""
+            table.insert(out, { text = (dv > 0 and "+" or "") .. dv .. pct .. " " .. (ns.STAT_LABEL[k] or k), up = dv > 0 })
+        end
+    end
+    return out
+end
+
+local function podiumWhyEnter(self)
+    local card, place = self.card, self.place
+    local e = card.entry
+    local d = e and e.places[place]
+    if not d then return end
+    local guide = currentGuide()
+    local info = guide and ns.Phases[guide.phase] or {}
+    local role = ns.SpecRole and ns.SpecRole(ns.char.selectedClass, ns.char.selectedSpec)
+    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    GameTooltip:AddLine("Why " .. ns.PLACE_NAMES[place] .. " place?", 1, 0.82, 0)
+    local by = d.isExtra and ((guide and guide.altSource) or "conquestcapped.com")
+        or ((info.source or "the BiS guide"):gsub("%s*%b()", ""))
+    GameTooltip:AddLine(d.isExtra and ("Ranked " .. ns.PLACE_NAMES[place] .. " by " .. by .. " (alternatives, the Realistic set and Other Options)")
+        or ("Best in slot on " .. by), 1, 1, 1, true)
+    if place == 1 and e.second then
+        GameTooltip:AddLine("You wear two, so both of these are 1st place.", 0.8, 0.8, 0.8, true)
+    end
+    -- stats against the neighbouring place
+    local other, otherPlace
+    if place == 1 then other, otherPlace = e.places[2], 2 else other, otherPlace = e.places[1], 1 end
+    if other then
+        local diffs = statDiff(d, other, role)
+        if #diffs > 0 then
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine("Compared with " .. ns.PLACE_NAMES[otherPlace] .. " place:", 0.8, 0.8, 0.8)
+            for _, x in ipairs(diffs) do
+                if x.up then GameTooltip:AddLine("  " .. x.text, 0.3, 1, 0.3) else GameTooltip:AddLine("  " .. x.text, 1, 0.4, 0.4) end
+            end
+        end
+    end
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("How to get it", 0.8, 0.8, 0.8)
+    GameTooltip:AddLine(howToGet(d), 1, 1, 1, true)
+    if d.note then GameTooltip:AddLine(d.note, 0.67, 0.67, 0.67, true) end
+    if d.why and d.why ~= d.note then
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine("What the guides say", 0.8, 0.8, 0.8)
+        GameTooltip:AddLine(d.why, 1, 1, 1, true)
+    end
+    GameTooltip:Show()
+end
+
+local function createCard(i)
+    local card = CreateFrame("Frame", nil, scrollChild)
+    card:SetSize(CARD_W, CARD_H)
+    card.bg = card:CreateTexture(nil, "BACKGROUND")
+    card.bg:SetAllPoints()
+    card.bg:SetColorTexture(0, 0, 0, 0.35)
+    edge(card, "TOPLEFT", "TOPRIGHT", nil, 1); edge(card, "BOTTOMLEFT", "BOTTOMRIGHT", nil, 1)
+    edge(card, "TOPLEFT", "BOTTOMLEFT", 1); edge(card, "TOPRIGHT", "BOTTOMRIGHT", 1)
+    card.title = card:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    card.title:SetPoint("TOPLEFT", 10, -8)
+    card.wear = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    card.wear:SetPoint("TOPRIGHT", -10, -9)
+    card.wear:SetTextColor(1, 0.82, 0)
+    card.steps = {}
+    for place = 1, 3 do
+        local st = {}
+        st.block = card:CreateTexture(nil, "ARTWORK")
+        st.block:SetHeight(STEP_H[place])
+        st.num = card:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+        st.num:SetPoint("CENTER", st.block, "CENTER", 0, 0)
+        st.num:SetText(place)
+        st.num:SetTextColor(0.15, 0.1, 0.05)
+        -- boss / quest: brighter, up to two lines, click for details
+        st.src = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+        st.src:SetPoint("BOTTOM", st.block, "TOP", 0, 3)
+        st.src:SetHeight(22)
+        st.src:SetJustifyH("CENTER")
+        st.src:SetJustifyV("BOTTOM")
+        st.src:SetWordWrap(true)
+        if st.src.SetMaxLines then st.src:SetMaxLines(2) end
+        st.src:SetTextColor(0.85, 0.82, 0.74)
+        st.srcHit = CreateFrame("Button", nil, card)
+        st.srcHit:SetPoint("TOPLEFT", st.src, "TOPLEFT", -2, 2)
+        st.srcHit:SetPoint("BOTTOMRIGHT", st.src, "BOTTOMRIGHT", 2, -2)
+        st.srcHit:SetScript("OnClick", function(self) sourceClick(self, st) end)
+        st.srcHit:SetScript("OnEnter", function(self) sourceEnter(self, st) end)
+        st.srcHit:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        st.name = card:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        st.name:SetPoint("BOTTOM", st.src, "TOP", 0, 1)
+        st.name:SetJustifyH("CENTER")
+        st.name:SetWordWrap(true)
+        if st.name.SetMaxLines then st.name:SetMaxLines(2) end
+        local size = place == 1 and 36 or 30
+        local btn = makeItemButton(card, size)
+        btn:SetPoint("BOTTOM", st.name, "TOP", 0, 3)
+        st.btn = btn
+        if place == 1 then
+            -- rings / trinkets: the second 1st place pick stands beside the first
+            st.btn2 = makeItemButton(card, 32)
+            st.btn2:SetPoint("BOTTOM", st.name, "TOP", 19, 3)
+            st.btn2:Hide()
+        end
+        st.trophy = card:CreateTexture(nil, "ARTWORK")
+        st.trophy:SetSize(place == 1 and 28 or 22, place == 1 and 28 or 22)
+        st.trophy:SetPoint("BOTTOM", btn, "TOP", 0, 3)
+        if place == 1 then
+            st.sparkle = ns.CreateSparkle(card, btn)
+        end
+        -- hover the numbered step: why it is in this place
+        st.why = CreateFrame("Frame", nil, card)
+        st.why:SetAllPoints(st.block)
+        st.why:EnableMouse(true)
+        st.why.card, st.why.place = card, place
+        st.why:SetScript("OnEnter", podiumWhyEnter)
+        st.why:SetScript("OnLeave", function() GameTooltip:Hide() end)
+        st.empty = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+        st.empty:SetPoint("BOTTOM", st.block, "TOP", 0, 8)
+        st.empty:SetText("No " .. ns.PLACE_NAMES[place] .. " pick")
+        card.steps[place] = st
+    end
+    podiumCards[i] = card
+    return card
+end
+
+local function layoutPodium()
+    local w = scrollChild:GetWidth() or CARD_W
+    local cols = math.max(1, math.floor((w + CARD_GAP) / (CARD_W + CARD_GAP)))
+    local cw = math.floor((w - (cols - 1) * CARD_GAP) / cols)
+    local side = math.floor((cw - 28) * 0.31)
+    local mid = cw - 28 - 2 * side
+    local xs = { [2] = 10, [1] = 10 + side + 4, [3] = 10 + side + 4 + mid + 4 }
+    local ws = { [2] = side, [1] = mid, [3] = side }
+    local shown = 0
+    for _, card in ipairs(podiumCards) do
+        if card:IsShown() then
+            local col, rowN = shown % cols, math.floor(shown / cols)
+            card:ClearAllPoints()
+            card:SetPoint("TOPLEFT", col * (cw + CARD_GAP), -rowN * (CARD_H + CARD_GAP))
+            card:SetWidth(cw)
+            for place, st in ipairs(card.steps) do
+                st.block:ClearAllPoints()
+                st.block:SetPoint("BOTTOMLEFT", card, "BOTTOMLEFT", xs[place], 8)
+                st.block:SetWidth(ws[place])
+                st.src:SetWidth(ws[place] - 2)
+                st.name:SetWidth(ws[place] - 2)
+            end
+            shown = shown + 1
+        end
+    end
+    return math.ceil(shown / cols) * (CARD_H + CARD_GAP)
+end
+
+local function fillItemButton(st, btn, d, nameKey)
+    btn.data, btn.link = d, nil
+    btn.tex:SetTexture(C_Item.GetItemIconByID(d.id) or 134400)
+    btn.own:SetShown(ns.Owned[d.id] ~= nil)
+    local token = st.token
+    ns.WithItem(d.id, function(item)
+        if st.token ~= token then return end
+        if not item then st[nameKey] = "|cffff5555Item " .. d.id .. "|r"
+        else
+            btn.link = item:GetItemLink()
+            btn.tex:SetTexture(item:GetItemIcon())
+            local text = (btn.link or item:GetItemName() or ""):gsub("[%[%]]", "")
+            st[nameKey] = text
+        end
+        st.name:SetText(st.names2 and ((st.n1 or "...") .. "\n" .. (st.n2 or "...")) or st.n1)
+    end)
+end
+
+-- d2: the second 1st place pick for rings / trinkets (both are worn)
+local function fillStep(card, st, place, d, holiday, d2)
+    local on = d ~= nil
+    st.block:SetColorTexture(STEP_COLOR[place][1], STEP_COLOR[place][2], STEP_COLOR[place][3], on and 0.9 or 0.18)
+    st.num:SetShown(on)
+    st.src:SetShown(on); st.name:SetShown(on); st.btn:SetShown(on); st.trophy:SetShown(on)
+    st.empty:SetShown(not on)
+    local two = on and d2 ~= nil and st.btn2 ~= nil
+    if st.btn2 then
+        st.btn2:SetShown(two)
+        st.btn:ClearAllPoints()
+        st.btn:SetPoint("BOTTOM", st.name, "TOP", two and -19 or 0, 3)
+        st.btn:SetSize(two and 32 or 36, two and 32 or 36)
+        if not two then st.btn2.data = nil end
+    end
+    if st.sparkle then ns.ShowSparkle(st.sparkle, on, two and 32 or 36) end
+    if not on then st.btn.data = nil; st.srcHit:Hide() return end
+    st.trophy:ClearAllPoints()
+    st.trophy:SetPoint("BOTTOM", st.btn, "TOP", two and 19 or 0, 3)
+    st.trophy:SetTexture(ns.PlaceIcon(place))
+    st.token = (st.token or 0) + 1
+    st.names2, st.n1, st.n2 = two, nil, nil
+    if two then
+        st.src:SetText("Wear both")
+        if st.sparkle2 == nil then st.sparkle2 = ns.CreateSparkle(card, st.btn2) end
+    else
+        local dungeon, bossText = ns.SplitSource(d.source)
+        local rate = ns.DropChance(d.id, d.source)
+        local from = d.craft and d.craft.from or d.source
+        st.boss = ns.FindBoss and ns.FindBoss(from) or nil
+        st.quests = (not st.boss) and ns.QuestsInSource and ns.QuestsInSource(from) or nil
+        st.questInLog = (not st.boss) and ns.QuestInLog and ns.QuestInLog(from) or nil
+        st.dungeonName, st.dropRate = dungeon, rate and ns.FormatChance(rate) or nil
+        local text = bossText ~= "" and bossText or dungeon
+        local isQuest = text:find("^Quest: ") ~= nil
+        if isQuest then text = text:sub(8) end
+        if isQuest or st.quests or st.questInLog then text = "|cffffd100Quest:|r " .. text end
+        if st.boss then text = ns.BOSS_ICON .. text end
+        if rate then text = text .. " |cffaaaaaa" .. ns.FormatChance(rate) .. "|r" end
+        st.src:SetText(text)
+    end
+    local clickable = not two and (st.boss or st.quests or st.questInLog) ~= nil
+    st.srcHit:SetShown(on and clickable)
+    if st.sparkle2 then ns.ShowSparkle(st.sparkle2, two, 32) end
+    st.name:SetText("|cff888888...|r")
+    fillItemButton(st, st.btn, d, "n1")
+    if two then fillItemButton(st, st.btn2, d2, "n2") end
+end
+
+-- slots: { { slot =, places = { [1] = row, [2] = row, [3] = row }, done = bool }, ... }
+local function fillPodium(slots)
+    local holiday = ns.HolidayOn()
+    for i, e in ipairs(slots) do
+        local card = podiumCards[i] or createCard(i)
+        card:Show()
+        card.title:SetText(e.slot)
+        card.entry = e
+        card.wear:SetText(ns.PAIRED_SLOTS[e.slot] and "wear 2" or "")
+        for place = 1, 3 do
+            fillStep(card, card.steps[place], place, e.places[place], holiday, place == 1 and e.second or nil)
+        end
+        card:SetAlpha(1)   -- finished slots keep full color; the green tick shows they are done
+        card:Show()
+    end
+    for i = #slots + 1, #podiumCards do
+        podiumCards[i]:Hide()
+        local st1 = podiumCards[i].steps[1]
+        if st1.sparkle then ns.ShowSparkle(st1.sparkle, false) end
+        if st1.sparkle2 then ns.ShowSparkle(st1.sparkle2, false) end
+    end
+    scrollChild:SetHeight(math.max(1, layoutPodium()))
+end
+
+function ns.PodiumCards() return podiumCards end   -- for tools/uitest.lua
+
+local function hidePodium()
+    for _, card in ipairs(podiumCards) do
+        card:Hide()
+        if card.steps[1].sparkle then ns.ShowSparkle(card.steps[1].sparkle, false) end
+        if card.steps[1].sparkle2 then ns.ShowSparkle(card.steps[1].sparkle2, false) end
+    end
 end
 
 ----------------------------------------------------------------------
@@ -965,11 +1612,21 @@ function ns.RefreshBrowser()
     frame.raidPane:Hide()
     frame.listScroll:Show()
 
-    local mode = "bis"
-    if ns.char.listMode == "realistic" and guide.realistic then mode = "realistic"
+    -- the Gear tab (1st / 2nd / 3rd place) replaces the BiS and Realistic tabs
+    if not ns.char.rankedSeen then
+        ns.char.rankedSeen = true
+        if ns.char.listMode == "bis" or ns.char.listMode == "realistic" then ns.char.listMode = "ranked" end
+    end
+    ns.UpdateHolidayDecor()
+    local mode = "ranked"
+    if ns.char.listMode == "bis" then mode = "bis"
+    elseif ns.char.listMode == "realistic" and guide.realistic then mode = "realistic"
     elseif ns.char.listMode == "enchants" and guide.enchants then mode = "enchants"
     elseif ns.char.listMode == "consumables" and guide.consumables then mode = "consumables" end
-    local gearList = mode == "bis" or mode == "realistic"
+    local gearList = mode == "bis" or mode == "realistic" or mode == "ranked"
+    frame.podiumOn = mode == "ranked" and ns.char.gearView == "podium"
+    viewButton:SetShown(mode == "ranked" and not frame.compact)
+    viewButton:SetText(frame.podiumOn and "View: Podium" or "View: List")
     local realistic = mode == "realistic"
     ns.UpdateListTabs(mode, guide)
     -- (headers are set in ns.LayoutHeaders)
@@ -980,11 +1637,20 @@ function ns.RefreshBrowser()
     end
     ns.LayoutHeaders()
     -- alternatives belong to the BiS list; "hide finished slots" to the gear lists
-    if mode ~= "bis" then altCheck:Disable(); altLabel:SetAlpha(0.4) else altCheck:Enable(); altLabel:SetAlpha(1) end
+    altLabel:SetText(mode == "ranked" and "2nd & 3rd" or "Alternatives")
+    if mode ~= "bis" and mode ~= "ranked" then altCheck:Disable(); altLabel:SetAlpha(0.4) else altCheck:Enable(); altLabel:SetAlpha(1) end
     if mode == "consumables" then doneCheck:Disable(); doneLabel:SetAlpha(0.4) else doneCheck:Enable(); doneLabel:SetAlpha(1) end
     missingCheck:SetChecked(ns.char.missingOnly)
     altCheck:SetChecked(ns.char.showAlts ~= false)
     doneCheck:SetChecked(ns.char.hideDone)
+    -- podium cards always show every place, so "2nd & 3rd" hides there and
+    -- "Hide finished" moves up next to "Missing only"
+    if not frame.compact then
+        altCheck:SetShown(not frame.podiumOn)
+        altLabel:SetShown(not frame.podiumOn)
+        doneCheck:ClearAllPoints()
+        doneCheck:SetPoint("LEFT", frame.podiumOn and frame.mcLabel or altLabel, "RIGHT", 10, 0)
+    end
 
     -- Done slots. Each main row has a key ("Head#1", "Finger#2"...) that is the
     -- same in the BiS and Realistic lists, so a slot can be done with a piece
@@ -992,7 +1658,12 @@ function ns.RefreshBrowser()
     -- you own enough of that slot's BiS / Realistic picks.
     local specKey = (ns.char.selectedClass or "") .. ":" .. (ns.char.selectedSpec or "")
     local canMark = gearList or mode == "enchants"
-    local listRows = ns.GetGuideRows(guide, mode == "bis" and ns.char.showAlts ~= false, mode)
+    local listRows
+    if mode == "ranked" then
+        listRows = ns.GetRankedRows(guide)
+    else
+        listRows = ns.GetGuideRows(guide, mode == "bis" and ns.char.showAlts ~= false, mode)
+    end
     local seenSlot = {}
     for _, r in ipairs(listRows) do
         if not r.isAlt and canMark then
@@ -1125,8 +1796,11 @@ function ns.RefreshBrowser()
         -- a Tier 0 piece you own stays visible under its missing Tier 0.5
         -- upgrade, so you can see you're ready to turn it in
         if r.isPre and owned and r.upgrade and not ns.Owned[r.upgrade] then owned = false end
-        if slotOk and not hidden and not (ns.char.missingOnly and owned) then
-            r.isNew = mode == "bis" and (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
+        -- 2nd / 3rd place show when "2nd & 3rd" is ticked or the slot is opened
+        local closed = r.isExtra and ns.char.showAlts == false
+            and not (ns.char.expandedSlots and ns.char.expandedSlots[r.slot])
+        if slotOk and not hidden and not closed and not (ns.char.missingOnly and owned) then
+            r.isNew = (mode == "bis" or mode == "ranked") and (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
             r.specKey = specKey
             if gearList and not r.isAlt then
                 r.enchantID, r.enchantNote, r.enchantSource = enchantFor(guide, r.slot)
@@ -1144,11 +1818,43 @@ function ns.RefreshBrowser()
     end
 
     if gearList or mode == "enchants" or mode == "consumables" then list = ns.SortRows(list) end
-    for i, data in ipairs(list) do
-        fillRow(rows[i] or createRow(i), data)
+    if frame.podiumOn then
+        -- one card per slot, with every place (whatever "2nd & 3rd" says)
+        for i = 1, #rows do rows[i]:Hide() end
+        local slots, bySlot = {}, {}
+        for _, r in ipairs(listRows) do
+            if r.place and not r.isPre then
+                local e = bySlot[r.slot]
+                if not e then
+                    e = { slot = r.slot, places = {}, done = slotDone[r.slot], allOwned = true }
+                    bySlot[r.slot] = e
+                    table.insert(slots, e)
+                end
+                if r.place == 1 and e.places[1] and not r.isAlt then
+                    e.second = e.second or r   -- rings / trinkets: two 1st place picks
+                else
+                    e.places[r.place] = e.places[r.place] or r
+                end
+                if not r.isAlt and not ns.Owned[r.id] then e.allOwned = false end
+            end
+        end
+        local shownSlots = {}
+        for _, e in ipairs(slots) do
+            local slotOk = ns.char.selectedSlot == "All" or e.slot == ns.char.selectedSlot
+            local hidden = ns.char.hideDone and e.done
+            if slotOk and not hidden and not (ns.char.missingOnly and e.allOwned) then
+                table.insert(shownSlots, e)
+            end
+        end
+        fillPodium(shownSlots)
+    else
+        hidePodium()
+        for i, data in ipairs(list) do
+            fillRow(rows[i] or createRow(i), data)
+        end
+        for i = #list + 1, #rows do rows[i]:Hide() end
+        scrollChild:SetHeight(math.max(1, #list * ROW_HEIGHT))
     end
-    for i = #list + 1, #rows do rows[i]:Hide() end
-    scrollChild:SetHeight(math.max(1, #list * ROW_HEIGHT))
 
     countText:SetText(string.format(mode == "consumables" and "Stocked %d / %d" or "Done %d / %d", have, total))
     -- keep the raid check companion on the spec being viewed
@@ -1161,6 +1867,9 @@ function ns.RefreshBrowser()
         .. "  |  Data: " .. (info.source or "?") .. ", checked " .. (info.checked or "?")
     if realistic then
         text = text .. "  |  Realistic set: " .. (guide.realisticSource or "community guides")
+    elseif mode == "ranked" then
+        text = text .. "  |  1st place: BiS list. 2nd / 3rd: "
+            .. (guide.altSource or info.altSource or "alternatives") .. " and the Realistic set"
     elseif mode == "enchants" then
         text = text .. "  |  Enchants: " .. (guide.enchantSource or "community guides")
     elseif mode == "consumables" then
@@ -1259,8 +1968,7 @@ end
 
 -- List tabs along the bottom edge of the window (like the character panel)
 local LIST_TABS = {
-    { mode = "bis",         text = "BiS",         tip = "The best pre-raid items." },
-    { mode = "realistic",   text = "Realistic",   tip = "A set most players can finish in a week or two from dungeons, quests and Tier 0.5." },
+    { mode = "ranked",      text = "Gear",        tip = "1st, 2nd and 3rd place for each slot. 1st place is the best pre-raid item; 2nd and 3rd are good picks that are often easier to get." },
     { mode = "enchants",    text = "Enchants",    tip = "The enchant, arcanum or armor kit for each slot." },
     { mode = "consumables", text = "Consumables", tip = "Raid shopping list: flask, elixirs, food, weapon oil or stone and potions." },
     { mode = "raid",        text = "Raid Check",  tip = "Is your character ready to raid? Hit, defense, empty slots, enchants and your gear's stats against the BiS set." },
@@ -1304,11 +2012,15 @@ end
 -- Highlight the tab for the list on screen; grey out lists this spec lacks
 function ns.UpdateListTabs(mode, guide)
     if not listTabs then return end
-    local have = { bis = true, realistic = guide and guide.realistic ~= nil,
+    local have = { ranked = true, bis = true, realistic = guide and guide.realistic ~= nil,
                    enchants = guide and guide.enchants ~= nil, consumables = guide and guide.consumables ~= nil,
                    raid = true }
     for i, info in ipairs(LIST_TABS) do
         local tab = listTabs[i]
+        if tab.skinBg then
+            local c = info.mode == mode and SLEEK.tabOn or SLEEK.tab
+            tab.skinBg:SetColorTexture(c[1], c[2], c[3], c[4])
+        end
         if info.mode == mode then
             if PanelTemplates_SelectTab then pcall(PanelTemplates_SelectTab, tab) else tab:LockHighlight() end
         elseif have[info.mode] then
@@ -1334,10 +2046,177 @@ local function slotMenu(owner)
 end
 
 ----------------------------------------------------------------------
+-- Holiday theme: Christmas lights along the top, holly by the title and a
+-- snowy strip of trees and a moose in the footer
+----------------------------------------------------------------------
+-- one 256x64 tile (4 bulbs on a drooping wire) shown at 72x18 inside the title bar
+local LIGHT_TILE_W, LIGHT_H = 72, 18
+local LIGHT_RIGHT_GAP = 64   -- keeps the lights clear of the buttons at the top right
+-- the footer scene is a wide strip (32:1); the window shows its middle part
+local SCENE_FULL_W, SCENE_H, FOOTER_RIGHT = 1280, 40, 228
+
+-- a string of lights hung inside the title bar, on both sides of the title:
+-- the wire, and two sets of bulbs that blink in turn. side is "left" / "right";
+-- UpdateHolidayDecor places and sizes each piece around the title text.
+local function lightLayer(d, file, level, side)
+    local t = d:CreateTexture(nil, "OVERLAY", nil, level)
+    t:SetTexture(ns.TEXTURES .. file, "REPEAT", "CLAMP")
+    t:SetHeight(LIGHT_H)
+    t.side = side
+    return t
+end
+
+-- a small, faraway sleigh: drawn behind the trees and the moose, high in the sky
+local SANTA_W, SANTA_SPEED = 72, 55   -- sleigh size and pixels per second
+
+-- one flight from the right end of the footer scene to the left end
+local function santaFlyBy(d)
+    if not d or not d.santa or not d.scene:IsShown() or not frame:IsShown() then return end
+    if d.santaFly:IsPlaying() then return end
+    local w = d.scene:GetWidth() or 0
+    if w < SANTA_W * 2 then return end
+    local dist = w - SANTA_W
+    local secs = dist / SANTA_SPEED
+    d.santa:ClearAllPoints()
+    d.santa:SetPoint("BOTTOMRIGHT", d.scene, "BOTTOMRIGHT", 0, 22)
+    d.santaMove:SetOffset(-dist, math.random(-1, 3))
+    d.santaMove:SetDuration(secs)
+    d.santaOut:SetStartDelay(math.max(0, secs - 0.6))
+    d.santa:Show()
+    d.santaFly:Play()
+end
+
+-- random gaps between flights, 45 seconds to 2.5 minutes; the first one
+-- comes shortly after the window opens
+local function scheduleSanta(d, soon)
+    if not (C_Timer and C_Timer.After) then return end
+    d.santaToken = (d.santaToken or 0) + 1
+    local token = d.santaToken
+    C_Timer.After(soon and math.random(6, 15) or math.random(45, 150), function()
+        if d.santaToken ~= token then return end
+        if ns.HolidayOn() then santaFlyBy(d) end
+        scheduleSanta(d)
+    end)
+end
+ns.SantaFlyBy = function() if frame and frame.holiday then santaFlyBy(frame.holiday) end end
+
+local function createHolidayDecor()
+    local d = CreateFrame("Frame", nil, frame)
+    d:SetAllPoints()
+    d:SetFrameLevel(frame:GetFrameLevel() + 20)
+    d.lights, d.blinks = {}, {}
+    for _, side in ipairs({ "left", "right" }) do
+        table.insert(d.lights, lightLayer(d, "lights_wire", 1, side))
+        for i, file in ipairs({ "lights_a", "lights_b" }) do
+            local t = lightLayer(d, file, 2, side)
+            table.insert(d.lights, t)
+            local g = t:CreateAnimationGroup()
+            g:SetLooping("BOUNCE")
+            local blink = g:CreateAnimation("Alpha")
+            if i == 1 then blink:SetFromAlpha(1); blink:SetToAlpha(0.25)
+            else blink:SetFromAlpha(0.25); blink:SetToAlpha(1) end
+            blink:SetDuration(0.8)
+            table.insert(d.blinks, g)
+        end
+    end
+    d.holly = d:CreateTexture(nil, "OVERLAY")
+    d.holly:SetTexture(ns.TEXTURES .. "holly")
+    d.holly:SetSize(18, 18)
+    if frame.titleText then d.holly:SetPoint("RIGHT", frame.titleText, "LEFT", -4, 0) end
+    d.scene = d:CreateTexture(nil, "ARTWORK")
+    d.scene:SetTexture(ns.TEXTURES .. "scene")
+    d.scene:SetHeight(SCENE_H)
+    d.scene:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 8, 6)
+    d.scene:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -FOOTER_RIGHT, 6)
+    -- the lights in the moose's antlers blink in two sets, like the top string
+    d.sceneLights = {}
+    for i, file in ipairs({ "scene_a", "scene_b" }) do
+        local t = d:CreateTexture(nil, "OVERLAY")
+        t:SetTexture(ns.TEXTURES .. file)
+        t:SetAllPoints(d.scene)
+        local g = t:CreateAnimationGroup()
+        g:SetLooping("BOUNCE")
+        local blink = g:CreateAnimation("Alpha")
+        if i == 1 then blink:SetFromAlpha(1); blink:SetToAlpha(0.1)
+        else blink:SetFromAlpha(0.1); blink:SetToAlpha(1) end
+        blink:SetDuration(0.8)
+        table.insert(d.blinks, g)
+        table.insert(d.sceneLights, t)
+    end
+    -- Santa's sleigh flies across the footer sky now and then
+    local santa = d:CreateTexture(nil, "ARTWORK", nil, -2)   -- under the scene (ARTWORK 0)
+    santa:SetTexture(ns.TEXTURES .. "santa")
+    santa:SetSize(SANTA_W, SANTA_W / 4)
+    santa:Hide()
+    d.santa = santa
+    local fly = santa:CreateAnimationGroup()
+    d.santaMove = fly:CreateAnimation("Translation")
+    d.santaMove:SetOrder(1)
+    local fadeIn = fly:CreateAnimation("Alpha")
+    fadeIn:SetFromAlpha(0); fadeIn:SetToAlpha(0.85); fadeIn:SetDuration(0.6); fadeIn:SetOrder(1)
+    d.santaOut = fly:CreateAnimation("Alpha")
+    d.santaOut:SetFromAlpha(0.85); d.santaOut:SetToAlpha(0); d.santaOut:SetDuration(0.6); d.santaOut:SetOrder(1)
+    fly:SetScript("OnFinished", function() santa:Hide() end)
+    d.santaFly = fly
+    return d
+end
+
+function ns.UpdateHolidayDecor()
+    if not frame then return end
+    local on = ns.HolidayOn and ns.HolidayOn() or false
+    if on and not frame.holiday then frame.holiday = createHolidayDecor() end
+    local w = frame:GetWidth() or 0
+    local d = frame.holiday
+    if d then
+        d:SetShown(on)
+        -- fill the title bar on both sides of the title (and its holly)
+        local titleW = (frame.titleText and frame.titleText:GetStringWidth()) or 200
+        local leftW = math.max(0, math.floor(w / 2 - titleW / 2 - 22 - 10 - 4))
+        local rightX = math.floor(w / 2 + titleW / 2 + 10)
+        local rightW = math.max(0, math.floor(w - LIGHT_RIGHT_GAP - rightX))
+        for _, t in ipairs(d.lights) do
+            local x, tw = 4, leftW
+            if t.side == "right" then x, tw = rightX, rightW end
+            t:ClearAllPoints()
+            t:SetPoint("TOPLEFT", frame, "TOPLEFT", x, -2)
+            t:SetWidth(math.max(1, tw))
+            t:SetShown(tw >= LIGHT_TILE_W / 2)
+            t:SetTexCoord(0, math.max(0.5, tw / LIGHT_TILE_W), 0, 1)
+        end
+        for _, g in ipairs(d.blinks) do
+            if on then
+                if not g:IsPlaying() then g:Play() end
+            else
+                g:Stop()
+            end
+        end
+        -- crop the strip from the middle so it fills the footer without stretching
+        local frac = math.min(1, math.max(0.1, (w - 8 - FOOTER_RIGHT) / SCENE_FULL_W))
+        local l, r = 0.5 - frac / 2, 0.5 + frac / 2
+        d.scene:SetTexCoord(l, r, 0, 1)
+        d.scene:SetShown(on and not frame.compact)
+        if on and not d.santaScheduled then
+            d.santaScheduled = true
+            scheduleSanta(d, true)
+        elseif not on then
+            d.santaScheduled = nil
+            d.santaToken = (d.santaToken or 0) + 1
+            d.santaFly:Stop(); d.santa:Hide()
+        end
+        for _, t in ipairs(d.sceneLights) do
+            t:SetTexCoord(l, r, 0, 1)
+            t:SetShown(on and not frame.compact)
+        end
+    end
+end
+
+----------------------------------------------------------------------
 -- Window
 ----------------------------------------------------------------------
 local function createFrame()
     frame = CreateFrame("Frame", "ForeverBiSFrame", UIParent, "BasicFrameTemplateWithInset")
+    frame.sleek = ns.db.windowStyle ~= "classic"
+    if frame.sleek then skinFrame(frame) end
     frame:SetSize(savedWidth(), ns.db.windowHeight or HEIGHT)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("MEDIUM")   -- same layer as the game's windows: whichever you click comes to the front
@@ -1372,6 +2251,7 @@ local function createFrame()
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", 0, -5)
     title:SetText(ns.title .. "  -  WoW Forever")
+    frame.titleText = title
 
     phaseButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     phaseButton:SetSize(90, 24)
@@ -1404,6 +2284,7 @@ local function createFrame()
         ns.RefreshBrowser()
     end)
     local mcLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    frame.mcLabel = mcLabel
     mcLabel:SetPoint("LEFT", missingCheck, "RIGHT", 2, 0)
     mcLabel:SetText("Missing only")
 
@@ -1435,6 +2316,23 @@ local function createFrame()
     doneLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     doneLabel:SetPoint("LEFT", doneCheck, "RIGHT", 2, 0)
     doneLabel:SetText("Hide finished")
+
+    -- Gear tab: list rows or podium cards
+    viewButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    viewButton:SetSize(110, 22)
+    viewButton:SetPoint("LEFT", doneLabel, "RIGHT", 14, 0)
+    viewButton:SetScript("OnClick", function()
+        ns.char.gearView = (ns.char.gearView == "podium") and "list" or "podium"
+        ns.RefreshBrowser()
+    end)
+    viewButton:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        GameTooltip:AddLine("Switch view")
+        GameTooltip:AddLine("List: one row per item with dungeon, boss and drop chance.", 1, 1, 1, true)
+        GameTooltip:AddLine("Podium: a card per slot with 1st, 2nd and 3rd place side by side.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    viewButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
     frame.wideOnly = { missingCheck, mcLabel, altCheck, altLabel, doneCheck, doneLabel }   -- "where to get it" stays
 
     countText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -1542,10 +2440,12 @@ local function createFrame()
         scrollChild:SetWidth(w - 46)
         if frame.raidPane then frame.raidPane.view.setWidth(math.max(300, w - 60)) end
         if self.sourceText then self.sourceText:SetWidth(w - 240) end
+        ns.UpdateHolidayDecor()
         ns.LayoutHeaders()
         for _, row in ipairs(rows) do
             if row:IsShown() then layoutRow(row) end
         end
+        if self.podiumOn then scrollChild:SetHeight(math.max(1, layoutPodium())) end
     end)
     scroll:SetScrollChild(scrollChild)
 
@@ -1556,11 +2456,22 @@ local function createFrame()
     frame.sourceText:SetHeight(26)
     frame.sourceText:SetJustifyH("LEFT")
     frame.sourceText:SetJustifyV("MIDDLE")
+    -- the footer stays clean: the source note lives in the Guide link tooltip
+    frame.sourceText:Hide()
 
     local guideLink = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     guideLink:SetSize(110, 22)
     guideLink:SetPoint("BOTTOMRIGHT", -26, 12)
     guideLink:SetText("Guide link")
+    guideLink:SetScript("OnEnter", function(self)
+        local note = frame.sourceText:GetText()
+        if not note or note == "" then return end
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine("Sources", 1, 0.82, 0)
+        GameTooltip:AddLine(note, 0.85, 0.85, 0.85, true)
+        GameTooltip:Show()
+    end)
+    guideLink:SetScript("OnLeave", function() GameTooltip:Hide() end)
     guideLink:SetScript("OnClick", function()
         local g = currentGuide()
         if g then
@@ -1574,6 +2485,11 @@ local function createFrame()
     settings:SetText("Settings")
     settings:SetScript("OnClick", function() ns.OpenOptions() end)
 
+    if frame.sleek then
+        title:SetFontObject("GameFontNormal")
+        for _, b in ipairs({ phaseButton, classButton, specButton, slotButton, viewButton, guideLink, settings }) do skinButton(b) end
+        for _, tab in ipairs(listTabs or {}) do skinButton(tab, SLEEK.tab) end
+    end
     frame:SetScript("OnShow", function() ns.RefreshOwned(); ns.RefreshBrowser() end)
     -- apply the saved size to the columns once
     frame:GetScript("OnSizeChanged")(frame, frame:GetWidth(), frame:GetHeight())

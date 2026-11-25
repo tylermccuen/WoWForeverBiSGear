@@ -13,6 +13,7 @@
 Core.lua
 Data\Phases.lua
 Data\Phase1.lua
+Data\Phase1Picks.lua
 Data\Phase2.lua
 Data\Crafting.lua
 Data\DropRates.lua

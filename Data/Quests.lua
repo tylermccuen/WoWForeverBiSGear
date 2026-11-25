@@ -18,7 +18,7 @@ ns.Quests = {
         { "Both", "Gatekeeper Rageroar", "Azshara", "42.3,20.1", "47" },
     },
     ["Codex of Defense"] = {
-        { "Both", "the class book (drops in Dire Maul)", "Dire Maul", "", "54" },
+        { "Both", "the class book (drops in any Dire Maul wing; turn in to Lorekeeper Lydros, West)", "Dire Maul", "", "54" },
     },
     ["Corruption of Earth and Seed"] = {
         { "Horde", "Selendra", "Desolace", "26.9,77.7", "45" },
@@ -28,7 +28,7 @@ ns.Quests = {
         { "Horde", "Thrall", "Orgrimmar", "31.7,37.8", "55" },
     },
     ["Frost Shock and You"] = {
-        { "Both", "the class book (drops in Dire Maul)", "Dire Maul", "", "54" },
+        { "Both", "the class book (drops in any Dire Maul wing; turn in to Lorekeeper Lydros, West)", "Dire Maul", "", "54" },
     },
     ["General Drakkisath's Demise"] = {
         { "Alliance", "Marshal Maxwell", "Burning Steppes", "84.7,69.0", "55" },
@@ -38,7 +38,7 @@ ns.Quests = {
         { "Both", "Jennea Cannon", "Stormwind City", "49.6,85.8", "50" },
     },
     ["Harnessing Shadows"] = {
-        { "Both", "the class book (drops in Dire Maul)", "Dire Maul", "", "54" },
+        { "Both", "the class book (drops in any Dire Maul wing; turn in to Lorekeeper Lydros, West)", "Dire Maul", "", "54" },
     },
     ["Hero of the Frostwolf"] = {
         { "Horde", "Voggah Deathgrip", "Alterac Mountains", "63.8,60.5", "58" },
@@ -50,7 +50,7 @@ ns.Quests = {
         { "Both", "Pamela Redpath", "Eastern Plaguelands", "31.1,78.0", "50" },
     },
     ["Holy Bologna: What the Light Won't Tell You"] = {
-        { "Both", "the class book (drops in Dire Maul)", "Dire Maul", "", "54" },
+        { "Both", "the class book (drops in any Dire Maul wing; turn in to Lorekeeper Lydros, West)", "Dire Maul", "", "54" },
     },
     ["In Dreams"] = {
         { "Both", "Highlord Taelan Fordring", "Western Plaguelands", "42.0,14.8", "52" },
@@ -76,7 +76,7 @@ ns.Quests = {
         { "Horde", "Talo Thornhoof", "Feralas", "76.2,43.8", "54" },
     },
     ["Libram of Focus"] = {
-        { "Both", "Lorekeeper Lydros", "Dire Maul", "", "54" },
+        { "Both", "Lorekeeper Lydros", "Dire Maul West", "", "54" },
     },
     ["Libram of Voracity"] = {
         { "Both", "Mathredis Firestar", "Burning Steppes", "65.0,23.6", "50" },
@@ -101,7 +101,7 @@ ns.Quests = {
         { "Both", "TBD", "Silithus", "", "54" },
     },
     ["The Arcanist's Cookbook"] = {
-        { "Both", "the class book (drops in Dire Maul)", "Dire Maul", "", "54" },
+        { "Both", "the class book (drops in any Dire Maul wing; turn in to Lorekeeper Lydros, West)", "Dire Maul", "", "54" },
     },
     ["The Dark Crystal"] = {
         { "Horde", "Master Apothecary Faranell", "Undercity", "48.8,69.3", "55" },
@@ -110,7 +110,7 @@ ns.Quests = {
         { "Both", "Magistrate Marduke", "Western Plaguelands", "70.6,74.1", "57" },
     },
     ["The Light and How To Swing It"] = {
-        { "Both", "the class book (drops in Dire Maul)", "Dire Maul", "", "54" },
+        { "Both", "the class book (drops in any Dire Maul wing; turn in to Lorekeeper Lydros, West)", "Dire Maul", "", "54" },
     },
     ["The Pariah's Instructions"] = {
         { "Both", "Centaur Pariah", "Desolace", "50.4,86.7", "39" },
@@ -125,7 +125,7 @@ ns.Quests = {
         { "Horde", "Nathanos Blightcaller", "Eastern Plaguelands", "22.2,63.5", "56" },
     },
     ["The Treasure of the Shen'dralar"] = {
-        { "Alliance", "Shen'dralar Ancient", "Dire Maul", "", "56" },
+        { "Alliance", "Shen'dralar Ancient", "Dire Maul West", "", "56" },
     },
     ["Voodoo Feathers"] = {
         { "Both", "Fallen Hero of the Horde", "Swamp of Sorrows", "34.3,66.1", "50" },
