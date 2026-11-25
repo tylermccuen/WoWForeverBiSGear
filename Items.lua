@@ -48,6 +48,7 @@ function ns.BuildIndex()
             local extras = {
                 { rows = g.alts or {},      flag = "alt" },
                 { rows = g.realistic or {}, flag = "realistic" },
+                { rows = g.picks or {},     flag = "alt" },
                 { rows = g.enchants or {},  flag = "enchant" },
                 { rows = g.consumables or {}, flag = "consumable" },
             }
@@ -414,15 +415,15 @@ function ns.ClearRowCache() wipe(rowCache); cachedGuides = 0 end
 ----------------------------------------------------------------------
 -- Each slot's picks in order: the BiS list first (two picks for rings and
 -- trinkets, so both are worn), then the Alternatives, then the Realistic set,
--- up to MAX_PLACES. BiS picks are the slot's main rows; the extra places are
+-- then the extra picks (Data\Phase1Picks.lua), up to MAX_PLACES. BiS picks are the slot's main rows; the extra places are
 -- rows with isAlt = true and isExtra = true, placed under them.
 ns.MAX_PLACES = 3
 ns.PLACE_NAMES = { "1st", "2nd", "3rd" }
 ns.PAIRED_SLOTS = { Finger = true, Trinket = true }
 
-local function copyRow(r)
+local function copyRow(r, why)
     return { slot = r.slot, id = r.id, source = r.source, faction = r.faction, isAlt = r.isAlt,
-             isPre = r.isPre, note = r.note, upgrade = r.upgrade, preID = r.preID }
+             isPre = r.isPre, note = r.note, upgrade = r.upgrade, preID = r.preID, why = why and why[r.id] }
 end
 
 -- Fresh rows every call (the browser writes its own fields onto them)
@@ -459,7 +460,7 @@ function ns.GetRankedRows(guide)
     end
     for _, r in ipairs(ns.GetGuideRows(guide, false, "bis")) do
       if fits(r.id) then
-        local c = copyRow(r)
+        local c = copyRow(r, guide.why)
         if not r.isAlt then
             -- rings and trinkets: you wear both best ones, so both are 1st place
             if ns.PAIRED_SLOTS[r.slot] then
@@ -478,6 +479,8 @@ function ns.GetRankedRows(guide)
     local extra = {}
     for _, row in ipairs(guide.alts or {}) do table.insert(extra, row) end
     for _, row in ipairs(guide.realistic or {}) do table.insert(extra, row) end
+    -- then the extra picks from the guides' ranked Other Options tables
+    for _, row in ipairs(guide.picks or {}) do table.insert(extra, row) end
     for _, row in ipairs(extra) do
         local slot = row[1]
         local id, source = row[2], row[3]
@@ -493,7 +496,8 @@ function ns.GetRankedRows(guide)
             ids[slot][id] = true
             local pos = last[slot] + 1
             table.insert(out, pos, { slot = slot, id = id, source = source, faction = fac, isAlt = true,
-                                     isExtra = true, place = n, note = row.note })
+                                     isExtra = true, place = n, note = row.note,
+                                     why = row.why or (guide.why and guide.why[id]) })
             for s, i in pairs(last) do
                 if i >= pos then last[s] = i + 1 end
             end

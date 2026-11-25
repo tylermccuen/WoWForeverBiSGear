@@ -8,7 +8,7 @@
 ]]
 
 local root = (arg and arg[1]) or "."
-local ns = {}
+local ns = { name = "ForeverBestInSlot" }
 wipe = wipe or function(t) for k in pairs(t) do t[k] = nil end end
 ns.On = function() end
 
@@ -66,6 +66,19 @@ for _, p in ipairs(ns.PhaseList) do
             if type(row[3]) ~= "string" or row[3] == "" then err(where .. ": missing source text") end
             local weaponSwap = (row[1] == "Main Hand" or row[1] == "Off Hand") and slotCount["Two Hand"]
             if not slotCount[row[1]] and not weaponSwap then warn(where .. ": no main pick for slot " .. row[1]) end
+        end
+        for i, row in ipairs(g.picks or {}) do
+            local where = p.label .. " " .. name .. " extra pick " .. i
+            if not validSlot[row[1]] then err(where .. ": unknown slot '" .. tostring(row[1]) .. "'") end
+            if type(row[2]) ~= "number" or row[2] <= 0 then err(where .. ": item ID must be a positive number") end
+            if type(row[3]) ~= "string" or row[3] == "" then err(where .. ": missing source text") end
+            if row[4] ~= nil and (type(row[4]) ~= "number" or type(row[5]) ~= "string") then
+                err(where .. ": Horde item needs both an ID and a source")
+            end
+            if row.why ~= nil and type(row.why) ~= "string" then err(where .. ": why must be text") end
+        end
+        for id, text in pairs(g.why or {}) do
+            if type(id) ~= "number" or type(text) ~= "string" then err(name .. ": bad why entry for " .. tostring(id)) end
         end
         for i, row in ipairs(g.enchants or {}) do
             local where = p.label .. " " .. name .. " enchant " .. i
