@@ -144,11 +144,14 @@ SlashCmdList["FOREVERBIS"] = function(msg)
         ns.db.holidayTheme = nextMode[ns.db.holidayTheme or "auto"] or "auto"
         ns.Print("Holiday theme: " .. ns.db.holidayTheme)
         if ns.RefreshBrowser then ns.RefreshBrowser() end
+    elseif cmd == "santa" then
+        -- send Santa across the footer now (holiday theme on, window open)
+        if ns.SantaFlyBy then ns.SantaFlyBy() end
     elseif cmd == "minimap" then
         ns.db.minimap.hide = not ns.db.minimap.hide
         ns.UpdateMinimap()
     else
-        ns.Print("Commands: /bis, /bis raid, /bis settings, /bis link <item>, /bis minimap, /bis holiday")
+        ns.Print("Commands: /bis, /bis raid, /bis settings, /bis link <item>, /bis minimap, /bis holiday, /bis santa")
     end
 end
 

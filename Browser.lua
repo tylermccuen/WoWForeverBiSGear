@@ -2061,6 +2061,39 @@ local function lightLayer(d, file, level, side)
     return t
 end
 
+local SANTA_W, SANTA_SPEED = 128, 90   -- sleigh size and pixels per second
+
+-- one flight from the right end of the footer scene to the left end
+local function santaFlyBy(d)
+    if not d or not d.santa or not d.scene:IsShown() or not frame:IsShown() then return end
+    if d.santaFly:IsPlaying() then return end
+    local w = d.scene:GetWidth() or 0
+    if w < SANTA_W * 2 then return end
+    local dist = w - SANTA_W
+    local secs = dist / SANTA_SPEED
+    d.santa:ClearAllPoints()
+    d.santa:SetPoint("BOTTOMRIGHT", d.scene, "BOTTOMRIGHT", 0, 10)
+    d.santaMove:SetOffset(-dist, math.random(-2, 8))
+    d.santaMove:SetDuration(secs)
+    d.santaOut:SetStartDelay(math.max(0, secs - 0.6))
+    d.santa:Show()
+    d.santaFly:Play()
+end
+
+-- random gaps between flights, 45 seconds to 2.5 minutes; the first one
+-- comes shortly after the window opens
+local function scheduleSanta(d, soon)
+    if not (C_Timer and C_Timer.After) then return end
+    d.santaToken = (d.santaToken or 0) + 1
+    local token = d.santaToken
+    C_Timer.After(soon and math.random(6, 15) or math.random(45, 150), function()
+        if d.santaToken ~= token then return end
+        if ns.HolidayOn() then santaFlyBy(d) end
+        scheduleSanta(d)
+    end)
+end
+ns.SantaFlyBy = function() if frame and frame.holiday then santaFlyBy(frame.holiday) end end
+
 local function createHolidayDecor()
     local d = CreateFrame("Frame", nil, frame)
     d:SetAllPoints()
@@ -2104,6 +2137,21 @@ local function createHolidayDecor()
         table.insert(d.blinks, g)
         table.insert(d.sceneLights, t)
     end
+    -- Santa's sleigh flies across the footer sky now and then
+    local santa = d:CreateTexture(nil, "OVERLAY", nil, 3)
+    santa:SetTexture(ns.TEXTURES .. "santa")
+    santa:SetSize(SANTA_W, SANTA_W / 4)
+    santa:Hide()
+    d.santa = santa
+    local fly = santa:CreateAnimationGroup()
+    d.santaMove = fly:CreateAnimation("Translation")
+    d.santaMove:SetOrder(1)
+    local fadeIn = fly:CreateAnimation("Alpha")
+    fadeIn:SetFromAlpha(0); fadeIn:SetToAlpha(1); fadeIn:SetDuration(0.6); fadeIn:SetOrder(1)
+    d.santaOut = fly:CreateAnimation("Alpha")
+    d.santaOut:SetFromAlpha(1); d.santaOut:SetToAlpha(0); d.santaOut:SetDuration(0.6); d.santaOut:SetOrder(1)
+    fly:SetScript("OnFinished", function() santa:Hide() end)
+    d.santaFly = fly
     return d
 end
 
@@ -2141,6 +2189,14 @@ function ns.UpdateHolidayDecor()
         local l, r = 0.5 - frac / 2, 0.5 + frac / 2
         d.scene:SetTexCoord(l, r, 0, 1)
         d.scene:SetShown(on and not frame.compact)
+        if on and not d.santaScheduled then
+            d.santaScheduled = true
+            scheduleSanta(d, true)
+        elseif not on then
+            d.santaScheduled = nil
+            d.santaToken = (d.santaToken or 0) + 1
+            d.santaFly:Stop(); d.santa:Hide()
+        end
         for _, t in ipairs(d.sceneLights) do
             t:SetTexCoord(l, r, 0, 1)
             t:SetShown(on and not frame.compact)

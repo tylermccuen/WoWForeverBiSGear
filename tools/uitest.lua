@@ -36,7 +36,12 @@ GetSpecializationInfo = function() return 253, "Beast Mastery" end
 GetInventoryItemID = function() return nil end
 GetCursorPosition = function() return 0,0 end
 C_Container = { GetContainerNumSlots=function() return 0 end, GetContainerItemID=function() end }
-C_Timer = { After=function(_,f) f() end }
+-- timers fire at once; a timer that keeps re-arming itself (Santa) stops after a few rounds
+local timerDepth = 0
+C_Timer = { After=function(_,f)
+  if timerDepth >= 4 then return end
+  timerDepth = timerDepth + 1; f(); timerDepth = timerDepth - 1
+end }
 C_ClassColor = { GetClassColor=function() return {r=1,g=1,b=1, GenerateHexColor=function() return "ffffffff" end} end }
 C_Item = { GetItemIconByID=function() return 134400 end, GetItemInfoInstant=function() end, GetItemQualityByID=function() return 3 end }
 Item = { CreateFromItemID=function(_,id) return { IsItemEmpty=function() return false end,
@@ -644,7 +649,7 @@ check("gear tab: podium cards", function()
     if not f then error("step " .. place .. " has no why tooltip") end
     f(why)
   end
-  ns.db.holidayTheme = "on"; ns.RefreshBrowser(); ns.db.holidayTheme = "auto"
+  ns.db.holidayTheme = "on"; ns.RefreshBrowser(); ns.SantaFlyBy(); ns.db.holidayTheme = "auto"
   ns.char.gearView = "list"
   ns.RefreshBrowser()
   if _G.ForeverBiSFrame.podiumOn or visibleRows() == 0 then error("list view didn't come back") end
