@@ -335,6 +335,7 @@ local function addPrequest(guide, rows)
     for _, r in ipairs(rows) do
         table.insert(out, r)
         local pre = guide.prequest[r.id]
+        r.preID = pre and pre[1] or nil
         if pre and not ns.Owned[r.id] then
             table.insert(out, { slot = r.slot, id = pre[1], source = pre[2], isAlt = true, isPre = true,
                                 upgrade = r.id, note = "Turn in for the Tier 0.5 piece above" })

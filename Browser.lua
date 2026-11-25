@@ -895,6 +895,10 @@ local function fillRow(row, data)
         row.doneBy = e
     end
     if ownedText == "" and data.isDone then ownedText = "|cff33ff33Done|r" end
+    -- Tier 0.5 piece you don't have yet, but you own the Tier 0 piece its quest needs
+    if ownedText == "" and not data.isPre and data.preID and ns.Owned[data.preID] and not frame.compact then
+        ownedText = "|cffffd100Tier 0 ready|r"
+    end
     row.owned:SetText(ownedText)
     row.doneKey, row.specKey, row.autoDone, row.doneSig = data.doneKey, data.specKey, data.autoDone, data.doneSig
     if data.doneKey then
@@ -1118,6 +1122,9 @@ function ns.RefreshBrowser()
         end
         local slotOk = ns.char.selectedSlot == "All" or r.slot == ns.char.selectedSlot or mode == "consumables"
         local hidden = ns.char.hideDone and canMark and (r.doneKey and r.isDone or (not r.doneKey and slotDone[r.slot]))
+        -- a Tier 0 piece you own stays visible under its missing Tier 0.5
+        -- upgrade, so you can see you're ready to turn it in
+        if r.isPre and owned and r.upgrade and not ns.Owned[r.upgrade] then owned = false end
         if slotOk and not hidden and not (ns.char.missingOnly and owned) then
             r.isNew = mode == "bis" and (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
             r.specKey = specKey

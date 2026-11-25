@@ -1,6 +1,7 @@
 # Forever Best In Slot
 
 ## 1.7.4
+- **Tier 0 to Tier 0.5 is clearer:** when you have the Tier 0 piece a Tier 0.5 quest needs, the Tier 0.5 row says "Tier 0 ready", and the "Needs:" row under it stays visible (showing where you have it) even with "Missing only" ticked.
 - **Plays nicer with other windows:** the browser, the raid check panel and the boss window now sit on the same layer as the game's own windows, so the guild window, quest log and others come to the front when you click them, and the browser comes back to the front when you click it.
 - **Open quests from the list:** click a quest you already have (the green "On quest" rows) to open it in your quest log. Shift-click still pins the quest giver on the map.
 - **Tidier source names:** "trash drop", "rare drop" and similar now read "Trash Drop", "Rare Drop", "World Drop" and so on.
