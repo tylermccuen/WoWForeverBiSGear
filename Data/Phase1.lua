@@ -1958,8 +1958,8 @@ end
 
 ns.RegisterPhase({
     id       = 1,
-    label    = "Phase 1",
-    subtitle = "Pre-raid (level 60)",
+    label    = "Pre-raid",
+    subtitle = "level 60 dungeons, before the raids open Dec 9, 2026",
     source   = "wowtbc.gg (IDs verified vs Forever DB)",
     checked  = "2026-11-23",
     guides   = guides,

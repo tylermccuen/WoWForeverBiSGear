@@ -38,7 +38,7 @@ ns.RegisterPhase({
 
 **Rules**
 - `class`: WARRIOR, PALADIN, HUNTER, ROGUE, PRIEST, SHAMAN, MAGE, WARLOCK, DRUID
-- `spec`: must match the Phase 1 spelling (e.g. "Beast Mastery", "Restoration") so the fallback and spec menus line up
+- `spec`: must match the Pre-raid list's spelling (e.g. "Beast Mastery", "Restoration") so the fallback and spec menus line up
 - `slot`: Head, Neck, Shoulder, Back, Chest, Wrist, Hands, Waist, Legs, Feet, Finger, Trinket, Two Hand, Main Hand, Off Hand, Ranged, Wand, Relic (Finger and Trinket can appear twice)
 - Item IDs: the number in a Wowhead Forever URL, `wowhead.com/forever/item=NNNN`. Look every ID up in a Forever item database; don't reuse Classic IDs, because many crafted and reworked items have new IDs in Forever.
 - Use the hand-picked lists from guide sites, not stat-weight calculators: calculators produced wrong picks such as a tank neck on hunters.

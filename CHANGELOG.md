@@ -1,6 +1,7 @@
 # Forever Best In Slot
 
 ## 1.7.3
+- **"Pre-raid" instead of "Phase 1":** the lists are pre-raid lists for level 60 dungeons; WoW Forever's first raids (Barrow Deeps, Hyjal Summit, Onyxia's Lair) open December 9, 2026, and raid lists will come as their own phase after that.
 - **Done ticks follow list updates:** a slot you ticked done is remembered together with the items the BiS and Realistic lists had for it (or the enchant). If a later update changes that slot's pick, the tick is cleared and a chat message says which slots changed, so you can check the new items. Slots you own the item for still tick themselves.
 - **Done ticks are easier to keep:** the browser opens on your real spec (from your talents), so it no longer sometimes opens on another spec that has its own, separate ticks. A tick also shows on your class's other specs when they list the same item for that slot.
 - **Enchants and Consumables columns:** these tabs now have separate SKILL (profession and skill level), WHERE TO GET IT (where the recipe comes from) and MATERIALS columns. Click ITEM, SKILL or WHERE TO GET IT to sort. Each material shows its icon so you can spot it on the auction house.
