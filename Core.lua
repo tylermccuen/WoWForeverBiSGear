@@ -22,6 +22,7 @@ local accountDefaults = {
     windowScale      = 1,
     compactWithCharacter = true,    -- shrink the browser next to the character window
     raidWithCharacter = true,       -- raid check panel next to the character window
+    windowStyle      = "sleek",     -- "sleek" (flat dark panel) or "classic" (the game's stone frame)
     holidayTheme     = "auto",      -- "auto" (Feast of Winter Veil, Dec 15 - Jan 2), "on" or "off"
 }
 

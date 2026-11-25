@@ -76,10 +76,15 @@ local function buildPanel()
         function() return ns.db.raidWithCharacter end,
         function(v) ns.db.raidWithCharacter = v; if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end end, c5)
 
+    local c5c = checkbox(panel, "Sleek window style (type /reload after changing)",
+        "On: a flat dark window with a thin gold border and flat buttons. Off: the game's stone frame and red buttons.",
+        function() return ns.db.windowStyle ~= "classic" end,
+        function(v) ns.db.windowStyle = v and "sleek" or "classic" end, c5b)
+
     -- Holiday theme
     local HOLIDAY_LABELS = { auto = "Auto (Winter Veil, Dec 15 - Jan 2)", on = "Always on", off = "Off" }
     local holidayHeader = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    holidayHeader:SetPoint("TOPLEFT", c5b, "BOTTOMLEFT", 0, -18)
+    holidayHeader:SetPoint("TOPLEFT", c5c, "BOTTOMLEFT", 0, -18)
     holidayHeader:SetText("Holiday theme (Christmas lights, trees, snowman and gingerbread places)")
     local holidayButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
     holidayButton:SetSize(260, 24)

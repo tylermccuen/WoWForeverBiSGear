@@ -531,6 +531,87 @@ local function createSpecBar()
 end
 
 ----------------------------------------------------------------------
+-- Sleek window style: a flat dark panel with a thin gold border and flat
+-- buttons and tabs, in place of the stone frame and red buttons
+----------------------------------------------------------------------
+local SLEEK = {
+    bg = { 0.07, 0.06, 0.045, 0.97 }, edge = { 0.42, 0.34, 0.22, 1 }, line = { 0.3, 0.24, 0.16, 1 },
+    titleTop = { 0.17, 0.13, 0.09, 1 }, titleBottom = { 0.1, 0.08, 0.055, 1 },
+    button = { 0.13, 0.1, 0.07, 1 }, buttonEdge = { 0.45, 0.36, 0.22, 1 },
+    tab = { 0.09, 0.075, 0.055, 1 }, tabOn = { 0.24, 0.17, 0.09, 1 },
+}
+
+local function solid(parent, layer, c, sub)
+    local t = parent:CreateTexture(nil, layer, nil, sub or 0)
+    t:SetColorTexture(c[1], c[2], c[3], c[4] or 1)
+    return t
+end
+
+-- 1px lines on all four sides, inset by `inset`
+local function outline(parent, c, inset, layer)
+    inset = inset or 0
+    local top = solid(parent, layer or "BORDER", c)
+    top:SetPoint("TOPLEFT", inset, -inset); top:SetPoint("TOPRIGHT", -inset, -inset); top:SetHeight(1)
+    local bottom = solid(parent, layer or "BORDER", c)
+    bottom:SetPoint("BOTTOMLEFT", inset, inset); bottom:SetPoint("BOTTOMRIGHT", -inset, inset); bottom:SetHeight(1)
+    local left = solid(parent, layer or "BORDER", c)
+    left:SetPoint("TOPLEFT", inset, -inset); left:SetPoint("BOTTOMLEFT", inset, inset); left:SetWidth(1)
+    local right = solid(parent, layer or "BORDER", c)
+    right:SetPoint("TOPRIGHT", -inset, -inset); right:SetPoint("BOTTOMRIGHT", -inset, inset); right:SetWidth(1)
+end
+
+local function hideTemplateArt(f)
+    for _, r in ipairs({ f:GetRegions() }) do
+        if r.GetObjectType and r:GetObjectType() == "Texture" then r:SetAlpha(0) end
+    end
+end
+
+local function hline(parent, y, c)
+    local t = solid(parent, "BORDER", c or SLEEK.line)
+    t:SetPoint("TOPLEFT", 2, y); t:SetPoint("TOPRIGHT", -2, y); t:SetHeight(1)
+    return t
+end
+
+local function skinFrame(f)
+    hideTemplateArt(f)
+    for _, key in ipairs({ "NineSlice", "Inset" }) do
+        if type(f[key]) == "table" and f[key].SetAlpha then f[key]:SetAlpha(0) end
+    end
+    solid(f, "BACKGROUND", SLEEK.bg, -8):SetAllPoints()
+    outline(f, { 0, 0, 0, 1 }, 0)
+    outline(f, SLEEK.edge, 1)
+    local band = solid(f, "BACKGROUND", SLEEK.titleBottom, -7)
+    band:SetPoint("TOPLEFT", 2, -2); band:SetPoint("TOPRIGHT", -2, -2); band:SetHeight(22)
+    if band.SetGradient and CreateColor then
+        pcall(band.SetGradient, band, "VERTICAL",
+            CreateColor(unpack(SLEEK.titleBottom)), CreateColor(unpack(SLEEK.titleTop)))
+    end
+    hline(f, -24, SLEEK.edge)        -- under the title
+    hline(f, -60)                    -- under the buttons
+    local foot = solid(f, "BORDER", SLEEK.line)
+    foot:SetPoint("BOTTOMLEFT", 2, 42); foot:SetPoint("BOTTOMRIGHT", -2, 42); foot:SetHeight(1)
+end
+
+local function skinButton(b, colors)
+    if not b then return end
+    for _, key in ipairs({ "Left", "Middle", "Right", "LeftDisabled", "MiddleDisabled", "RightDisabled",
+                           "LeftActive", "MiddleActive", "RightActive", "LeftHighlight", "MiddleHighlight", "RightHighlight" }) do
+        if type(b[key]) == "table" and b[key].SetAlpha then b[key]:SetAlpha(0) end
+    end
+    for _, get in ipairs({ "GetNormalTexture", "GetPushedTexture", "GetDisabledTexture", "GetHighlightTexture" }) do
+        local t = b[get] and b[get](b)
+        if t and t.SetAlpha then t:SetAlpha(0) end
+    end
+    hideTemplateArt(b)
+    b.skinBg = solid(b, "BACKGROUND", colors or SLEEK.button, -8)
+    b.skinBg:SetAllPoints()
+    outline(b, SLEEK.buttonEdge, 0, "BACKGROUND")
+    local hl = b:CreateTexture(nil, "HIGHLIGHT")
+    hl:SetColorTexture(1, 0.82, 0, 0.12)
+    hl:SetAllPoints()
+end
+
+----------------------------------------------------------------------
 -- Sparkle around 1st place items: a pulsing gold glow and twinkling stars
 ----------------------------------------------------------------------
 local SPARK_SPOTS = {   -- point on the icon, x, y, size, delay
@@ -841,6 +922,7 @@ local function createRow(i)
     link:SetSize(64, 22)
     link:SetPoint("RIGHT", -4, 0)
     link:SetText("Link")
+    if frame.sleek then skinButton(link) end
     link:SetScript("OnClick", function()
         if row.itemID then ns.ShowLinkPopupForItem(row.itemID) end
     end)
@@ -1735,6 +1817,10 @@ function ns.UpdateListTabs(mode, guide)
                    raid = true }
     for i, info in ipairs(LIST_TABS) do
         local tab = listTabs[i]
+        if tab.skinBg then
+            local c = info.mode == mode and SLEEK.tabOn or SLEEK.tab
+            tab.skinBg:SetColorTexture(c[1], c[2], c[3], c[4])
+        end
         if info.mode == mode then
             if PanelTemplates_SelectTab then pcall(PanelTemplates_SelectTab, tab) else tab:LockHighlight() end
         elseif have[info.mode] then
@@ -1763,35 +1849,34 @@ end
 -- Holiday theme: Christmas lights along the top, holly by the title and a
 -- snowy strip of trees and a moose in the footer
 ----------------------------------------------------------------------
-local BULB_COLORS = { { 1, 0.25, 0.3 }, { 1, 0.84, 0.37 }, { 0.37, 0.69, 1 }, { 0.31, 0.88, 0.48 } }
-local BULB_GAP, MAX_BULBS = 16, 100
+local LIGHT_TILE_W, LIGHT_H = 120, 30   -- one 256x64 tile shown at 120x30: 4 bulbs on a drooping wire
 local SCENE_W, SCENE_H, FOOTER_RIGHT = 320, 40, 228
+
+-- a string of lights draped along the top edge of the window: the wire, and
+-- two sets of bulbs that blink in turn
+local function lightLayer(d, file, level)
+    local t = d:CreateTexture(nil, "OVERLAY", nil, level)
+    t:SetTexture(ns.TEXTURES .. file, "REPEAT", "CLAMP")
+    t:SetHeight(LIGHT_H)
+    t:SetPoint("BOTTOMLEFT", frame, "TOPLEFT", 4, -14)
+    t:SetPoint("BOTTOMRIGHT", frame, "TOPRIGHT", -4, -14)
+    return t
+end
 
 local function createHolidayDecor()
     local d = CreateFrame("Frame", nil, frame)
     d:SetAllPoints()
     d:SetFrameLevel(frame:GetFrameLevel() + 20)
-    local wire = d:CreateTexture(nil, "ARTWORK")
-    wire:SetColorTexture(0.08, 0.22, 0.12, 1)
-    wire:SetHeight(1)
-    wire:SetPoint("TOPLEFT", 6, -23)
-    wire:SetPoint("TOPRIGHT", -6, -23)
-    d.bulbs = {}
-    for i = 1, MAX_BULBS do
-        local b = d:CreateTexture(nil, "OVERLAY")
-        b:SetTexture(ns.TEXTURES .. "bulb")
-        b:SetSize(5, 10)
-        local c = BULB_COLORS[(i - 1) % #BULB_COLORS + 1]
-        b:SetVertexColor(c[1], c[2], c[3])
-        b:SetPoint("TOP", d, "TOPLEFT", 12 + (i - 1) * BULB_GAP, -22)
-        local g = b:CreateAnimationGroup()
+    d.lights = { lightLayer(d, "lights_wire", 1), lightLayer(d, "lights_a", 2), lightLayer(d, "lights_b", 2) }
+    d.blinks = {}
+    for i = 2, 3 do
+        local g = d.lights[i]:CreateAnimationGroup()
         g:SetLooping("BOUNCE")
         local blink = g:CreateAnimation("Alpha")
-        if i % 2 == 0 then blink:SetFromAlpha(1); blink:SetToAlpha(0.3)
-        else blink:SetFromAlpha(0.3); blink:SetToAlpha(1) end
+        if i == 2 then blink:SetFromAlpha(1); blink:SetToAlpha(0.25)
+        else blink:SetFromAlpha(0.25); blink:SetToAlpha(1) end
         blink:SetDuration(0.8)
-        b.anim = g
-        d.bulbs[i] = b
+        table.insert(d.blinks, g)
     end
     d.holly = d:CreateTexture(nil, "OVERLAY")
     d.holly:SetTexture(ns.TEXTURES .. "holly")
@@ -1812,13 +1897,14 @@ function ns.UpdateHolidayDecor()
     local d = frame.holiday
     if d then
         d:SetShown(on)
-        for i, b in ipairs(d.bulbs) do
-            local show = on and (12 + (i - 1) * BULB_GAP) < (w - 12)
-            b:SetShown(show)
-            if show then
-                if not b.anim:IsPlaying() then b.anim:Play() end
+        -- repeat the tile across the window's width
+        local reps = math.max(1, (w - 8) / LIGHT_TILE_W)
+        for _, t in ipairs(d.lights) do t:SetTexCoord(0, reps, 0, 1) end
+        for _, g in ipairs(d.blinks) do
+            if on then
+                if not g:IsPlaying() then g:Play() end
             else
-                b.anim:Stop()
+                g:Stop()
             end
         end
         d.scene:SetShown(on and not frame.compact)
@@ -1833,6 +1919,8 @@ end
 ----------------------------------------------------------------------
 local function createFrame()
     frame = CreateFrame("Frame", "ForeverBiSFrame", UIParent, "BasicFrameTemplateWithInset")
+    frame.sleek = ns.db.windowStyle ~= "classic"
+    if frame.sleek then skinFrame(frame) end
     frame:SetSize(savedWidth(), ns.db.windowHeight or HEIGHT)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("MEDIUM")   -- same layer as the game's windows: whichever you click comes to the front
@@ -2089,6 +2177,11 @@ local function createFrame()
     settings:SetText("Settings")
     settings:SetScript("OnClick", function() ns.OpenOptions() end)
 
+    if frame.sleek then
+        title:SetFontObject("GameFontNormal")
+        for _, b in ipairs({ phaseButton, classButton, specButton, slotButton, viewButton, guideLink, settings }) do skinButton(b) end
+        for _, tab in ipairs(listTabs or {}) do skinButton(tab, SLEEK.tab) end
+    end
     frame:SetScript("OnShow", function() ns.RefreshOwned(); ns.RefreshBrowser() end)
     -- apply the saved size to the columns once
     frame:GetScript("OnSizeChanged")(frame, frame:GetWidth(), frame:GetHeight())
