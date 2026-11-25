@@ -727,8 +727,8 @@ local function createRow(i)
         if not row.place then return end
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:AddLine((ns.PLACE_NAMES[row.place] or "") .. " place for " .. (row.slotName or "this slot"), 1, 0.82, 0)
-        if row.paired and row.place <= 2 then
-            GameTooltip:AddLine("You wear two of these, so 1st and 2nd place are both picks to equip.", 1, 1, 1, true)
+        if row.paired and row.place == 1 and not row.isExtra then
+            GameTooltip:AddLine("You wear two, so both of these best picks are 1st place.", 1, 1, 1, true)
         elseif row.place == 1 then
             GameTooltip:AddLine("The best pick for this slot.", 1, 1, 1, true)
         else
@@ -1244,7 +1244,7 @@ local function podiumItemEnter(self)
     GameTooltip:SetItemByID(d.id)
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine((ns.PLACE_NAMES[d.place] or "") .. " place for " .. d.slot
-        .. ((ns.PAIRED_SLOTS[d.slot] and d.place <= 2) and " (you wear two)" or ""), 1, 0.82, 0)
+        .. ((ns.PAIRED_SLOTS[d.slot] and d.place == 1) and " (you wear two)" or ""), 1, 0.82, 0)
     local dungeon, boss = ns.SplitSource(d.source)
     if dungeon ~= "" then GameTooltip:AddDoubleLine("Dungeon", dungeon, 0.8, 0.8, 0.8, 1, 1, 1) end
     if boss ~= "" then GameTooltip:AddDoubleLine("Boss / source", boss, 0.8, 0.8, 0.8, 1, 1, 1) end
@@ -1265,6 +1265,26 @@ local function edge(card, a, b, w, h)
     t:SetPoint(a, card, a)
     t:SetPoint(b, card, b)
     if w then t:SetWidth(w) else t:SetHeight(h) end
+end
+
+local function makeItemButton(card, size)
+    local btn = CreateFrame("Button", nil, card)
+    btn:SetSize(size, size)
+    btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    btn.tex = btn:CreateTexture(nil, "ARTWORK")
+    btn.tex:SetAllPoints()
+    btn.own = btn:CreateTexture(nil, "OVERLAY", nil, 7)
+    btn.own:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
+    btn.own:SetSize(14, 14)
+    btn.own:SetPoint("BOTTOMRIGHT", 4, -4)
+    btn:SetScript("OnEnter", podiumItemEnter)
+    btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    btn:SetScript("OnClick", function(self, button)
+        if not self.data then return end
+        if button == "RightButton" then ns.ShowLinkPopupForItem(self.data.id) return end
+        if self.link then HandleModifiedItemClick(self.link) end
+    end)
+    return btn
 end
 
 local function createCard(i)
@@ -1299,24 +1319,15 @@ local function createCard(i)
         st.name:SetWordWrap(true)
         if st.name.SetMaxLines then st.name:SetMaxLines(2) end
         local size = place == 1 and 36 or 30
-        local btn = CreateFrame("Button", nil, card)
-        btn:SetSize(size, size)
+        local btn = makeItemButton(card, size)
         btn:SetPoint("BOTTOM", st.name, "TOP", 0, 3)
-        btn:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-        btn.tex = btn:CreateTexture(nil, "ARTWORK")
-        btn.tex:SetAllPoints()
-        btn.own = btn:CreateTexture(nil, "OVERLAY", nil, 7)
-        btn.own:SetTexture("Interface\\RaidFrame\\ReadyCheck-Ready")
-        btn.own:SetSize(14, 14)
-        btn.own:SetPoint("BOTTOMRIGHT", 4, -4)
-        btn:SetScript("OnEnter", podiumItemEnter)
-        btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
-        btn:SetScript("OnClick", function(self, button)
-            if not self.data then return end
-            if button == "RightButton" then ns.ShowLinkPopupForItem(self.data.id) return end
-            if self.link then HandleModifiedItemClick(self.link) end
-        end)
         st.btn = btn
+        if place == 1 then
+            -- rings / trinkets: the second 1st place pick stands beside the first
+            st.btn2 = makeItemButton(card, 32)
+            st.btn2:SetPoint("BOTTOM", st.name, "TOP", 19, 3)
+            st.btn2:Hide()
+        end
         st.trophy = card:CreateTexture(nil, "ARTWORK")
         st.trophy:SetSize(place == 1 and 28 or 22, place == 1 and 28 or 22)
         st.trophy:SetPoint("BOTTOM", btn, "TOP", 0, 3)
@@ -1360,32 +1371,58 @@ local function layoutPodium()
     return math.ceil(shown / cols) * (CARD_H + CARD_GAP)
 end
 
-local function fillStep(card, st, place, d, holiday)
+local function fillItemButton(st, btn, d, nameKey)
+    btn.data, btn.link = d, nil
+    btn.tex:SetTexture(C_Item.GetItemIconByID(d.id) or 134400)
+    btn.own:SetShown(ns.Owned[d.id] ~= nil)
+    local token = st.token
+    ns.WithItem(d.id, function(item)
+        if st.token ~= token then return end
+        if not item then st[nameKey] = "|cffff5555Item " .. d.id .. "|r"
+        else
+            btn.link = item:GetItemLink()
+            btn.tex:SetTexture(item:GetItemIcon())
+            local text = (btn.link or item:GetItemName() or ""):gsub("[%[%]]", "")
+            st[nameKey] = text
+        end
+        st.name:SetText(st.names2 and ((st.n1 or "...") .. "\n" .. (st.n2 or "...")) or st.n1)
+    end)
+end
+
+-- d2: the second 1st place pick for rings / trinkets (both are worn)
+local function fillStep(card, st, place, d, holiday, d2)
     local on = d ~= nil
     st.block:SetColorTexture(STEP_COLOR[place][1], STEP_COLOR[place][2], STEP_COLOR[place][3], on and 0.9 or 0.18)
     st.num:SetShown(on)
     st.src:SetShown(on); st.name:SetShown(on); st.btn:SetShown(on); st.trophy:SetShown(on)
     st.empty:SetShown(not on)
-    if st.sparkle then ns.ShowSparkle(st.sparkle, on, 36) end
+    local two = on and d2 ~= nil and st.btn2 ~= nil
+    if st.btn2 then
+        st.btn2:SetShown(two)
+        st.btn:ClearAllPoints()
+        st.btn:SetPoint("BOTTOM", st.name, "TOP", two and -19 or 0, 3)
+        st.btn:SetSize(two and 32 or 36, two and 32 or 36)
+        if not two then st.btn2.data = nil end
+    end
+    if st.sparkle then ns.ShowSparkle(st.sparkle, on, two and 32 or 36) end
     if not on then st.btn.data = nil return end
+    st.trophy:ClearAllPoints()
+    st.trophy:SetPoint("BOTTOM", st.btn, "TOP", two and 19 or 0, 3)
     st.trophy:SetTexture(ns.PlaceIcon(place))
-    st.btn.data, st.btn.link = d, nil
-    st.btn.tex:SetTexture(C_Item.GetItemIconByID(d.id) or 134400)
-    st.btn.own:SetShown(ns.Owned[d.id] ~= nil)
-    local _, boss = ns.SplitSource(d.source)
-    local rate = ns.DropChance(d.id, d.source)
-    st.src:SetText(boss .. (rate and (" - " .. ns.FormatChance(rate)) or ""))
-    st.name:SetText("|cff888888...|r")
     st.token = (st.token or 0) + 1
-    local token = st.token
-    ns.WithItem(d.id, function(item)
-        if st.token ~= token then return end
-        if not item then st.name:SetText("|cffff5555Item " .. d.id .. "|r") return end
-        st.btn.link = item:GetItemLink()
-        st.btn.tex:SetTexture(item:GetItemIcon())
-        local text = (st.btn.link or item:GetItemName() or ""):gsub("[%[%]]", "")
-        st.name:SetText(text)
-    end)
+    st.names2, st.n1, st.n2 = two, nil, nil
+    if two then
+        st.src:SetText("Wear both")
+        if st.sparkle2 == nil then st.sparkle2 = ns.CreateSparkle(card, st.btn2) end
+    else
+        local _, boss = ns.SplitSource(d.source)
+        local rate = ns.DropChance(d.id, d.source)
+        st.src:SetText(boss .. (rate and (" - " .. ns.FormatChance(rate)) or ""))
+    end
+    if st.sparkle2 then ns.ShowSparkle(st.sparkle2, two, 32) end
+    st.name:SetText("|cff888888...|r")
+    fillItemButton(st, st.btn, d, "n1")
+    if two then fillItemButton(st, st.btn2, d2, "n2") end
 end
 
 -- slots: { { slot =, places = { [1] = row, [2] = row, [3] = row }, done = bool }, ... }
@@ -1395,14 +1432,17 @@ local function fillPodium(slots)
         local card = podiumCards[i] or createCard(i)
         card.title:SetText(e.slot)
         card.wear:SetText(ns.PAIRED_SLOTS[e.slot] and "wear 2" or "")
-        for place = 1, 3 do fillStep(card, card.steps[place], place, e.places[place], holiday) end
+        for place = 1, 3 do
+            fillStep(card, card.steps[place], place, e.places[place], holiday, place == 1 and e.second or nil)
+        end
         card:SetAlpha(e.done and 0.6 or 1)
         card:Show()
     end
     for i = #slots + 1, #podiumCards do
         podiumCards[i]:Hide()
-        local sp = podiumCards[i].steps[1].sparkle
-        if sp then ns.ShowSparkle(sp, false) end
+        local st1 = podiumCards[i].steps[1]
+        if st1.sparkle then ns.ShowSparkle(st1.sparkle, false) end
+        if st1.sparkle2 then ns.ShowSparkle(st1.sparkle2, false) end
     end
     scrollChild:SetHeight(math.max(1, layoutPodium()))
 end
@@ -1411,6 +1451,7 @@ local function hidePodium()
     for _, card in ipairs(podiumCards) do
         card:Hide()
         if card.steps[1].sparkle then ns.ShowSparkle(card.steps[1].sparkle, false) end
+        if card.steps[1].sparkle2 then ns.ShowSparkle(card.steps[1].sparkle2, false) end
     end
 end
 
@@ -1663,7 +1704,11 @@ function ns.RefreshBrowser()
                     bySlot[r.slot] = e
                     table.insert(slots, e)
                 end
-                e.places[r.place] = r
+                if r.place == 1 and e.places[1] and not r.isAlt then
+                    e.second = e.second or r   -- rings / trinkets: two 1st place picks
+                else
+                    e.places[r.place] = e.places[r.place] or r
+                end
                 if not r.isAlt and not ns.Owned[r.id] then e.allOwned = false end
             end
         end

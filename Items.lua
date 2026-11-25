@@ -461,7 +461,12 @@ function ns.GetRankedRows(guide)
       if fits(r.id) then
         local c = copyRow(r)
         if not r.isAlt then
-            count[r.slot] = (count[r.slot] or 0) + 1
+            -- rings and trinkets: you wear both best ones, so both are 1st place
+            if ns.PAIRED_SLOTS[r.slot] then
+                count[r.slot] = 1
+            else
+                count[r.slot] = (count[r.slot] or 0) + 1
+            end
             c.place = count[r.slot]
             ids[r.slot] = ids[r.slot] or {}
             ids[r.slot][r.id] = true

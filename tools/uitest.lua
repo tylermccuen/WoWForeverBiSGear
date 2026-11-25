@@ -565,6 +565,14 @@ check("gear tab: 1st / 2nd / 3rd place", function()
   end
   if places.Shoulder ~= 3 then error("Fury shoulder should have 3 places, got " .. tostring(places.Shoulder)) end
   if places.Finger ~= 3 then error("Fury rings should have 3 places, got " .. tostring(places.Finger)) end
+  -- you wear two rings: both best rings are 1st place, the extras 2nd and 3rd
+  local ringMains = {}
+  for _, r in ipairs(rows) do
+    if r.slot == "Finger" and not r.isExtra then table.insert(ringMains, r.place) end
+  end
+  if #ringMains ~= 2 or ringMains[1] ~= 1 or ringMains[2] ~= 1 then
+    error("both best rings should be 1st place: " .. table.concat(ringMains, ","))
+  end
   -- closed slots: only the main rows; open one: its extras appear
   ns.char.showAlts = false; ns.char.expandedSlots = {}
   ns.RefreshBrowser()
