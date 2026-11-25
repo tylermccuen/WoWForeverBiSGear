@@ -22,7 +22,8 @@ local COMPACT_W = 660   -- width beside the character window
 -- Consumables / Enchants: item | recipe | materials. Compact: item | source | drop.
 local function columnLayout(contentWidth)
     local L = { dungeonW = 0, dropW = 0 }
-    local gear = frame and (frame.layoutMode == nil or frame.layoutMode == "bis" or frame.layoutMode == "realistic")
+    local gear = frame and (frame.layoutMode == nil or frame.layoutMode == "bis" or frame.layoutMode == "realistic"
+        or frame.layoutMode == "ranked")
     if frame and frame.compact then
         L.nameW = 180
         L.sourceX = L.nameW + 50
@@ -168,8 +169,8 @@ function ns.LayoutHeaders()
     if not frame or not frame.headers then return end
     local H = frame.headers
     local L = columnLayout(scrollChild:GetWidth())
-    local mode = frame.layoutMode or "bis"
-    local gear = mode == "bis" or mode == "realistic"
+    local mode = frame.layoutMode or "ranked"
+    local gear = mode == "bis" or mode == "realistic" or mode == "ranked"
     local crafting = mode == "consumables" or mode == "enchants"
     local function place(h, x, text, shown)
         h:ClearAllPoints()
@@ -195,7 +196,12 @@ end
 
 local function layoutRow(row)
     local L = columnLayout(scrollChild:GetWidth())
-    row.name:SetWidth(L.nameW - (row.isAlt and 18 or 0))
+    row.name:SetWidth(L.nameW - (row.isAlt and 18 or 0) - (row.place and 24 or 0)
+        - (row.more and row.more:IsShown() and 62 or 0))
+    if row.more then
+        row.more:ClearAllPoints()
+        row.more:SetPoint("RIGHT", row, "LEFT", L.dungeonX - 8, 0)
+    end
     row.slot:SetWidth(L.nameW)
     row.dungeon:ClearAllPoints()
     row.dungeon:SetPoint("LEFT", L.dungeonX, 0)
@@ -523,6 +529,74 @@ local function createSpecBar()
 end
 
 ----------------------------------------------------------------------
+-- Sparkle around 1st place items: a pulsing gold glow and twinkling stars
+----------------------------------------------------------------------
+local SPARK_SPOTS = {   -- point on the icon, x, y, size, delay
+    { "TOPLEFT", -3, 3, 14, 0 }, { "TOPRIGHT", 3, 2, 11, 0.5 }, { "BOTTOMLEFT", -2, -2, 10, 1.0 },
+    { "RIGHT", 5, -3, 9, 0.3 }, { "TOP", 2, 6, 8, 0.8 }, { "LEFT", -6, 2, 7, 1.3 },
+}
+
+function ns.CreateSparkle(parent, anchor)
+    local f = CreateFrame("Frame", nil, parent)
+    f:SetAllPoints(anchor)
+    f:SetFrameLevel(parent:GetFrameLevel() + 3)
+    f.groups = {}
+    local glow = f:CreateTexture(nil, "OVERLAY")
+    glow:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
+    glow:SetBlendMode("ADD")
+    glow:SetVertexColor(1, 0.8, 0.25)
+    glow:SetPoint("CENTER")
+    glow:SetSize(62, 62)
+    f.glow = glow
+    local g = glow:CreateAnimationGroup()
+    g:SetLooping("BOUNCE")
+    local pulse = g:CreateAnimation("Alpha")
+    pulse:SetFromAlpha(0.35)
+    pulse:SetToAlpha(1)
+    pulse:SetDuration(1.1)
+    table.insert(f.groups, g)
+    for _, s in ipairs(SPARK_SPOTS) do
+        local t = f:CreateTexture(nil, "OVERLAY", nil, 7)
+        t:SetTexture(ns.TEXTURES .. "sparkle")
+        t:SetBlendMode("ADD")
+        t:SetSize(s[4], s[4])
+        t:SetPoint("CENTER", f, s[1], s[2], s[3])
+        t:SetAlpha(0)
+        local sg = t:CreateAnimationGroup()
+        sg:SetLooping("REPEAT")
+        local fadeIn = sg:CreateAnimation("Alpha")
+        fadeIn:SetFromAlpha(0); fadeIn:SetToAlpha(1); fadeIn:SetDuration(0.5)
+        fadeIn:SetOrder(1); fadeIn:SetStartDelay(s[5])
+        local turn = sg:CreateAnimation("Rotation")
+        turn:SetDegrees(-45); turn:SetDuration(0.5)
+        turn:SetOrder(1); turn:SetStartDelay(s[5])
+        local fadeOut = sg:CreateAnimation("Alpha")
+        fadeOut:SetFromAlpha(1); fadeOut:SetToAlpha(0); fadeOut:SetDuration(0.6)
+        fadeOut:SetOrder(2)
+        local rest = sg:CreateAnimation("Alpha")
+        rest:SetFromAlpha(0); rest:SetToAlpha(0); rest:SetDuration(0.7)
+        rest:SetOrder(3)
+        table.insert(f.groups, sg)
+    end
+    f:Hide()
+    return f
+end
+
+function ns.ShowSparkle(f, on, iconSize)
+    if not f then return end
+    if on then
+        f.glow:SetSize((iconSize or 32) * 1.95, (iconSize or 32) * 1.95)
+        f:Show()
+        for _, g in ipairs(f.groups) do
+            if not g:IsPlaying() then g:Play() end
+        end
+    else
+        for _, g in ipairs(f.groups) do g:Stop() end
+        f:Hide()
+    end
+end
+
+----------------------------------------------------------------------
 -- Rows
 ----------------------------------------------------------------------
 
@@ -554,6 +628,57 @@ local function createRow(i)
         if row.itemLink then HandleModifiedItemClick(row.itemLink) end
     end)
     row.icon = icon
+
+    -- 1st / 2nd / 3rd place icon left of the item icon (Gear tab)
+    local trophy = CreateFrame("Frame", nil, row)
+    trophy:SetSize(24, 24)
+    trophy.tex = trophy:CreateTexture(nil, "ARTWORK")
+    trophy.tex:SetAllPoints()
+    trophy:EnableMouse(true)
+    trophy:SetScript("OnEnter", function(self)
+        if not row.place then return end
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine((ns.PLACE_NAMES[row.place] or "") .. " place for " .. (row.slotName or "this slot"), 1, 0.82, 0)
+        if row.paired and row.place <= 2 then
+            GameTooltip:AddLine("You wear two of these, so 1st and 2nd place are both picks to equip.", 1, 1, 1, true)
+        elseif row.place == 1 then
+            GameTooltip:AddLine("The best pick for this slot.", 1, 1, 1, true)
+        else
+            GameTooltip:AddLine("A good pick while you work on the places above it.", 1, 1, 1, true)
+        end
+        GameTooltip:Show()
+    end)
+    trophy:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    trophy:Hide()
+    row.trophy = trophy
+    row.sparkle = ns.CreateSparkle(row, icon)
+
+    -- "+2 more" / "Hide": opens a slot's 2nd and 3rd place (Gear tab)
+    local more = CreateFrame("Button", nil, row)
+    more:SetSize(58, 18)
+    more.bg = more:CreateTexture(nil, "BACKGROUND")
+    more.bg:SetAllPoints()
+    more.bg:SetColorTexture(0, 0, 0, 0.45)
+    more.text = more:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    more.text:SetPoint("CENTER")
+    more:SetHighlightTexture("Interface\\Buttons\\UI-Listbox-Highlight2", "ADD")
+    more:SetScript("OnClick", function()
+        if not row.slotName then return end
+        ns.char.expandedSlots = ns.char.expandedSlots or {}
+        local open = ns.char.expandedSlots
+        if open[row.slotName] then open[row.slotName] = nil else open[row.slotName] = true end
+        ns.RefreshBrowser()
+    end)
+    more:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        local open = ns.char.expandedSlots and ns.char.expandedSlots[row.slotName]
+        GameTooltip:AddLine(open and "Hide 2nd and 3rd place" or ("Show 2nd and 3rd place for " .. (row.slotName or "this slot")))
+        GameTooltip:AddLine("Tick \"2nd & 3rd\" at the top to open every slot.", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    more:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    more:Hide()
+    row.more = more
 
     row.name = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     row.name:SetPoint("TOPLEFT", icon, "TOPRIGHT", 6, -1)
@@ -792,10 +917,38 @@ local function fillRow(row, data)
     -- alternatives are indented and tinted under the main pick for their slot
     row.isAlt = data.isAlt
     row.isPre = data.isPre
+    row.isExtra = data.isExtra
+    row.slotName = data.slot
+    row.paired = ns.PAIRED_SLOTS and ns.PAIRED_SLOTS[data.slot] or nil
+    -- place icon (Gear tab), then the item icon
+    local placeIcon = data.place and ns.PlaceIcon and ns.PlaceIcon(data.place)
+    row.place = placeIcon and data.place or nil
+    local iconX = data.isAlt and 22 or 4
+    if placeIcon then
+        local size = data.isAlt and 20 or 24
+        row.trophy:ClearAllPoints()
+        row.trophy:SetPoint("LEFT", iconX, 0)
+        row.trophy:SetSize(size, size)
+        row.trophy.tex:SetTexture(placeIcon)
+        row.trophy:Show()
+        iconX = iconX + size + 2
+    else
+        row.trophy:Hide()
+    end
     row.icon:ClearAllPoints()
-    row.icon:SetPoint("LEFT", data.isAlt and 22 or 4, 0)
+    row.icon:SetPoint("LEFT", iconX, 0)
     row.icon:SetSize(data.isAlt and 26 or 32, data.isAlt and 26 or 32)
-    if data.isAlt then
+    ns.ShowSparkle(row.sparkle, row.place == 1 and not data.isAlt, 32)
+    if data.extraCount and ns.char.showAlts == false then
+        local open = ns.char.expandedSlots and ns.char.expandedSlots[data.slot]
+        row.more.text:SetText(open and "Hide" or ("+" .. data.extraCount .. " more"))
+        row.more:Show()
+    else
+        row.more:Hide()
+    end
+    if data.isExtra then
+        row.bg:SetColorTexture(1, 0.85, 0.4, 0.05)
+    elseif data.isAlt then
         row.bg:SetColorTexture(0.45, 0.6, 1, 0.07)
     else
         row.bg:SetColorTexture(1, 1, 1, (row.index % 2 == 0) and 0.04 or 0)
@@ -806,7 +959,9 @@ local function fillRow(row, data)
     row.name:SetText("|cff888888Loading item " .. data.id .. "...|r")
     local slotText = data.slot
     if data.isPre then slotText = "|cffffd100For T0.5 quest|r  " .. slotText
+    elseif data.isExtra then slotText = "|cffd0d0d0" .. (ns.PLACE_NAMES[data.place] or "") .. " place|r  " .. slotText
     elseif data.isAlt then slotText = "|cff8fb8ffAlternative|r  " .. slotText end
+    if row.place and not data.isAlt and row.paired then slotText = slotText .. "  |cffffd100wear 2|r" end
     if data.isNew then slotText = "|cff1eff00NEW|r  " .. slotText end
     if data.faction then slotText = slotText .. "  |cffffd100(" .. data.faction .. ")|r" end
     local onQuest = ns.OnSourceQuest(data.source)
@@ -829,7 +984,8 @@ local function fillRow(row, data)
     end
     -- gear tabs: dungeon in its own column, boss / source in this one
     local splitCols = not data.craft and not frame.compact
-        and (frame.layoutMode == nil or frame.layoutMode == "bis" or frame.layoutMode == "realistic")
+        and (frame.layoutMode == nil or frame.layoutMode == "bis" or frame.layoutMode == "realistic"
+             or frame.layoutMode == "ranked")
     local dungeon, bossText = ns.SplitSource(data.source)
     if splitCols then
         row.dungeon:SetText(dungeon)
@@ -920,7 +1076,7 @@ local function fillRow(row, data)
         row.icon.tex:SetTexture(item:GetItemIcon())
         local text = (row.itemLink or row.itemName or ""):gsub("[%[%]]", "")
         if row.isPre then text = "|cffffd100Needs:|r " .. text
-        elseif row.isAlt then text = "|cff8fb8ffAlt:|r " .. text end
+        elseif row.isAlt and not row.isExtra then text = "|cff8fb8ffAlt:|r " .. text end
         row.name:SetText(text)
     end)
     row:Show()
@@ -965,11 +1121,18 @@ function ns.RefreshBrowser()
     frame.raidPane:Hide()
     frame.listScroll:Show()
 
-    local mode = "bis"
-    if ns.char.listMode == "realistic" and guide.realistic then mode = "realistic"
+    -- the Gear tab (1st / 2nd / 3rd place) replaces the BiS and Realistic tabs
+    if not ns.char.rankedSeen then
+        ns.char.rankedSeen = true
+        if ns.char.listMode == "bis" or ns.char.listMode == "realistic" then ns.char.listMode = "ranked" end
+    end
+    ns.UpdateHolidayDecor()
+    local mode = "ranked"
+    if ns.char.listMode == "bis" then mode = "bis"
+    elseif ns.char.listMode == "realistic" and guide.realistic then mode = "realistic"
     elseif ns.char.listMode == "enchants" and guide.enchants then mode = "enchants"
     elseif ns.char.listMode == "consumables" and guide.consumables then mode = "consumables" end
-    local gearList = mode == "bis" or mode == "realistic"
+    local gearList = mode == "bis" or mode == "realistic" or mode == "ranked"
     local realistic = mode == "realistic"
     ns.UpdateListTabs(mode, guide)
     -- (headers are set in ns.LayoutHeaders)
@@ -980,7 +1143,8 @@ function ns.RefreshBrowser()
     end
     ns.LayoutHeaders()
     -- alternatives belong to the BiS list; "hide finished slots" to the gear lists
-    if mode ~= "bis" then altCheck:Disable(); altLabel:SetAlpha(0.4) else altCheck:Enable(); altLabel:SetAlpha(1) end
+    altLabel:SetText(mode == "ranked" and "2nd & 3rd" or "Alternatives")
+    if mode ~= "bis" and mode ~= "ranked" then altCheck:Disable(); altLabel:SetAlpha(0.4) else altCheck:Enable(); altLabel:SetAlpha(1) end
     if mode == "consumables" then doneCheck:Disable(); doneLabel:SetAlpha(0.4) else doneCheck:Enable(); doneLabel:SetAlpha(1) end
     missingCheck:SetChecked(ns.char.missingOnly)
     altCheck:SetChecked(ns.char.showAlts ~= false)
@@ -992,7 +1156,12 @@ function ns.RefreshBrowser()
     -- you own enough of that slot's BiS / Realistic picks.
     local specKey = (ns.char.selectedClass or "") .. ":" .. (ns.char.selectedSpec or "")
     local canMark = gearList or mode == "enchants"
-    local listRows = ns.GetGuideRows(guide, mode == "bis" and ns.char.showAlts ~= false, mode)
+    local listRows
+    if mode == "ranked" then
+        listRows = ns.GetRankedRows(guide)
+    else
+        listRows = ns.GetGuideRows(guide, mode == "bis" and ns.char.showAlts ~= false, mode)
+    end
     local seenSlot = {}
     for _, r in ipairs(listRows) do
         if not r.isAlt and canMark then
@@ -1125,8 +1294,11 @@ function ns.RefreshBrowser()
         -- a Tier 0 piece you own stays visible under its missing Tier 0.5
         -- upgrade, so you can see you're ready to turn it in
         if r.isPre and owned and r.upgrade and not ns.Owned[r.upgrade] then owned = false end
-        if slotOk and not hidden and not (ns.char.missingOnly and owned) then
-            r.isNew = mode == "bis" and (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
+        -- 2nd / 3rd place show when "2nd & 3rd" is ticked or the slot is opened
+        local closed = r.isExtra and ns.char.showAlts == false
+            and not (ns.char.expandedSlots and ns.char.expandedSlots[r.slot])
+        if slotOk and not hidden and not closed and not (ns.char.missingOnly and owned) then
+            r.isNew = (mode == "bis" or mode == "ranked") and (not r.isAlt) and prevSet ~= nil and not prevSet[r.id]
             r.specKey = specKey
             if gearList and not r.isAlt then
                 r.enchantID, r.enchantNote, r.enchantSource = enchantFor(guide, r.slot)
@@ -1161,6 +1333,9 @@ function ns.RefreshBrowser()
         .. "  |  Data: " .. (info.source or "?") .. ", checked " .. (info.checked or "?")
     if realistic then
         text = text .. "  |  Realistic set: " .. (guide.realisticSource or "community guides")
+    elseif mode == "ranked" then
+        text = text .. "  |  1st place: BiS list. 2nd / 3rd: "
+            .. (guide.altSource or info.altSource or "alternatives") .. " and the Realistic set"
     elseif mode == "enchants" then
         text = text .. "  |  Enchants: " .. (guide.enchantSource or "community guides")
     elseif mode == "consumables" then
@@ -1259,8 +1434,7 @@ end
 
 -- List tabs along the bottom edge of the window (like the character panel)
 local LIST_TABS = {
-    { mode = "bis",         text = "BiS",         tip = "The best pre-raid items." },
-    { mode = "realistic",   text = "Realistic",   tip = "A set most players can finish in a week or two from dungeons, quests and Tier 0.5." },
+    { mode = "ranked",      text = "Gear",        tip = "1st, 2nd and 3rd place for each slot. 1st place is the best pre-raid item; 2nd and 3rd are good picks that are often easier to get." },
     { mode = "enchants",    text = "Enchants",    tip = "The enchant, arcanum or armor kit for each slot." },
     { mode = "consumables", text = "Consumables", tip = "Raid shopping list: flask, elixirs, food, weapon oil or stone and potions." },
     { mode = "raid",        text = "Raid Check",  tip = "Is your character ready to raid? Hit, defense, empty slots, enchants and your gear's stats against the BiS set." },
@@ -1304,7 +1478,7 @@ end
 -- Highlight the tab for the list on screen; grey out lists this spec lacks
 function ns.UpdateListTabs(mode, guide)
     if not listTabs then return end
-    local have = { bis = true, realistic = guide and guide.realistic ~= nil,
+    local have = { ranked = true, bis = true, realistic = guide and guide.realistic ~= nil,
                    enchants = guide and guide.enchants ~= nil, consumables = guide and guide.consumables ~= nil,
                    raid = true }
     for i, info in ipairs(LIST_TABS) do
@@ -1331,6 +1505,75 @@ local function slotMenu(owner)
                 function() ns.char.selectedSlot = s; ns.RefreshBrowser() end)
         end
     end)
+end
+
+----------------------------------------------------------------------
+-- Holiday theme: Christmas lights along the top, holly by the title and a
+-- snowy strip of trees and a moose in the footer
+----------------------------------------------------------------------
+local BULB_COLORS = { { 1, 0.25, 0.3 }, { 1, 0.84, 0.37 }, { 0.37, 0.69, 1 }, { 0.31, 0.88, 0.48 } }
+local BULB_GAP, MAX_BULBS = 16, 100
+local SCENE_W, SCENE_H, FOOTER_RIGHT = 320, 40, 228
+
+local function createHolidayDecor()
+    local d = CreateFrame("Frame", nil, frame)
+    d:SetAllPoints()
+    d:SetFrameLevel(frame:GetFrameLevel() + 20)
+    local wire = d:CreateTexture(nil, "ARTWORK")
+    wire:SetColorTexture(0.08, 0.22, 0.12, 1)
+    wire:SetHeight(1)
+    wire:SetPoint("TOPLEFT", 6, -23)
+    wire:SetPoint("TOPRIGHT", -6, -23)
+    d.bulbs = {}
+    for i = 1, MAX_BULBS do
+        local b = d:CreateTexture(nil, "OVERLAY")
+        b:SetTexture(ns.TEXTURES .. "bulb")
+        b:SetSize(5, 10)
+        local c = BULB_COLORS[(i - 1) % #BULB_COLORS + 1]
+        b:SetVertexColor(c[1], c[2], c[3])
+        b:SetPoint("TOP", d, "TOPLEFT", 12 + (i - 1) * BULB_GAP, -22)
+        local g = b:CreateAnimationGroup()
+        g:SetLooping("BOUNCE")
+        local blink = g:CreateAnimation("Alpha")
+        if i % 2 == 0 then blink:SetFromAlpha(1); blink:SetToAlpha(0.3)
+        else blink:SetFromAlpha(0.3); blink:SetToAlpha(1) end
+        blink:SetDuration(0.8)
+        b.anim = g
+        d.bulbs[i] = b
+    end
+    d.holly = d:CreateTexture(nil, "OVERLAY")
+    d.holly:SetTexture(ns.TEXTURES .. "holly")
+    d.holly:SetSize(18, 18)
+    if frame.titleText then d.holly:SetPoint("RIGHT", frame.titleText, "LEFT", -4, 0) end
+    d.scene = d:CreateTexture(nil, "ARTWORK")
+    d.scene:SetTexture(ns.TEXTURES .. "scene")
+    d.scene:SetSize(SCENE_W, SCENE_H)
+    d.scene:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -FOOTER_RIGHT, 6)
+    return d
+end
+
+function ns.UpdateHolidayDecor()
+    if not frame then return end
+    local on = ns.HolidayOn and ns.HolidayOn() or false
+    if on and not frame.holiday then frame.holiday = createHolidayDecor() end
+    local w = frame:GetWidth() or 0
+    local d = frame.holiday
+    if d then
+        d:SetShown(on)
+        for i, b in ipairs(d.bulbs) do
+            local show = on and (12 + (i - 1) * BULB_GAP) < (w - 12)
+            b:SetShown(show)
+            if show then
+                if not b.anim:IsPlaying() then b.anim:Play() end
+            else
+                b.anim:Stop()
+            end
+        end
+        d.scene:SetShown(on and not frame.compact)
+    end
+    -- the footer text makes room for the scene
+    local sceneRoom = (on and not frame.compact) and (SCENE_W + 12) or 0
+    if frame.sourceText then frame.sourceText:SetWidth(math.max(120, w - 240 - sceneRoom)) end
 end
 
 ----------------------------------------------------------------------
@@ -1372,6 +1615,7 @@ local function createFrame()
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     title:SetPoint("TOP", 0, -5)
     title:SetText(ns.title .. "  -  WoW Forever")
+    frame.titleText = title
 
     phaseButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     phaseButton:SetSize(90, 24)
@@ -1542,6 +1786,7 @@ local function createFrame()
         scrollChild:SetWidth(w - 46)
         if frame.raidPane then frame.raidPane.view.setWidth(math.max(300, w - 60)) end
         if self.sourceText then self.sourceText:SetWidth(w - 240) end
+        ns.UpdateHolidayDecor()
         ns.LayoutHeaders()
         for _, row in ipairs(rows) do
             if row:IsShown() then layoutRow(row) end

@@ -1,5 +1,9 @@
 # Forever Best In Slot
 
+## Unreleased (test build)
+- **1st, 2nd and 3rd place:** the BiS and Realistic tabs are now one **Gear** tab. Each slot shows its 1st place item with a gold trophy and a sparkle; click **+2 more** to see 2nd (silver) and 3rd (bronze) place under it, or tick **2nd & 3rd** to open every slot. 1st place comes from the BiS list (rings and trinkets have two, since you wear both), then the Alternatives, then the Realistic set. Some slots have fewer than three picks for now.
+- **Holiday theme:** during the Feast of Winter Veil (Dec 15 to Jan 2) the trophies become a Christmas tree, a snowman and a gingerbread man, with Christmas lights along the top of the window, holly by the title, and snowy trees and a moose in the footer. Settings has **Holiday theme: Auto / Always on / Off**, and `/bis holiday` switches between them.
+
 ## 1.7.4
 - **One window at a time by the character screen:** with the browser open, opening the character window now shows just the shrunk browser beside it, without the raid check panel as well. The raid check panel shows there when the browser is closed (and the Raid Check tab is in the shrunk browser too).
 - **Tier 0 to Tier 0.5 is clearer:** when you have the Tier 0 piece a Tier 0.5 quest needs, the Tier 0.5 row says "Tier 0 ready", and the "Needs:" row under it stays visible (showing where you have it) even with "Missing only" ticked.

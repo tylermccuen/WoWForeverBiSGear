@@ -547,3 +547,45 @@ check("character window: shrunk browser, raid panel only when the browser is clo
   CharacterFrame = saved
 end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
+check("gear tab: 1st / 2nd / 3rd place", function()
+  if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end
+  ns.char.selectedClass, ns.char.selectedSpec, ns.char.listMode = "WARRIOR", "Fury", "ranked"
+  ns.char.selectedSlot, ns.char.missingOnly, ns.char.hideDone = "All", false, false
+  local g = ns.GetGuide("WARRIOR", "Fury", ns.LatestPhase())
+  local rows = ns.GetRankedRows(g)
+  local places, seen = {}, {}
+  for _, r in ipairs(rows) do
+    if r.place then
+      places[r.slot] = math.max(places[r.slot] or 0, r.place)
+      local k = r.slot .. ":" .. r.id
+      if seen[k] then error("duplicate item in a slot: " .. k) end
+      seen[k] = true
+      if r.place > ns.MAX_PLACES then error("too many places for " .. r.slot) end
+    end
+  end
+  if places.Shoulder ~= 3 then error("Fury shoulder should have 3 places, got " .. tostring(places.Shoulder)) end
+  if places.Finger ~= 3 then error("Fury rings should have 3 places, got " .. tostring(places.Finger)) end
+  -- closed slots: only the main rows; open one: its extras appear
+  ns.char.showAlts = false; ns.char.expandedSlots = {}
+  ns.RefreshBrowser()
+  local closed = visibleRows()
+  ns.char.expandedSlots.Shoulder = true
+  ns.RefreshBrowser()
+  local opened = visibleRows()
+  if opened ~= closed + 2 then error("opening Shoulder should add 2 rows: " .. closed .. " -> " .. opened) end
+  ns.char.showAlts = true
+  ns.RefreshBrowser()
+  local all = visibleRows()
+  if all <= opened then error("2nd & 3rd ticked should show every slot's places") end
+  print("   gear rows closed / one open / all:", closed, opened, all)
+end)
+check("holiday theme on / off", function()
+  ns.db.holidayTheme = "on"
+  if not ns.HolidayOn() then error("holiday should be on") end
+  if not ns.PlaceIcon(1):find("holiday1") then error("1st place should be the tree") end
+  ns.RefreshBrowser()
+  ns.db.holidayTheme = "off"
+  if ns.HolidayOn() or not ns.PlaceIcon(2):find("place2") then error("holiday should be off") end
+  ns.RefreshBrowser()
+  ns.db.holidayTheme = "auto"
+end)

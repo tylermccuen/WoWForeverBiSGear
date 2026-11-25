@@ -76,9 +76,34 @@ local function buildPanel()
         function() return ns.db.raidWithCharacter end,
         function(v) ns.db.raidWithCharacter = v; if ns.UpdateRaidCompanion then ns.UpdateRaidCompanion() end end, c5)
 
+    -- Holiday theme
+    local HOLIDAY_LABELS = { auto = "Auto (Winter Veil, Dec 15 - Jan 2)", on = "Always on", off = "Off" }
+    local holidayHeader = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    holidayHeader:SetPoint("TOPLEFT", c5b, "BOTTOMLEFT", 0, -18)
+    holidayHeader:SetText("Holiday theme (Christmas lights, trees, snowman and gingerbread places)")
+    local holidayButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    holidayButton:SetSize(260, 24)
+    holidayButton:SetPoint("TOPLEFT", holidayHeader, "BOTTOMLEFT", 0, -8)
+    local function holidayText()
+        holidayButton:SetText(HOLIDAY_LABELS[ns.db.holidayTheme or "auto"] or HOLIDAY_LABELS.auto)
+    end
+    holidayButton:SetScript("OnClick", function(self)
+        MenuUtil.CreateContextMenu(self, function(_, root)
+            for _, k in ipairs({ "auto", "on", "off" }) do
+                root:CreateRadio(HOLIDAY_LABELS[k],
+                    function() return (ns.db.holidayTheme or "auto") == k end,
+                    function()
+                        ns.db.holidayTheme = k
+                        holidayText()
+                        if ns.RefreshBrowser then ns.RefreshBrowser() end
+                    end)
+            end
+        end)
+    end)
+
     -- Link site
     local linkHeader = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    linkHeader:SetPoint("TOPLEFT", c5b, "BOTTOMLEFT", 0, -18)
+    linkHeader:SetPoint("TOPLEFT", holidayButton, "BOTTOMLEFT", 0, -18)
     linkHeader:SetText("Copy-paste link")
 
     local siteButton = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
@@ -100,6 +125,7 @@ local function buildPanel()
     preview:SetJustifyH("LEFT")
 
     local function refresh()
+        holidayText()
         siteButton:SetText(presetLabel(ns.db.linkPreset))
         tmpl:SetText(ns.db.customTemplate or "")
         if ns.db.linkPreset == "custom" then tmpl:Enable() else tmpl:Disable() end

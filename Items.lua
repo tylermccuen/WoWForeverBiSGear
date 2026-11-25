@@ -409,6 +409,93 @@ end
 
 function ns.ClearRowCache() wipe(rowCache); cachedGuides = 0 end
 
+----------------------------------------------------------------------
+-- 1st / 2nd / 3rd place
+----------------------------------------------------------------------
+-- Each slot's picks in order: the BiS list first (two picks for rings and
+-- trinkets, so both are worn), then the Alternatives, then the Realistic set,
+-- up to MAX_PLACES. BiS picks are the slot's main rows; the extra places are
+-- rows with isAlt = true and isExtra = true, placed under them.
+ns.MAX_PLACES = 3
+ns.PLACE_NAMES = { "1st", "2nd", "3rd" }
+ns.PAIRED_SLOTS = { Finger = true, Trinket = true }
+
+local function copyRow(r)
+    return { slot = r.slot, id = r.id, source = r.source, faction = r.faction, isAlt = r.isAlt,
+             isPre = r.isPre, note = r.note, upgrade = r.upgrade, preID = r.preID }
+end
+
+-- Fresh rows every call (the browser writes its own fields onto them)
+function ns.GetRankedRows(guide)
+    local faction = UnitFactionGroup("player")
+    local out, count, ids, last = {}, {}, {}, {}
+    for _, r in ipairs(ns.GetGuideRows(guide, false, "bis")) do
+        local c = copyRow(r)
+        if not r.isAlt then
+            count[r.slot] = (count[r.slot] or 0) + 1
+            c.place = count[r.slot]
+            ids[r.slot] = ids[r.slot] or {}
+            ids[r.slot][r.id] = true
+        end
+        table.insert(out, c)
+        last[r.slot] = #out
+    end
+    local extra = {}
+    for _, row in ipairs(guide.alts or {}) do table.insert(extra, row) end
+    for _, row in ipairs(guide.realistic or {}) do table.insert(extra, row) end
+    for _, row in ipairs(extra) do
+        local slot = row[1]
+        local id, source = row[2], row[3]
+        local fac = (row[4] and row[4] ~= row[2]) and "Alliance" or nil
+        if row[4] and faction == "Horde" then
+            id, source = row[4], row[5] or row[3]
+            fac = (row[4] ~= row[2]) and "Horde" or nil
+        end
+        local n = count[slot]
+        if n and n < ns.MAX_PLACES and not ids[slot][id] then
+            n = n + 1
+            count[slot] = n
+            ids[slot][id] = true
+            local pos = last[slot] + 1
+            table.insert(out, pos, { slot = slot, id = id, source = source, faction = fac, isAlt = true,
+                                     isExtra = true, place = n, note = row.note })
+            for s, i in pairs(last) do
+                if i >= pos then last[s] = i + 1 end
+            end
+            last[slot] = pos
+        end
+    end
+    -- the slot's last main row carries how many extra places follow it
+    local lastMain = {}
+    for i, r in ipairs(out) do
+        if not r.isAlt then lastMain[r.slot] = i end
+    end
+    for slot, i in pairs(lastMain) do
+        local n = (count[slot] or 0) - (out[i].place or 0)
+        out[i].extraCount = n > 0 and n or nil
+    end
+    return out
+end
+
+-- Holiday theme: on during the Feast of Winter Veil (Dec 15 - Jan 2) when set
+-- to "auto", or always / never with "on" / "off"
+function ns.HolidayOn()
+    local mode = ns.db and ns.db.holidayTheme or "auto"
+    if mode == "on" then return true end
+    if mode == "off" then return false end
+    local ok, t = pcall(date, "*t")
+    if not ok or type(t) ~= "table" then return false end
+    return (t.month == 12 and t.day >= 15) or (t.month == 1 and t.day <= 2)
+end
+
+ns.TEXTURES = "Interface\\AddOns\\" .. ns.name .. "\\Textures\\"
+
+-- Trophy (or holiday) icon for a place
+function ns.PlaceIcon(place)
+    if not place or place < 1 or place > 3 then return nil end
+    return ns.TEXTURES .. (ns.HolidayOn() and "holiday" or "place") .. place
+end
+
 -- Asynchronous item data load. cb(itemMixin or nil)
 function ns.WithItem(itemID, cb)
     if not itemID or itemID <= 0 then cb(nil) return end
