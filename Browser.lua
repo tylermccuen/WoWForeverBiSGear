@@ -1049,7 +1049,8 @@ local function fillRow(row, data)
     row.icon:ClearAllPoints()
     row.icon:SetPoint("LEFT", iconX, 0)
     row.icon:SetSize(data.isAlt and 26 or 32, data.isAlt and 26 or 32)
-    ns.ShowSparkle(row.sparkle, row.place == 1 and not data.isAlt, 32)
+    -- sparkle is saved for the podium cards; list rows stay calm
+    ns.ShowSparkle(row.sparkle, false)
     if data.extraCount and ns.char.showAlts == false then
         local open = ns.char.expandedSlots and ns.char.expandedSlots[data.slot]
         row.more.text:SetText(open and "Hide" or ("+" .. data.extraCount .. " more"))
