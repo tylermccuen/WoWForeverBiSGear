@@ -636,6 +636,14 @@ check("gear tab: podium cards", function()
   ns.RefreshBrowser()
   if not _G.ForeverBiSFrame.podiumOn then error("podium view not on") end
   if visibleRows() ~= 0 then error("list rows still shown in podium view") end
+  -- hovering a step explains the place
+  local card = ns.PodiumCards()[1]
+  for place = 1, 3 do
+    local why = card.steps[place].why
+    local f = why:GetScript("OnEnter")
+    if not f then error("step " .. place .. " has no why tooltip") end
+    f(why)
+  end
   ns.db.holidayTheme = "on"; ns.RefreshBrowser(); ns.db.holidayTheme = "auto"
   ns.char.gearView = "list"
   ns.RefreshBrowser()

@@ -198,6 +198,27 @@ local function addStats(into, stats)
     end
 end
 
+-- Stats that matter for a role, for one item: plain stats plus "Equip: +1%"
+-- hit / crit read from its tooltip. Used by the podium's "why this place" tip.
+ns.STAT_LABEL = { hit = "Hit", crit = "Crit" }
+for _, g in ipairs(STAT_GROUPS) do ns.STAT_LABEL[g.key] = g.label end
+ns.ROLE_STATS = ROLE_STATS
+function ns.ItemKeyStats(id)
+    local link = "item:" .. id
+    local out = {}
+    addStats(out, itemStats(link))
+    out.hit, out.crit = nil, nil   -- rating keys are unreliable; read the % lines
+    local tip = C_TooltipInfo and C_TooltipInfo.GetHyperlink and C_TooltipInfo.GetHyperlink(link)
+    for _, l in ipairs(tip and tip.lines or {}) do
+        local t = l.leftText or ""
+        local hit = t:match("chance to hit[^%d]*(%d+)%%")
+        local crit = t:match("critical strike[^%d]*(%d+)%%")
+        if hit then out.hit = (out.hit or 0) + tonumber(hit) end
+        if crit then out.crit = (out.crit or 0) + tonumber(crit) end
+    end
+    return out
+end
+
 -- Equipped item's enchant for an inventory slot: text (or nil), enchanted
 local INV_OF = INV
 function ns.SlotEnchant(slot)

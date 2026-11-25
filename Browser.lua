@@ -1290,6 +1290,81 @@ local function makeItemButton(card, size)
     return btn
 end
 
+-- "Why this place?": hovering a podium step explains the ranking from what we
+-- know for sure: which guide ranked it, how its stats compare with the place
+-- next to it, and how hard it is to get.
+local function howToGet(d)
+    local src = d.source or ""
+    local dungeon, boss = ns.SplitSource(src)
+    local rate = ns.DropChance(d.id, src)
+    if boss:find("^Quest:") then return "Quest reward, a sure thing once the quest is done" end
+    if src:find("Leatherworking") or src:find("Blacksmithing") or src:find("Tailoring")
+        or src:find("Engineering") or src:find("Crafted") then
+        return "Crafted (" .. (src:match("(%a+working)") or src:match("(%a+smithing)") or src:match("(Tailoring)") or src:match("(Engineering)") or "profession") .. "), buy it or make it"
+    end
+    if src:find("Revered") or src:find("Exalted") or src:find("Honored") or src:find("Friendly%)") then
+        return "Reputation reward, a steady grind"
+    end
+    if src:find("Trash") then return "Trash drop in " .. dungeon .. (rate and (", about " .. ns.FormatChance(rate)) or "") end
+    if rate then return "Drops from " .. boss .. (dungeon ~= "" and (" in " .. dungeon) or "") .. ", " .. ns.FormatChance(rate) .. " chance" end
+    if boss ~= "" then return boss .. (dungeon ~= "" and (" (" .. dungeon .. ")") or "") end
+    return dungeon
+end
+
+local function statDiff(a, b, role)
+    if not ns.ItemKeyStats then return {} end
+    local sa, sb = ns.ItemKeyStats(a.id), ns.ItemKeyStats(b.id)
+    local keys = {}
+    for _, k in ipairs((ns.ROLE_STATS and ns.ROLE_STATS[role]) or {}) do table.insert(keys, k) end
+    table.insert(keys, "hit"); table.insert(keys, "crit")
+    local out = {}
+    for _, k in ipairs(keys) do
+        local dv = (sa[k] or 0) - (sb[k] or 0)
+        if dv ~= 0 then
+            local pct = (k == "hit" or k == "crit") and "%" or ""
+            table.insert(out, { text = (dv > 0 and "+" or "") .. dv .. pct .. " " .. (ns.STAT_LABEL[k] or k), up = dv > 0 })
+        end
+    end
+    return out
+end
+
+local function podiumWhyEnter(self)
+    local card, place = self.card, self.place
+    local e = card.entry
+    local d = e and e.places[place]
+    if not d then return end
+    local guide = currentGuide()
+    local info = guide and ns.Phases[guide.phase] or {}
+    local role = ns.SpecRole and ns.SpecRole(ns.char.selectedClass, ns.char.selectedSpec)
+    GameTooltip:SetOwner(self, "ANCHOR_TOP")
+    GameTooltip:AddLine("Why " .. ns.PLACE_NAMES[place] .. " place?", 1, 0.82, 0)
+    local by = d.isExtra and ((guide and guide.altSource) or "conquestcapped.com")
+        or ((info.source or "the BiS guide"):gsub("%s*%b()", ""))
+    GameTooltip:AddLine(d.isExtra and ("Ranked " .. ns.PLACE_NAMES[place] .. " by " .. by .. " (alternatives and the Realistic set)")
+        or ("Best in slot on " .. by), 1, 1, 1, true)
+    if place == 1 and e.second then
+        GameTooltip:AddLine("You wear two, so both of these are 1st place.", 0.8, 0.8, 0.8, true)
+    end
+    -- stats against the neighbouring place
+    local other, otherPlace
+    if place == 1 then other, otherPlace = e.places[2], 2 else other, otherPlace = e.places[1], 1 end
+    if other then
+        local diffs = statDiff(d, other, role)
+        if #diffs > 0 then
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine("Compared with " .. ns.PLACE_NAMES[otherPlace] .. " place:", 0.8, 0.8, 0.8)
+            for _, x in ipairs(diffs) do
+                if x.up then GameTooltip:AddLine("  " .. x.text, 0.3, 1, 0.3) else GameTooltip:AddLine("  " .. x.text, 1, 0.4, 0.4) end
+            end
+        end
+    end
+    GameTooltip:AddLine(" ")
+    GameTooltip:AddLine("How to get it", 0.8, 0.8, 0.8)
+    GameTooltip:AddLine(howToGet(d), 1, 1, 1, true)
+    if d.note then GameTooltip:AddLine(d.note, 0.67, 0.67, 0.67, true) end
+    GameTooltip:Show()
+end
+
 local function createCard(i)
     local card = CreateFrame("Frame", nil, scrollChild)
     card:SetSize(CARD_W, CARD_H)
@@ -1348,6 +1423,13 @@ local function createCard(i)
         if place == 1 then
             st.sparkle = ns.CreateSparkle(card, btn)
         end
+        -- hover the numbered step: why it is in this place
+        st.why = CreateFrame("Frame", nil, card)
+        st.why:SetAllPoints(st.block)
+        st.why:EnableMouse(true)
+        st.why.card, st.why.place = card, place
+        st.why:SetScript("OnEnter", podiumWhyEnter)
+        st.why:SetScript("OnLeave", function() GameTooltip:Hide() end)
         st.empty = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         st.empty:SetPoint("BOTTOM", st.block, "TOP", 0, 8)
         st.empty:SetText("No " .. ns.PLACE_NAMES[place] .. " pick")
@@ -1459,6 +1541,7 @@ local function fillPodium(slots)
         local card = podiumCards[i] or createCard(i)
         card:Show()
         card.title:SetText(e.slot)
+        card.entry = e
         card.wear:SetText(ns.PAIRED_SLOTS[e.slot] and "wear 2" or "")
         for place = 1, 3 do
             fillStep(card, card.steps[place], place, e.places[place], holiday, place == 1 and e.second or nil)
@@ -1474,6 +1557,8 @@ local function fillPodium(slots)
     end
     scrollChild:SetHeight(math.max(1, layoutPodium()))
 end
+
+function ns.PodiumCards() return podiumCards end   -- for tools/uitest.lua
 
 local function hidePodium()
     for _, card in ipairs(podiumCards) do
