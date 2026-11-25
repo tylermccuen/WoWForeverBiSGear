@@ -1,6 +1,7 @@
 # Forever Best In Slot
 
 ## 1.7.4
+- **Tidier source names:** "trash drop", "rare drop" and similar now read "Trash Drop", "Rare Drop", "World Drop" and so on.
 - **Says why a slot is done:** when a slot counts as done because of an item from the other list, the row now says so, for example "BiS equipped" on the Realistic tab or "Realistic in bags" on the BiS tab, instead of just "Done". Hovering the tick names the item.
 - **Spec detection:** reads more of the ways the game can report your talent trees, so Marksmanship hunters (and others) aren't shown as their class's first spec. `/bis spec` prints what the game reports, to help fix detection if it's still wrong. Right-clicking the gold-ringed icon to pick your spec still works.
 - **Consumable stock:** the Consumables tab shows how many of each you have (bags and bank) against how many to keep on hand: green when you're stocked, yellow when you're short, red when you have none. The addon recommends an amount for a raid night (2 flasks, 4 elixirs, 10 food, 5 potions, 6 weapon oils or stones, 5 runes); click the count to change it, or to stop tracking an item. Hover it to see bags vs bank and how many more to buy. The top right counts how many are stocked, and "Missing only" shows what you still need.

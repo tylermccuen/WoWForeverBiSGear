@@ -86,12 +86,12 @@ function ns.SplitSource(source)
         return place, faction .. " (" .. standing .. ")"
     end
     if source:match("^World drop") then
-        return "World drop", source:match("%((.-)%)") and ("Any mob (" .. source:match("%((.-)%)") .. ")") or "Any mob"
+        return "World Drop", source:match("%((.-)%)") and ("Any Mob (" .. source:match("%((.-)%)") .. ")") or "Any Mob"
     end
     local prof = source:match("^Crafted: (.+)$")
     if prof then return "Crafted", prof end
     local trash = source:match("^Random trash drop %((.-)%)$")
-    if trash then return trash, "Trash drop" end
+    if trash then return trash, "Trash Drop" end
     local where, rest = source:match("^(.-):%s*(.+)$")
     if where then return where, rest end
     return "", source

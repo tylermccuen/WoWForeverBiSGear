@@ -207,7 +207,7 @@ local guides = {
         { "Shoulder", 18686,  "Scholomance: Rattlegore" },
         { "Back",     272414, PIX75 },
         DAWN,
-        { "Wrist",    18296,  "Dire Maul: trash drop" },
+        { "Wrist",    18296,  "Dire Maul: Trash Drop" },
         DEV_GLOVES,
         { "Waist",    22232,  "Lower Blackrock Spire: Urok Doomhowl" },
         DEV_LEGS,
@@ -225,7 +225,7 @@ local guides = {
         { "Shoulder", 18686,  "Scholomance: Rattlegore" },
         BLACK_BARON,
         DAWN,
-        { "Wrist",    18296,  "Dire Maul: trash drop" },
+        { "Wrist",    18296,  "Dire Maul: Trash Drop" },
         DEV_GLOVES,
         { "Waist",    22232,  "Lower Blackrock Spire: Urok Doomhowl" },
         DEV_LEGS,
@@ -241,7 +241,7 @@ local guides = {
     { class = "HUNTER", spec = "Survival", url = SRC .. "survival-hunter/", items = {
         BDH,
         MARK,
-        { "Shoulder", 18742,  "Stratholme: trash drop" },
+        { "Shoulder", 18742,  "Stratholme: Trash Drop" },
         BLACK_BARON,
         DAWN,
         { "Wrist",    18375,  "Dire Maul West: Prince Tortheldrin" },
@@ -334,7 +334,7 @@ local guides = {
         { "Trinket",  18469,  "Quest: Holy Bologna: What the Light Won't Tell You (Dire Maul)" },
         GIFT_MAGI,
         LEI,
-        { "Wand",     22254,  "Blackrock Depths: trash drop" },
+        { "Wand",     22254,  "Blackrock Depths: Trash Drop" },
     } },
     { class = "PRIEST", spec = "Holy", url = SRC .. "holy-priest/", items = {
         { "Head",     226947, D2_HEAD },
@@ -353,7 +353,7 @@ local guides = {
         { "Trinket",  18469,  "Quest: Holy Bologna: What the Light Won't Tell You (Dire Maul)" },
         GIFT_MAGI,
         LEI,
-        { "Wand",     22254,  "Blackrock Depths: trash drop" },
+        { "Wand",     22254,  "Blackrock Depths: Trash Drop" },
     } },
     { class = "PRIEST", spec = "Shadow", url = SRC .. "shadow-priest/", items = {
         SPELLWEAVER,
@@ -405,7 +405,7 @@ local guides = {
         { "Hands",    227022, D2_HANDS },
         { "Waist",    227018, D2_HANDS },
         { "Legs",     252606, LW },
-        { "Feet",     14616,  "Scholomance: drop" },
+        { "Feet",     14616,  "Scholomance: Drop" },
         DONJULIO,
         CHANNELER,
         WYRMTHALAK,
@@ -430,7 +430,7 @@ local guides = {
         { "Trinket",  18471,  "Quest: Frost Shock and You (Dire Maul)" },
         GIFT_MAGI,
         PENELOPE,
-        { "Relic",    23200,  "Scholomance: trash drop" },
+        { "Relic",    23200,  "Scholomance: Trash Drop" },
     } },
 
     -- MAGE
@@ -518,7 +518,7 @@ local guides = {
         TIMBER_MANT,
         ARCANOWEAVE,
         ROBE_VOID,
-        { "Wrist",    18497,  "Dire Maul: trash drop" },
+        { "Wrist",    18497,  "Dire Maul: Trash Drop" },
         { "Hands",    226911, D2_HANDS },
         ARCHMAGE_BT,
         { "Legs",     13170,  "Lower Blackrock Spire: Highlord Omokk" },
@@ -537,7 +537,7 @@ local guides = {
         TIMBER_MANT,
         ARCANOWEAVE,
         ROBE_VOID,
-        { "Wrist",    18497,  "Dire Maul: trash drop" },
+        { "Wrist",    18497,  "Dire Maul: Trash Drop" },
         { "Hands",    226911, D2_HANDS },
         ARCHMAGE_BT,
         { "Legs",     13170,  "Lower Blackrock Spire: Highlord Omokk" },
@@ -729,7 +729,7 @@ local ALTS = {
         ELVEN_RING,
         { "Trinket", 280071, "Blackmaw Hold: Unbound Spirit" },
         { "Off Hand", 12783, "Crafted: Blacksmithing (Weaponsmith)" },
-        { "Ranged",   18680, "Scholomance: random drop", note = "rare" },
+        { "Ranged",   18680, "Scholomance: Random Drop", note = "rare" },
     },
     ["HUNTER:Survival"] = {
         EPAULETS,
@@ -787,7 +787,7 @@ local ALTS = {
         HOWLERS,
         TIMBER_TUN,
         { "Wrist",  279256, LW },
-        { "Hands",  14615,  "Scholomance: drop" },
+        { "Hands",  14615,  "Scholomance: Drop" },
         { "Legs",   22748,  "Warsong Gulch: Silverwing Sentinels (Exalted)", 22673, "Warsong Gulch: Warsong Outriders (Exalted)", note = "1% hit" },
         { "Finger", 275981, "The Watchers (Exalted)", note = "1% hit" },
         BEHEMOTH,
@@ -958,7 +958,7 @@ local REALISTIC = {
         { "Trinket", 11832, "Blackrock Depths: Ambassador Flamelash" },                            -- Burst of Knowledge
         { "Main Hand", 276404, "Stratholme: Crimson Hammersmith" },                                -- Masterwork Crimson Hammer
         { "Off Hand", 15805, "Quest: Kirtonos the Herald (Scholomance)" },                         -- Penelope's Rose
-        { "Relic", 23201, "Scholomance: rare drop" },                                              -- Libram of Divinity
+        { "Relic", 23201, "Scholomance: Rare Drop" },                                              -- Libram of Divinity
     },
     ["PALADIN:Protection"] = {
         { "Head", 226989, D2_HEAD, note = "4 defense" },                                           -- Soulforge Faceguard
@@ -1139,7 +1139,7 @@ local REALISTIC = {
         { "Wrist", 227017, D2_WRIST },                                                             -- Bands of The Five Thunders
         { "Hands", 227022, D2_HANDS },                                                             -- Fists of The Five Thunders
         { "Waist", 227018, D2_HANDS, note = "1% hit" },                                            -- Girdle of The Five Thunders
-        { "Legs", 12963, "Upper Blackrock Spire: drop", note = "1% hit" },                         -- Blademaster Leggings
+        { "Legs", 12963, "Upper Blackrock Spire: Drop", note = "1% hit" },                         -- Blademaster Leggings
         { "Feet", 13967, "Scholomance: Kirtonos the Herald", note = "1% hit" },                    -- Windreaver Greaves
         { "Finger", 17713, "Maraudon: Princess Theradras", note = "1% hit" },                      -- Blackstone Ring
         { "Finger", 18314, "Dire Maul East: Alzzin the Wildshaper", note = "1% hit" },             -- Ring of Demonic Guile

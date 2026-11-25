@@ -312,11 +312,11 @@ check("dungeon / boss split and sorting", function()
     { "Quest: The Princess Saved? (Blackrock Depths)", "Blackrock Depths", "Quest: The Princess Saved?" },
     { "Dungeon Set 2 quest: Saving the Best for Last", "Tier 0.5 set", "Quest: Saving the Best for Last" },
     { "Crafted: Leatherworking", "Crafted", "Leatherworking" },
-    { "Random trash drop (Stratholme, Scholomance, Blackrock Spire)", "Stratholme, Scholomance, Blackrock Spire", "Trash drop" },
+    { "Random trash drop (Stratholme, Scholomance, Blackrock Spire)", "Stratholme, Scholomance, Blackrock Spire", "Trash Drop" },
     { "Stormpike Guard / Frostwolf Clan (Exalted)", "Alterac Valley", "Stormpike Guard / Frostwolf Clan (Exalted)" },
     { "Darkspear Raiders (Exalted)", "Reputation", "Darkspear Raiders (Exalted)" },
     { "Barkskin Burrow reputation (Revered)", "Reputation", "Barkskin Burrow (Revered)" },
-    { "World drop (BoE)", "World drop", "Any mob (BoE)" },
+    { "World drop (BoE)", "World Drop", "Any Mob (BoE)" },
   }
   for _, c in ipairs(cases) do
     local d, b = ns.SplitSource(c[1])
