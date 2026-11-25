@@ -440,4 +440,21 @@ check("ticks carry to another spec with the same items", function()
   if ns.ResolveDoneMark("HUNTER:Survival", "Head#1", "1|2") ~= false then error("untick lost") end
   ns.char.done = {}
 end)
+check("enchants tab: skill / where / materials columns sort", function()
+  local list = {
+    { id = 1, slot = "Head", source = "Quest: Libram (Burning Steppes)", craftTab = true },
+    { id = 2, slot = "Neck", craftTab = true, craft = { prof = "Enchanting", skill = 210, from = "Vendor: B" } },
+    { id = 3, slot = "Back", craftTab = true, craft = { prof = "Enchanting", skill = 300, from = "Drop: A" } },
+  }
+  ns.char.sortBy, ns.char.sortDesc = "dungeon", true
+  local out = ns.SortRows(list)
+  if out[1].id ~= 3 or out[3].id ~= 1 then error("skill sort wrong") end
+  ns.char.sortBy, ns.char.sortDesc = "boss", false
+  out = ns.SortRows(list)
+  if out[1].id ~= 3 or out[2].id ~= 1 or out[3].id ~= 2 then error("source sort wrong") end
+  ns.char.sortBy, ns.char.sortDesc = "slot", false
+  ns.char.listMode = "enchants"; ns.RefreshBrowser()
+  ns.char.listMode = "consumables"; ns.RefreshBrowser()
+  ns.char.listMode = "bis"; ns.RefreshBrowser()
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

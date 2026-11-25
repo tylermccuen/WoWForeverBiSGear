@@ -45,11 +45,14 @@ local function columnLayout(contentWidth)
         L.dropX, L.dropW = L.sourceX + L.sourceW + 10, dropW
         L.avoidX, L.avoidW = L.dropX + dropW + 10, enchantW
     else
-        local matsW = math.floor(rest * 0.45)
-        L.dungeonX = firstX
-        L.sourceX, L.sourceW = firstX, math.max(180, rest - matsW - 10)
+        -- Enchants / Consumables: skill | where to get the recipe | materials
+        local matsW = math.floor(rest * 0.42)
+        local skillW = 96
+        L.dungeonX, L.dungeonW = firstX, skillW
+        L.sourceX = firstX + skillW + 10
+        L.sourceW = math.max(160, rest - skillW - matsW - 20)
         L.dropX = L.sourceX + L.sourceW
-        L.avoidX, L.avoidW = L.sourceX + L.sourceW + 10, rest - L.sourceW - 10
+        L.avoidX, L.avoidW = L.sourceX + L.sourceW + 10, rest - skillW - L.sourceW - 20
     end
     return L
 end
@@ -125,6 +128,16 @@ function ns.SortRows(list)
         end
     end
     local function key(r)
+        if r.craft ~= nil or r.craftTab then
+            -- Enchants / Consumables: SKILL and WHERE TO GET IT columns
+            if by == "dungeon" then
+                return (r.craft and r.craft.skill) or -1
+            elseif by == "boss" then
+                local from = (r.craft and (r.craft.from or "~")) or r.source or "~"
+                return from:lower()
+            end
+            return 0
+        end
         if by == "dungeon" then
             local d = ns.SplitSource(r.source)
             return d == "" and "~" or d:lower()
@@ -162,20 +175,22 @@ function ns.LayoutHeaders()
         h:ClearAllPoints()
         h:SetPoint("TOPLEFT", frame, "TOPLEFT", x + 14, -62)
         local arrow = ""
-        if gear and h.sortKey and (ns.char.sortBy or "slot") == h.sortKey then
+        if (gear or crafting) and h.sortKey and (ns.char.sortBy or "slot") == h.sortKey then
             arrow = ns.char.sortDesc and " v" or " ^"
         end
         h:SetText(text .. arrow)
         h:SetShown(shown)
     end
     place(H.item, 4, "ITEM", true)
-    place(H.dungeon, L.dungeonX, "DUNGEON", gear and L.dungeonW > 0)
-    place(H.source, L.sourceX, crafting and "RECIPE / WHERE TO GET IT"
+    place(H.dungeon, L.dungeonX, crafting and "SKILL" or "DUNGEON", (gear or crafting) and L.dungeonW > 0)
+    place(H.source, L.sourceX, crafting and "WHERE TO GET IT"
         or (frame.compact and "WHERE TO GET IT" or "BOSS / SOURCE"), true)
     place(H.drop, L.dropX, "DROP", gear and L.dropW > 0)
     place(H.avoid, L.avoidX, crafting and "MATERIALS" or "ENCHANT", not frame.compact)
-    -- sorting only applies to the gear tabs
-    for _, h in pairs(H) do if h.sortKey then h:EnableMouse(gear) end end
+    -- sorting: gear tabs (all columns), Enchants / Consumables (item, skill, where)
+    for _, h in pairs(H) do
+        if h.sortKey then h:EnableMouse(gear or (crafting and h.sortKey ~= "drop")) end
+    end
 end
 
 local function layoutRow(row)
@@ -266,21 +281,35 @@ local function setEnchantText(row, data, name)
 end
 
 -- "30 Gromsblood, 1 Crystal Vial" for crafted consumables / enchants
-local function materialsText(craft)
+local function itemIcon(id)
+    local icon = C_Item and C_Item.GetItemIconByID and C_Item.GetItemIconByID(id)
+    if not icon and GetItemIcon then icon = GetItemIcon(id) end
+    return icon
+end
+
+local function materialsText(craft, withIcons)
     local parts = {}
     for _, m in ipairs(craft.mats or {}) do
-        table.insert(parts, m[2] .. " " .. m[3])
+        local icon = withIcons and itemIcon(m[1])
+        if icon then
+            table.insert(parts, "|T" .. icon .. ":14:14:0:0|t " .. m[2] .. " " .. m[3])
+        else
+            table.insert(parts, m[2] .. " " .. m[3])
+        end
     end
-    return table.concat(parts, ", ")
+    return table.concat(parts, withIcons and "   " or ", ")
 end
 
 local function enchantCell(row, data)
     if data.craft then
-        row.avoid:SetText("|cffffffff" .. materialsText(data.craft) .. "|r")
+        row.avoid:SetText("|cffffffff" .. materialsText(data.craft, true) .. "|r")
         return
     end
     local id = data.enchantID
-    if not id then row.avoid:SetText("") return end
+    if not id then
+        row.avoid:SetText(data.craftTab and "|cff666666-|r" or "")
+        return
+    end
     local name = C_Item.GetItemNameByID and C_Item.GetItemNameByID(id)
     if name then setEnchantText(row, data, name) return end
     row.avoid:SetText("|cff999999...|r")
@@ -695,6 +724,16 @@ local function fillRow(row, data)
     if splitCols then
         row.dungeon:SetText(dungeon)
         src = bossText
+    elseif data.craftTab and not frame.compact then
+        -- Enchants / Consumables: skill in its own column, recipe source here
+        local c = data.craft
+        if c and c.prof then
+            row.dungeon:SetText("|cffffd100" .. c.prof .. "|r" .. (c.skill and ("\n|cffffffff" .. c.skill .. "|r") or ""))
+            src = c.from or (c.recipe and "|cff999999TBD|r") or "|cff999999Recipe: TBD|r"
+        else
+            row.dungeon:SetText("|cff999999None|r")
+            src = (c and c.from) or data.source or ""
+        end
     else
         row.dungeon:SetText("")
     end
@@ -927,6 +966,7 @@ function ns.RefreshBrowser()
                 r.enchantID, r.enchantNote, r.enchantSource = nil, nil, nil
             end
             r.craft = (mode == "consumables" or mode == "enchants") and ns.Crafting and ns.Crafting[r.id] or nil
+            r.craftTab = (mode == "consumables" or mode == "enchants") or nil
             if mode == "enchants" then
                 r.gearReady = gearForSlot[r.slot] or false
                 r.enchanted = r.gearReady and ns.SlotEnchant and select(2, ns.SlotEnchant(r.slot)) or false
@@ -935,7 +975,7 @@ function ns.RefreshBrowser()
         end
     end
 
-    if gearList then list = ns.SortRows(list) end
+    if gearList or mode == "enchants" or mode == "consumables" then list = ns.SortRows(list) end
     for i, data in ipairs(list) do
         fillRow(rows[i] or createRow(i), data)
     end
@@ -1238,7 +1278,8 @@ local function createFrame()
             b:SetScript("OnEnter", function(self)
                 self.label:SetTextColor(1, 1, 1)
                 GameTooltip:SetOwner(self, "ANCHOR_TOP")
-                GameTooltip:AddLine("Click to sort by " .. text:lower())
+                local name = (self.baseText or text):gsub(" [%^v]$", "")
+                GameTooltip:AddLine("Click to sort by " .. name:lower())
                 GameTooltip:Show()
             end)
             b:SetScript("OnLeave", function(self) self.label:SetTextColor(1, 0.82, 0); GameTooltip:Hide() end)
