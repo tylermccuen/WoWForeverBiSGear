@@ -1340,7 +1340,7 @@ local function podiumWhyEnter(self)
     GameTooltip:AddLine("Why " .. ns.PLACE_NAMES[place] .. " place?", 1, 0.82, 0)
     local by = d.isExtra and ((guide and guide.altSource) or "conquestcapped.com")
         or ((info.source or "the BiS guide"):gsub("%s*%b()", ""))
-    GameTooltip:AddLine(d.isExtra and ("Ranked " .. ns.PLACE_NAMES[place] .. " by " .. by .. " (alternatives and the Realistic set)")
+    GameTooltip:AddLine(d.isExtra and ("Ranked " .. ns.PLACE_NAMES[place] .. " by " .. by .. " (alternatives, the Realistic set and Other Options)")
         or ("Best in slot on " .. by), 1, 1, 1, true)
     if place == 1 and e.second then
         GameTooltip:AddLine("You wear two, so both of these are 1st place.", 0.8, 0.8, 0.8, true)
@@ -1362,6 +1362,11 @@ local function podiumWhyEnter(self)
     GameTooltip:AddLine("How to get it", 0.8, 0.8, 0.8)
     GameTooltip:AddLine(howToGet(d), 1, 1, 1, true)
     if d.note then GameTooltip:AddLine(d.note, 0.67, 0.67, 0.67, true) end
+    if d.why and d.why ~= d.note then
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine("What the guides say", 0.8, 0.8, 0.8)
+        GameTooltip:AddLine(d.why, 1, 1, 1, true)
+    end
     GameTooltip:Show()
 end
 

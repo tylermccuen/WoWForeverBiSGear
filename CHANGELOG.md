@@ -1,6 +1,8 @@
 # Forever Best In Slot
 
 ## Unreleased (test build)
+- **More 2nd and 3rd place picks:** every spec's slots were checked against the conquestcapped.com WoW Forever guides, and the easier-to-get options from their Realistic sets and ranked Other Options tables (dungeon blues, quest rewards, crafted and reputation items) now fill 2nd and 3rd place. 406 of 413 gear slots now have a 2nd place pick and 367 have a 3rd (before: 249 and 58).
+- **Why it ranks there:** hover a place in podium view to see what the guides say about that item, such as its hit or spell damage, whether it's in the Realistic set, and its drop chance.
 - **1st, 2nd and 3rd place:** the BiS and Realistic tabs are now one **Gear** tab. Each slot shows its 1st place item with a gold trophy and a sparkle; click **+2 more** to see 2nd (silver) and 3rd (bronze) place under it, or tick **2nd & 3rd** to open every slot. 1st place comes from the BiS list (rings and trinkets have two, since you wear both), then the Alternatives, then the Realistic set. Some slots have fewer than three picks for now.
 - **Podium view:** the **View** button on the Gear tab switches to podium cards: one card per slot with 2nd, 1st and 3rd place standing on silver, gold and bronze steps. Hover an item for its dungeon, boss and drop chance; right-click to copy its link.
 - **Sleek window:** a flat dark window with a thin gold border, a slim title bar and flat buttons and tabs. Settings has "Sleek window style" to go back to the game's stone frame (type /reload after changing it).
