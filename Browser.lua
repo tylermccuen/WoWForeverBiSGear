@@ -2061,7 +2061,8 @@ local function lightLayer(d, file, level, side)
     return t
 end
 
-local SANTA_W, SANTA_SPEED = 128, 90   -- sleigh size and pixels per second
+-- a small, faraway sleigh: drawn behind the trees and the moose, high in the sky
+local SANTA_W, SANTA_SPEED = 72, 55   -- sleigh size and pixels per second
 
 -- one flight from the right end of the footer scene to the left end
 local function santaFlyBy(d)
@@ -2072,8 +2073,8 @@ local function santaFlyBy(d)
     local dist = w - SANTA_W
     local secs = dist / SANTA_SPEED
     d.santa:ClearAllPoints()
-    d.santa:SetPoint("BOTTOMRIGHT", d.scene, "BOTTOMRIGHT", 0, 10)
-    d.santaMove:SetOffset(-dist, math.random(-2, 8))
+    d.santa:SetPoint("BOTTOMRIGHT", d.scene, "BOTTOMRIGHT", 0, 22)
+    d.santaMove:SetOffset(-dist, math.random(-1, 3))
     d.santaMove:SetDuration(secs)
     d.santaOut:SetStartDelay(math.max(0, secs - 0.6))
     d.santa:Show()
@@ -2138,7 +2139,7 @@ local function createHolidayDecor()
         table.insert(d.sceneLights, t)
     end
     -- Santa's sleigh flies across the footer sky now and then
-    local santa = d:CreateTexture(nil, "OVERLAY", nil, 3)
+    local santa = d:CreateTexture(nil, "ARTWORK", nil, -2)   -- under the scene (ARTWORK 0)
     santa:SetTexture(ns.TEXTURES .. "santa")
     santa:SetSize(SANTA_W, SANTA_W / 4)
     santa:Hide()
@@ -2147,9 +2148,9 @@ local function createHolidayDecor()
     d.santaMove = fly:CreateAnimation("Translation")
     d.santaMove:SetOrder(1)
     local fadeIn = fly:CreateAnimation("Alpha")
-    fadeIn:SetFromAlpha(0); fadeIn:SetToAlpha(1); fadeIn:SetDuration(0.6); fadeIn:SetOrder(1)
+    fadeIn:SetFromAlpha(0); fadeIn:SetToAlpha(0.85); fadeIn:SetDuration(0.6); fadeIn:SetOrder(1)
     d.santaOut = fly:CreateAnimation("Alpha")
-    d.santaOut:SetFromAlpha(1); d.santaOut:SetToAlpha(0); d.santaOut:SetDuration(0.6); d.santaOut:SetOrder(1)
+    d.santaOut:SetFromAlpha(0.85); d.santaOut:SetToAlpha(0); d.santaOut:SetDuration(0.6); d.santaOut:SetOrder(1)
     fly:SetScript("OnFinished", function() santa:Hide() end)
     d.santaFly = fly
     return d
