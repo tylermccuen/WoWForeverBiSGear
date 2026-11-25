@@ -1516,6 +1516,14 @@ function ns.RefreshBrowser()
     missingCheck:SetChecked(ns.char.missingOnly)
     altCheck:SetChecked(ns.char.showAlts ~= false)
     doneCheck:SetChecked(ns.char.hideDone)
+    -- podium cards always show every place, so "2nd & 3rd" hides there and
+    -- "Hide finished" moves up next to "Missing only"
+    if not frame.compact then
+        altCheck:SetShown(not frame.podiumOn)
+        altLabel:SetShown(not frame.podiumOn)
+        doneCheck:ClearAllPoints()
+        doneCheck:SetPoint("LEFT", frame.podiumOn and frame.mcLabel or altLabel, "RIGHT", 10, 0)
+    end
 
     -- Done slots. Each main row has a key ("Head#1", "Finger#2"...) that is the
     -- same in the BiS and Realistic lists, so a slot can be done with a piece
@@ -2092,6 +2100,7 @@ local function createFrame()
         ns.RefreshBrowser()
     end)
     local mcLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    frame.mcLabel = mcLabel
     mcLabel:SetPoint("LEFT", missingCheck, "RIGHT", 2, 0)
     mcLabel:SetText("Missing only")
 
