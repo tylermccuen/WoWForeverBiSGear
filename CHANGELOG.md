@@ -1,5 +1,8 @@
 # Forever Best In Slot
 
+## 1.7.4
+- **Boss window shows the right boss:** opening a boss after closing another one no longer sometimes shows the previous boss's model.
+
 ## 1.7.3
 - **"Pre-raid" instead of "Phase 1":** the lists are pre-raid lists for level 60 dungeons; WoW Forever's first raids (Barrow Deeps, Hyjal Summit, Onyxia's Lair) open December 9, 2026, and raid lists will come as their own phase after that.
 - **Done ticks follow list updates:** a slot you ticked done is remembered together with the items the BiS and Realistic lists had for it (or the enchant). If a later update changes that slot's pick, the tick is cleared and a chat message says which slots changed, so you can check the new items. Slots you own the item for still tick themselves.

@@ -94,6 +94,8 @@ local function createWindow()
         end
     end)
     win.model = model
+    -- forget the model on close so the next boss never starts from the old one
+    win:HookScript("OnHide", function() model:ClearModel(); win.boss = nil end)
     local bg = model:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
     bg:SetColorTexture(0, 0, 0, 0.35)
@@ -112,17 +114,24 @@ function ns.ShowBoss(boss)
     win.title:SetText(boss.name)
     win.instance:SetText(boss.instance or "")
 
-    -- model: by model (display) ID, or by NPC ID
-    win.model:ClearModel()
-    if boss.display then
-        win.model:SetDisplayInfo(boss.display)
-    elseif boss.npc then
-        win.model:SetCreature(boss.npc)
-    end
-    win.model.facing = 0
-    win.model:SetFacing(0)
-
+    -- A model set while the window is hidden is ignored and the last one
+    -- comes back when it shows, so show first, then set the model, and set it
+    -- again a moment later (creature data may still be loading).
     win:Show()
     win:Raise()
+    local function apply()
+        if not win:IsShown() or win.boss ~= boss then return end
+        win.model:ClearModel()
+        if boss.display then
+            win.model:SetDisplayInfo(boss.display)
+        elseif boss.npc then
+            win.model:SetCreature(boss.npc)
+        end
+        win.model.facing = 0
+        win.model:SetFacing(0)
+    end
+    apply()
+    C_Timer.After(0.1, apply)
+    C_Timer.After(0.6, apply)
 end
 
