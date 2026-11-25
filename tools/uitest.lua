@@ -471,4 +471,21 @@ check("pin a quest giver on the map", function()
   if not set or set.m ~= 1454 or math.abs(set.x - 0.317) > 0.001 then error("wrong pin") end
   UnitFactionGroup = function() return "Alliance" end
 end)
+check("consumables: have / keep counts and targets", function()
+  C_Item = C_Item or {}
+  local saveCount = C_Item.GetItemCount
+  C_Item.GetItemCount = function(id, bank) if id == 13510 then return bank and 3 or 1 end return 0 end
+  local b, t = ns.ConsumeCount(13510)
+  if b ~= 1 or t ~= 3 then error("count " .. b .. "/" .. t) end
+  if ns.ConsumeTarget(13510, "Flask") ~= 2 then error("flask recommendation") end
+  ns.SetConsumeTarget(13510, 10)
+  local n, custom = ns.ConsumeTarget(13510, "Flask")
+  if n ~= 10 or not custom then error("custom target") end
+  ns.char.selectedClass, ns.char.selectedSpec, ns.char.listMode = "WARRIOR", "Fury", "consumables"
+  ns.RefreshBrowser()
+  ns.char.missingOnly = true; ns.RefreshBrowser(); ns.char.missingOnly = false
+  ns.SetConsumeTarget(13510, nil)
+  C_Item.GetItemCount = saveCount
+  ns.char.listMode = "bis"; ns.RefreshBrowser()
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

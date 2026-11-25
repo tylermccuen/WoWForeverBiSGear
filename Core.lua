@@ -34,6 +34,7 @@ local charDefaults = {
     hideDone      = false,          -- hide slots where the BiS or Realistic item is owned
     savedSpecs    = {},             -- up to 5 "CLASS:Spec" picks for quick switching
     bankItems     = {},
+    consumeTargets = {},            -- [itemID] = how many to keep on hand (else the recommendation)
 }
 
 local function applyDefaults(dst, src)

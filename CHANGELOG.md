@@ -1,6 +1,7 @@
 # Forever Best In Slot
 
 ## 1.7.4
+- **Consumable stock:** the Consumables tab shows how many of each you have (bags and bank) against how many to keep on hand: green when you're stocked, yellow when you're short, red when you have none. The addon recommends an amount for a raid night (2 flasks, 4 elixirs, 10 food, 5 potions, 6 weapon oils or stones, 5 runes); click the count to change it, or to stop tracking an item. Hover it to see bags vs bank and how many more to buy. The top right counts how many are stocked, and "Missing only" shows what you still need.
 - **Boss window shows the right boss:** opening a boss after closing another one no longer sometimes shows the previous boss's model.
 
 ## 1.7.3

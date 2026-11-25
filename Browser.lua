@@ -687,6 +687,43 @@ local function createRow(i)
     row.owned:SetPoint("RIGHT", done, "LEFT", -4, 0)
     row.owned:SetJustifyH("RIGHT")
 
+    -- Consumables tab: "have / keep" with a menu to change how many to keep
+    local haveHit = CreateFrame("Button", nil, row)
+    haveHit:SetPoint("TOPLEFT", row.owned, "TOPLEFT", -6, 6)
+    haveHit:SetPoint("BOTTOMRIGHT", row.owned, "BOTTOMRIGHT", 4, -6)
+    haveHit:SetScript("OnEnter", function(self)
+        if not row.stock then return end
+        local s = row.stock
+        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+        GameTooltip:AddLine("On hand")
+        GameTooltip:AddDoubleLine("In bags", s.bags, 1, 1, 1, 1, 1, 1)
+        GameTooltip:AddDoubleLine("In bank", s.total - s.bags, 1, 1, 1, 1, 1, 1)
+        GameTooltip:AddDoubleLine("Keep", s.target .. (s.custom and "" or " (recommended)"), 1, 1, 1, 1, 0.82, 0)
+        if s.total < s.target then
+            GameTooltip:AddLine("Buy or make " .. (s.target - s.total) .. " more", 1, 0.4, 0.4)
+        end
+        GameTooltip:AddLine("Click to change how many to keep", 0.2, 1, 0.2)
+        GameTooltip:Show()
+    end)
+    haveHit:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    haveHit:SetScript("OnClick", function(self)
+        local s = row.stock
+        if not s or not (MenuUtil and MenuUtil.CreateContextMenu) then return end
+        MenuUtil.CreateContextMenu(self, function(_, root)
+            root:CreateTitle("Keep on hand")
+            local rec = ns.ConsumeRecommended[s.kind] or 5
+            for _, n in ipairs({ 1, 2, 3, 5, 10, 15, 20, 40 }) do
+                root:CreateRadio(n .. (n == rec and "  |cffaaaaaa(recommended)|r" or ""),
+                    function() return s.target == n end,
+                    function() ns.SetConsumeTarget(s.id, n); ns.RefreshBrowser() end)
+            end
+            root:CreateDivider()
+            root:CreateButton("Don't track this one", function() ns.SetConsumeTarget(s.id, 0); ns.RefreshBrowser() end)
+            root:CreateButton("Use the recommendation (" .. rec .. ")", function() ns.SetConsumeTarget(s.id, nil); ns.RefreshBrowser() end)
+        end)
+    end)
+    row.haveHit = haveHit
+
     rows[i] = row
     return row
 end
@@ -779,7 +816,21 @@ local function fillRow(row, data)
     elseif data.gearReady then
         ownedText = YELLOW_CHECK .. " |cffffd100Ready|r"
     end
-    if frame.compact then ownedText = ownedText:match("^(|T.-|t)") or ownedText end   -- icon only
+    row.stock = nil
+    if frame.layoutMode == "consumables" then
+        -- how many you have against how many to keep
+        local bags, total = ns.ConsumeCount(data.id)
+        local target, custom = ns.ConsumeTarget(data.id, data.slot)
+        row.stock = { id = data.id, kind = data.slot, bags = bags, total = total, target = target, custom = custom }
+        if target == 0 then
+            ownedText = "|cff888888" .. total .. "|r"
+        else
+            local color = total >= target and "|cff33ff33" or (total > 0 and "|cffffd100" or "|cffff5555")
+            ownedText = color .. total .. "|r |cffaaaaaa/ " .. target .. "|r"
+        end
+    end
+    row.haveHit:SetShown(row.stock ~= nil)
+    if frame.compact and not row.stock then ownedText = ownedText:match("^(|T.-|t)") or ownedText end   -- icon only
     if ownedText == "" and data.isDone then ownedText = "|cff33ff33Done|r" end
     row.owned:SetText(ownedText)
     row.doneKey, row.specKey, row.autoDone, row.doneSig = data.doneKey, data.specKey, data.autoDone, data.doneSig
@@ -969,11 +1020,23 @@ function ns.RefreshBrowser()
     for _, r in ipairs(listRows) do
         if not r.isAlt then
             total = total + 1
-            if (canMark and r.isDone) or (not canMark and ns.Owned[r.id]) then have = have + 1 end
+            if mode == "consumables" then
+                -- stocked: at least as many as you want to keep
+                local target = ns.ConsumeTarget(r.id, r.slot)
+                local _, total = ns.ConsumeCount(r.id)
+                if target == 0 then total, target = 1, 1 end
+                if total >= target then have = have + 1 end
+            elseif (canMark and r.isDone) or (not canMark and ns.Owned[r.id]) then have = have + 1 end
         end
     end
     for _, r in ipairs(listRows) do
         local owned = ns.Owned[r.id] ~= nil
+        if mode == "consumables" then
+            -- "Missing only" here means: fewer than you want to keep
+            local target = ns.ConsumeTarget(r.id, r.slot)
+            local _, total = ns.ConsumeCount(r.id)
+            owned = total >= target
+        end
         local slotOk = ns.char.selectedSlot == "All" or r.slot == ns.char.selectedSlot or mode == "consumables"
         local hidden = ns.char.hideDone and canMark and (r.doneKey and r.isDone or (not r.doneKey and slotDone[r.slot]))
         if slotOk and not hidden and not (ns.char.missingOnly and owned) then
@@ -1001,7 +1064,7 @@ function ns.RefreshBrowser()
     for i = #list + 1, #rows do rows[i]:Hide() end
     scrollChild:SetHeight(math.max(1, #list * ROW_HEIGHT))
 
-    countText:SetText(string.format(mode == "consumables" and "In bags %d / %d" or "Done %d / %d", have, total))
+    countText:SetText(string.format(mode == "consumables" and "Stocked %d / %d" or "Done %d / %d", have, total))
     -- keep the raid check companion on the spec being viewed
     if specKey ~= lastRaidSpec then
         lastRaidSpec = specKey
@@ -1027,6 +1090,15 @@ function ns.RefreshBrowser()
 end
 
 ns.OnOwnedChanged = function() ns.RefreshBrowser() end
+
+-- Consumable counts change without the owned list changing (using a potion,
+-- buying more), so the Consumables tab redraws on bag changes itself.
+local stockPending = false
+ns.On("BAG_UPDATE_DELAYED", function()
+    if stockPending or not frame or not frame:IsShown() or ns.char.listMode ~= "consumables" then return end
+    stockPending = true
+    C_Timer.After(0.5, function() stockPending = false; ns.RefreshBrowser() end)
+end)
 
 ----------------------------------------------------------------------
 -- Menus

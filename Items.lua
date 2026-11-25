@@ -215,6 +215,33 @@ function ns.RemoveSavedSpec(class, spec)
     return false
 end
 
+-- Consumables: how many to keep on hand for a raid night (about 3 hours).
+-- Flasks last 2 hours; elixirs 1 hour; food, oils and stones 15-30 minutes
+-- and are lost on death; potions and runes about one per boss.
+ns.ConsumeRecommended = { Flask = 2, Elixir = 4, Food = 10, Potion = 5, Weapon = 6, Rune = 5, Other = 10 }
+
+function ns.ConsumeTarget(itemID, kind)
+    local t = ns.char and ns.char.consumeTargets and ns.char.consumeTargets[itemID]
+    if t then return t, true end
+    return ns.ConsumeRecommended[kind] or 5, false
+end
+
+function ns.SetConsumeTarget(itemID, n)
+    ns.char.consumeTargets = ns.char.consumeTargets or {}
+    ns.char.consumeTargets[itemID] = n
+end
+
+-- bags, bags + bank
+function ns.ConsumeCount(itemID)
+    local count = (C_Item and C_Item.GetItemCount) or GetItemCount
+    if not count then return 0, 0 end
+    local okB, bags = pcall(count, itemID, false)
+    local okT, total = pcall(count, itemID, true)
+    bags = okB and tonumber(bags) or 0
+    total = okT and tonumber(total) or bags
+    return bags, math.max(total, bags)
+end
+
 -- Equip location -> slot names used in the guides
 ns.EquipLocSlots = {
     INVTYPE_HEAD = { "Head" },         INVTYPE_NECK = { "Neck" },
