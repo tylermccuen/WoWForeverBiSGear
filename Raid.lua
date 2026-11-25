@@ -707,6 +707,7 @@ function ns.CreateRaidView(parent, top, bottom, width)
     foot:SetJustifyH("LEFT")
     foot:SetText("Hit: 8% melee/ranged, 17% spells (conquestcapped.com). Tanks: 440 defense.")
     foot:SetWordWrap(true)
+    foot:Hide()   -- footers stay clean
 
     view.refresh = function() refreshView(view) end
     view.setWidth = function(w)

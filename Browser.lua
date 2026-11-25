@@ -2147,11 +2147,22 @@ local function createFrame()
     frame.sourceText:SetHeight(26)
     frame.sourceText:SetJustifyH("LEFT")
     frame.sourceText:SetJustifyV("MIDDLE")
+    -- the footer stays clean: the source note lives in the Guide link tooltip
+    frame.sourceText:Hide()
 
     local guideLink = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
     guideLink:SetSize(110, 22)
     guideLink:SetPoint("BOTTOMRIGHT", -26, 12)
     guideLink:SetText("Guide link")
+    guideLink:SetScript("OnEnter", function(self)
+        local note = frame.sourceText:GetText()
+        if not note or note == "" then return end
+        GameTooltip:SetOwner(self, "ANCHOR_TOP")
+        GameTooltip:AddLine("Sources", 1, 0.82, 0)
+        GameTooltip:AddLine(note, 0.85, 0.85, 0.85, true)
+        GameTooltip:Show()
+    end)
+    guideLink:SetScript("OnLeave", function() GameTooltip:Hide() end)
     guideLink:SetScript("OnClick", function()
         local g = currentGuide()
         if g then
