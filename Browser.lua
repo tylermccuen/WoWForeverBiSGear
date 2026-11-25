@@ -612,11 +612,11 @@ local function skinButton(b, colors)
 end
 
 ----------------------------------------------------------------------
--- Sparkle around 1st place items: a pulsing gold glow and twinkling stars
+-- Treasure gleam around 1st place items: a soft breathing gold glow
+-- and two small, slow twinkles
 ----------------------------------------------------------------------
 local SPARK_SPOTS = {   -- point on the icon, x, y, size, delay
-    { "TOPLEFT", 0, 0, 12, 0 }, { "TOPRIGHT", 0, 0, 10, 0.6 }, { "BOTTOMLEFT", 0, 0, 9, 1.1 },
-    { "LEFT", -1, 4, 7, 0.3 },
+    { "TOPRIGHT", -2, -2, 9, 0 }, { "BOTTOMLEFT", 2, 2, 7, 1.6 },
 }
 
 function ns.CreateSparkle(parent, anchor)
@@ -648,9 +648,9 @@ function ns.CreateSparkle(parent, anchor)
     local g = glow:CreateAnimationGroup()
     g:SetLooping("BOUNCE")
     local pulse = g:CreateAnimation("Alpha")
-    pulse:SetFromAlpha(0.45)
-    pulse:SetToAlpha(1)
-    pulse:SetDuration(1.1)
+    pulse:SetFromAlpha(0.25)
+    pulse:SetToAlpha(0.6)
+    pulse:SetDuration(2.2)
     table.insert(f.groups, g)
     for _, s in ipairs(SPARK_SPOTS) do
         local t = f:CreateTexture(nil, "OVERLAY", nil, 7)
@@ -662,16 +662,16 @@ function ns.CreateSparkle(parent, anchor)
         local sg = t:CreateAnimationGroup()
         sg:SetLooping("REPEAT")
         local fadeIn = sg:CreateAnimation("Alpha")
-        fadeIn:SetFromAlpha(0); fadeIn:SetToAlpha(1); fadeIn:SetDuration(0.5)
+        fadeIn:SetFromAlpha(0); fadeIn:SetToAlpha(0.85); fadeIn:SetDuration(0.6)
         fadeIn:SetOrder(1); fadeIn:SetStartDelay(s[5])
         local turn = sg:CreateAnimation("Rotation")
-        turn:SetDegrees(-45); turn:SetDuration(0.5)
+        turn:SetDegrees(-45); turn:SetDuration(0.6)
         turn:SetOrder(1); turn:SetStartDelay(s[5])
         local fadeOut = sg:CreateAnimation("Alpha")
-        fadeOut:SetFromAlpha(1); fadeOut:SetToAlpha(0); fadeOut:SetDuration(0.6)
+        fadeOut:SetFromAlpha(0.85); fadeOut:SetToAlpha(0); fadeOut:SetDuration(0.8)
         fadeOut:SetOrder(2)
         local rest = sg:CreateAnimation("Alpha")
-        rest:SetFromAlpha(0); rest:SetToAlpha(0); rest:SetDuration(0.7)
+        rest:SetFromAlpha(0); rest:SetToAlpha(0); rest:SetDuration(2.2)
         rest:SetOrder(3)
         table.insert(f.groups, sg)
     end
@@ -683,7 +683,7 @@ function ns.ShowSparkle(f, on, iconSize)
     if not f then return end
     if on then
         -- the gold ring sits on the icon's edge and fades out within a few pixels
-        f.glow:SetSize((iconSize or 32) * 1.45, (iconSize or 32) * 1.45)
+        f.glow:SetSize((iconSize or 32) * 1.3, (iconSize or 32) * 1.3)
         f.rays:SetSize((iconSize or 32) * 1.9, (iconSize or 32) * 1.9)
         f.rays:SetShown(f.withRays and true or false)
         f:Show()
@@ -1293,7 +1293,6 @@ local function createCard(i)
         st.trophy:SetPoint("BOTTOM", btn, "TOP", 0, 3)
         if place == 1 then
             st.sparkle = ns.CreateSparkle(card, btn)
-            st.sparkle.withRays = true   -- room for the turning rays on a card
         end
         st.empty = card:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
         st.empty:SetPoint("BOTTOM", st.block, "TOP", 0, 8)
