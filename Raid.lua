@@ -305,11 +305,11 @@ function ns.RunRaidCheck(cb)
     -- Enchants, one line per slot on the spec's enchant list
     if guide.enchants then
         line("head", "Enchants")
-        -- an item is ready for its enchant once it is a 1st place pick: no
-        -- upgrade is coming for that slot, so the enchant won't be wasted
+        -- an item is worth enchanting once it is a 1st or 2nd place pick:
+        -- you'll wear it a good while, so the enchant won't be wasted
         local firstIds = {}
         for _, r in ipairs(ns.GetRankedRows(guide)) do
-            if r.place == 1 and not r.isExtra then firstIds[r.id] = true end
+            if r.place and r.place <= 2 then firstIds[r.id] = true end
         end
         local seen = {}
         for _, row in ipairs(guide.enchants) do
