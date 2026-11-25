@@ -36,7 +36,12 @@ GetSpecializationInfo = function() return 253, "Beast Mastery" end
 GetInventoryItemID = function() return nil end
 GetCursorPosition = function() return 0,0 end
 C_Container = { GetContainerNumSlots=function() return 0 end, GetContainerItemID=function() end }
-C_Timer = { After=function(_,f) f() end }
+-- timers fire at once; a timer that keeps re-arming itself (Santa) stops after a few rounds
+local timerDepth = 0
+C_Timer = { After=function(_,f)
+  if timerDepth >= 4 then return end
+  timerDepth = timerDepth + 1; f(); timerDepth = timerDepth - 1
+end }
 C_ClassColor = { GetClassColor=function() return {r=1,g=1,b=1, GenerateHexColor=function() return "ffffffff" end} end }
 C_Item = { GetItemIconByID=function() return 134400 end, GetItemInfoInstant=function() end, GetItemQualityByID=function() return 3 end }
 Item = { CreateFromItemID=function(_,id) return { IsItemEmpty=function() return false end,
@@ -236,6 +241,12 @@ check("raid check (every spec)", function()
     local got
     ns.RunRaidCheck(function(r) got = r end)
     if not got then error("no report for " .. cls .. " " .. sp) end
+    if got.placeTotal and (got.placeTotal < 10 or #got.places ~= 3) then
+      error("gear by place looks wrong for " .. cls .. " " .. sp .. ": " .. tostring(got.placeTotal))
+    end
+    for _, b in ipairs(got.bars) do
+      if b.label:find("BiS items") or b.label:find("Realistic") then error("old BiS / Realistic bar is back") end
+    end
     if cls == "HUNTER" and sp == "Marksmanship" then
       for _, l in ipairs(got.lines) do print("   [" .. l.status .. "] " .. l.text) end
     end
@@ -547,3 +558,99 @@ check("character window: shrunk browser, raid panel only when the browser is clo
   CharacterFrame = saved
 end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
+check("gear tab: 1st / 2nd / 3rd place", function()
+  if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end
+  ns.char.selectedClass, ns.char.selectedSpec, ns.char.listMode = "WARRIOR", "Fury", "ranked"
+  ns.char.selectedSlot, ns.char.missingOnly, ns.char.hideDone = "All", false, false
+  local g = ns.GetGuide("WARRIOR", "Fury", ns.LatestPhase())
+  local rows = ns.GetRankedRows(g)
+  local places, seen = {}, {}
+  for _, r in ipairs(rows) do
+    if r.place then
+      places[r.slot] = math.max(places[r.slot] or 0, r.place)
+      local k = r.slot .. ":" .. r.id
+      if seen[k] then error("duplicate item in a slot: " .. k) end
+      seen[k] = true
+      if r.place > ns.MAX_PLACES then error("too many places for " .. r.slot) end
+    end
+  end
+  if places.Shoulder ~= 3 then error("Fury shoulder should have 3 places, got " .. tostring(places.Shoulder)) end
+  if places.Finger ~= 3 then error("Fury rings should have 3 places, got " .. tostring(places.Finger)) end
+  -- you wear two rings: both best rings are 1st place, the extras 2nd and 3rd
+  local ringMains = {}
+  for _, r in ipairs(rows) do
+    if r.slot == "Finger" and not r.isExtra then table.insert(ringMains, r.place) end
+  end
+  if #ringMains ~= 2 or ringMains[1] ~= 1 or ringMains[2] ~= 1 then
+    error("both best rings should be 1st place: " .. table.concat(ringMains, ","))
+  end
+  -- closed slots: only the main rows; open one: its extras appear
+  ns.char.showAlts = false; ns.char.expandedSlots = {}
+  ns.RefreshBrowser()
+  local closed = visibleRows()
+  ns.char.expandedSlots.Shoulder = true
+  ns.RefreshBrowser()
+  local opened = visibleRows()
+  if opened ~= closed + 2 then error("opening Shoulder should add 2 rows: " .. closed .. " -> " .. opened) end
+  ns.char.showAlts = true
+  ns.RefreshBrowser()
+  local all = visibleRows()
+  if all <= opened then error("2nd & 3rd ticked should show every slot's places") end
+  print("   gear rows closed / one open / all:", closed, opened, all)
+end)
+check("holiday theme on / off", function()
+  ns.db.holidayTheme = "on"
+  if not ns.HolidayOn() then error("holiday should be on") end
+  if not ns.PlaceIcon(1):find("holiday1") then error("1st place should be the tree") end
+  ns.RefreshBrowser()
+  ns.db.holidayTheme = "off"
+  if ns.HolidayOn() or not ns.PlaceIcon(2):find("place2") then error("holiday should be off") end
+  ns.RefreshBrowser()
+  ns.db.holidayTheme = "auto"
+end)
+check("gear tab: quiver / ammo follow the bow or gun", function()
+  local function quiverPlaces(g)
+    local out = {}
+    for _, r in ipairs(ns.GetRankedRows(g)) do
+      if r.slot == "Quiver" or r.slot == "Ammo" then table.insert(out, r.slot .. r.place .. "=" .. r.id) end
+    end
+    return table.concat(out, " ")
+  end
+  local found
+  for _, ph in ipairs(ns.PhaseList) do
+    local g = ns.GetGuide("HUNTER", "Marksmanship", ph.id)
+    if g and quiverPlaces(g) ~= "" then found = g break end
+  end
+  if not found then error("no hunter guide with a quiver") end
+  local _GII, _GIL = GetItemInfoInstant, GetInventoryItemLink
+  GetItemInfoInstant = function() return 1, "Weapon", "Bows", "INVTYPE_RANGED", 1, 2, 2 end
+  local bow = quiverPlaces(found)
+  GetItemInfoInstant = function() return 1, "Weapon", "Guns", "INVTYPE_RANGEDRIGHT", 1, 2, 3 end
+  GetInventoryItemLink = function(_, inv) if inv == 18 then return "|Hitem:1|h" end end
+  local gun = quiverPlaces(found)
+  GetItemInfoInstant, GetInventoryItemLink = _GII, _GIL
+  print("   bow:", bow) print("   gun:", gun)
+  if bow ~= "Quiver1=19319 Quiver2=2662 Ammo1=12654" then error("bow quiver places wrong: " .. bow) end
+  if gun ~= "Quiver1=19320 Quiver2=2663 Ammo1=13377" then error("gun quiver places wrong: " .. gun) end
+end)
+
+check("gear tab: podium cards", function()
+  if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end
+  ns.char.selectedClass, ns.char.selectedSpec, ns.char.listMode = "WARRIOR", "Fury", "ranked"
+  ns.char.gearView = "podium"
+  ns.RefreshBrowser()
+  if not _G.ForeverBiSFrame.podiumOn then error("podium view not on") end
+  if visibleRows() ~= 0 then error("list rows still shown in podium view") end
+  -- hovering a step explains the place
+  local card = ns.PodiumCards()[1]
+  for place = 1, 3 do
+    local why = card.steps[place].why
+    local f = why:GetScript("OnEnter")
+    if not f then error("step " .. place .. " has no why tooltip") end
+    f(why)
+  end
+  ns.db.holidayTheme = "on"; ns.RefreshBrowser(); ns.SantaFlyBy(); ns.db.holidayTheme = "auto"
+  ns.char.gearView = "list"
+  ns.RefreshBrowser()
+  if _G.ForeverBiSFrame.podiumOn or visibleRows() == 0 then error("list view didn't come back") end
+end)

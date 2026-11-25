@@ -22,6 +22,8 @@ local accountDefaults = {
     windowScale      = 1,
     compactWithCharacter = true,    -- shrink the browser next to the character window
     raidWithCharacter = true,       -- raid check panel next to the character window
+    windowStyle      = "sleek",     -- "sleek" (flat dark panel) or "classic" (the game's stone frame)
+    holidayTheme     = "auto",      -- "auto" (Feast of Winter Veil, Dec 15 - Jan 2), "on" or "off"
 }
 
 local charDefaults = {
@@ -30,7 +32,10 @@ local charDefaults = {
     selectedSlot  = "All",
     missingOnly   = false,
     showAlts      = true,
-    listMode      = "bis",          -- "bis", "realistic", "enchants" or "consumables"
+    listMode      = "ranked",       -- "ranked" (Gear tab: 1st / 2nd / 3rd place), "enchants", "consumables" or "raid"
+                                    -- ("bis" and "realistic" still work but have no tab)
+    expandedSlots = {},             -- Gear list: slots opened to show their 2nd / 3rd place
+    gearView      = "list",         -- Gear tab: "list" rows or "podium" cards
     hideDone      = false,          -- hide slots where the BiS or Realistic item is owned
     savedSpecs    = {},             -- up to 5 "CLASS:Spec" picks for quick switching
     bankItems     = {},
@@ -134,11 +139,19 @@ SlashCmdList["FOREVERBIS"] = function(msg)
         ns.ToggleRaidCheck()
     elseif cmd == "spec" then
         ns.DebugSpec()
+    elseif cmd == "holiday" then
+        local nextMode = { auto = "on", on = "off", off = "auto" }
+        ns.db.holidayTheme = nextMode[ns.db.holidayTheme or "auto"] or "auto"
+        ns.Print("Holiday theme: " .. ns.db.holidayTheme)
+        if ns.RefreshBrowser then ns.RefreshBrowser() end
+    elseif cmd == "santa" then
+        -- send Santa across the footer now (holiday theme on, window open)
+        if ns.SantaFlyBy then ns.SantaFlyBy() end
     elseif cmd == "minimap" then
         ns.db.minimap.hide = not ns.db.minimap.hide
         ns.UpdateMinimap()
     else
-        ns.Print("Commands: /bis, /bis raid, /bis settings, /bis link <item>, /bis minimap")
+        ns.Print("Commands: /bis, /bis raid, /bis settings, /bis link <item>, /bis minimap, /bis holiday, /bis santa")
     end
 end
 

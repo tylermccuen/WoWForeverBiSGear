@@ -135,7 +135,7 @@ local guides = {
         DONJULIO,
         CUTTHROAT,
         ADAPTIVE,
-        { "Trinket",  18466,  "Quest: Codex of Defense (Dire Maul)" },
+        { "Trinket",  18466,  "Quest: Codex of Defense (Dire Maul West)" },
         { "Main Hand", 11684, "Blackrock Depths: Emperor Dagran Thaurissan" },
         IMMOVABLE,
         { "Ranged",   280020, "The Shaper's Terrace: Thunderhoof" },
@@ -156,7 +156,7 @@ local guides = {
         FORDRING,
         MENDING,
         SERENITY,
-        { "Trinket",  18472,  "Quest: The Light and How To Swing It (Dire Maul)" },
+        { "Trinket",  18472,  "Quest: The Light and How To Swing It (Dire Maul West)" },
         { "Main Hand", 22315, "Dire Maul East: Isalien" },
         LEI,
         { "Relic",    272436, PIX50 },
@@ -207,7 +207,7 @@ local guides = {
         { "Shoulder", 18686,  "Scholomance: Rattlegore" },
         { "Back",     272414, PIX75 },
         DAWN,
-        { "Wrist",    18296,  "Dire Maul: Trash Drop" },
+        { "Wrist",    18296,  "Dire Maul East: Trash Drop (satyrs)" },
         DEV_GLOVES,
         { "Waist",    22232,  "Lower Blackrock Spire: Urok Doomhowl" },
         DEV_LEGS,
@@ -225,7 +225,7 @@ local guides = {
         { "Shoulder", 18686,  "Scholomance: Rattlegore" },
         BLACK_BARON,
         DAWN,
-        { "Wrist",    18296,  "Dire Maul: Trash Drop" },
+        { "Wrist",    18296,  "Dire Maul East: Trash Drop (satyrs)" },
         DEV_GLOVES,
         { "Waist",    22232,  "Lower Blackrock Spire: Urok Doomhowl" },
         DEV_LEGS,
@@ -331,7 +331,7 @@ local guides = {
         MENDING,
         { "Finger",   272407, PIX75 },
         SERENITY,
-        { "Trinket",  18469,  "Quest: Holy Bologna: What the Light Won't Tell You (Dire Maul)" },
+        { "Trinket",  18469,  "Quest: Holy Bologna: What the Light Won't Tell You (Dire Maul West)" },
         GIFT_MAGI,
         LEI,
         { "Wand",     22254,  "Blackrock Depths: Trash Drop" },
@@ -350,7 +350,7 @@ local guides = {
         MENDING,
         { "Finger",   272407, PIX75 },
         SERENITY,
-        { "Trinket",  18469,  "Quest: Holy Bologna: What the Light Won't Tell You (Dire Maul)" },
+        { "Trinket",  18469,  "Quest: Holy Bologna: What the Light Won't Tell You (Dire Maul West)" },
         GIFT_MAGI,
         LEI,
         { "Wand",     22254,  "Blackrock Depths: Trash Drop" },
@@ -390,7 +390,7 @@ local guides = {
         CHANNELER,
         RUNEBAND,
         EYE_BEAST,
-        { "Trinket",  18471,  "Quest: Frost Shock and You (Dire Maul)" },
+        { "Trinket",  18471,  "Quest: Frost Shock and You (Dire Maul West)" },
         WITCHBLADE,
         THERAZANE,
         STORM_TOTEM,
@@ -427,7 +427,7 @@ local guides = {
         MENDING,
         FORDRING,
         SERENITY,
-        { "Trinket",  18471,  "Quest: Frost Shock and You (Dire Maul)" },
+        { "Trinket",  18471,  "Quest: Frost Shock and You (Dire Maul West)" },
         GIFT_MAGI,
         PENELOPE,
         { "Relic",    23200,  "Scholomance: Trash Drop" },
@@ -507,7 +507,7 @@ local guides = {
         SONGSTONE,
         { "Finger",   13001,  "World drop" },
         WEAKNESS,
-        { "Trinket",  18467,  "Quest: Harnessing Shadows (Dire Maul)" },
+        { "Trinket",  18467,  "Quest: Harnessing Shadows (Dire Maul West)" },
         SAGEBLADE,
         { "Off Hand", 19309,  AV_EX },
         { "Wand",     13396,  "Stratholme: Skul (rare)" },
@@ -518,14 +518,14 @@ local guides = {
         TIMBER_MANT,
         ARCANOWEAVE,
         ROBE_VOID,
-        { "Wrist",    18497,  "Dire Maul: Trash Drop" },
+        { "Wrist",    18497,  "Dire Maul North: Guard Mol'dar / Guard Fengus / Guard Slip'kik" },
         { "Hands",    226911, D2_HANDS },
         ARCHMAGE_BT,
         { "Legs",     13170,  "Lower Blackrock Spire: Highlord Omokk" },
         OMNICAST,
         RUNEBAND,
         CHANNELER,
-        { "Trinket",  18467,  "Quest: Harnessing Shadows (Dire Maul)" },
+        { "Trinket",  18467,  "Quest: Harnessing Shadows (Dire Maul West)" },
         EYE_BEAST,
         SAGEBLADE,
         THERAZANE,
@@ -537,7 +537,7 @@ local guides = {
         TIMBER_MANT,
         ARCANOWEAVE,
         ROBE_VOID,
-        { "Wrist",    18497,  "Dire Maul: Trash Drop" },
+        { "Wrist",    18497,  "Dire Maul North: Guard Mol'dar / Guard Fengus / Guard Slip'kik" },
         { "Hands",    226911, D2_HANDS },
         ARCHMAGE_BT,
         { "Legs",     13170,  "Lower Blackrock Spire: Highlord Omokk" },
@@ -545,7 +545,7 @@ local guides = {
         CHANNELER,
         RUNEBAND,
         WEAKNESS,
-        { "Trinket",  18467,  "Quest: Harnessing Shadows (Dire Maul)" },
+        { "Trinket",  18467,  "Quest: Harnessing Shadows (Dire Maul West)" },
         SAGEBLADE,
         THERAZANE,
         BONECREEPER,
@@ -666,14 +666,14 @@ local ALTS = {
         SPAULDERS, HOWLERS, GAUNTLETS,
         { "Finger", 260219, "Quest: Blackmaw Reclamation (Blackmaw Hold)" },
         LODESTONE, NIGHTFALL,
-        { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },
+        { "Ranged", 18323, "Dire Maul East: Zevrim Thornhoof", note = "1% hit" },
     },
     ["WARRIOR:Fury"] = {
         SPAULDERS, GAUNTLETS,
         { "Waist", 20041, "Arathi Basin: League of Arathor", 20204, "Arathi Basin: The Defilers" },
         CUTTHROAT, LODESTONE,
         { "Main Hand", 11684, "Blackrock Depths: Emperor Dagran Thaurissan" },
-        { "Ranged",    18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },
+        { "Ranged",    18323, "Dire Maul East: Zevrim Thornhoof", note = "1% hit" },
     },
     ["WARRIOR:Protection"] = {
         SPAULDERS,
@@ -808,12 +808,12 @@ local ALTS = {
     ["DRUID:Balance"] = { OBSIDIAN },
     ["DRUID:Feral"] = {
         PAULDRONS,
-        { "Wrist", 270124, "Quest: Lethtendris's Web (Dire Maul)" },
+        { "Wrist", 270124, "Quest: Lethtendris's Web (Dire Maul East)" },
         GLOVES,
         { "Feet",  12553,  "Blackrock Depths: Princess Moira Bronzebeard" },
         { "Finger", 22255, "Blackrock Depths: Secret Safe" },
         LODESTONE,
-        { "Two Hand", 18420, "Quest: The Treasure of the Shen'dralar (Dire Maul)" },
+        { "Two Hand", 18420, "Quest: The Treasure of the Shen'dralar (Dire Maul West)" },
     },
     ["DRUID:Feral Tank"] = {
         { "Head",  226801, D2_HEAD, note = "tank version" },
@@ -901,7 +901,7 @@ local REALISTIC = {
         { "Trinket", 280065, "Blackmaw Hold: Blackmaw Behemoth" },                                 -- Behemoth Bones
         { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Two Hand", 280018, "The Shaper's Terrace: Thunderhoof" },                               -- Hammer of Thundering Hooves
-        { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
+        { "Ranged", 18323, "Dire Maul East: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
     },
     ["WARRIOR:Fury"] = {
         { "Head", 20521, "Quest: Voodoo Feathers (Sunken Temple)", note = "1% hit" },              -- Fury Visor
@@ -920,7 +920,7 @@ local REALISTIC = {
         { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Main Hand", 12940, "Upper Blackrock Spire: Warchief Rend Blackhand" },                  -- Dal'Rend's Sacred Charge
         { "Off Hand", 12939, "Upper Blackrock Spire: Warchief Rend Blackhand" },                   -- Dal'Rend's Tribal Guardian
-        { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
+        { "Ranged", 18323, "Dire Maul East: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
     },
     ["WARRIOR:Protection"] = {
         { "Head", 226869, D2_HEAD, note = "9 defense" },                                           -- Faceguard of Heroism
@@ -954,7 +954,7 @@ local REALISTIC = {
         { "Feet", 226983, D2_LEGS },                                                               -- Soulforge Treads
         { "Finger", 16058, "Quest: In Dreams (Western Plaguelands)" },                             -- Fordring's Seal
         { "Finger", 13178, "Lower Blackrock Spire: Urok Doomhowl" },                               -- Rosewine Circle
-        { "Trinket", 18472, "Quest: The Light and How To Swing It (Dire Maul)" },                  -- Royal Seal (Paladin)
+        { "Trinket", 18472, "Quest: The Light and How To Swing It (Dire Maul West)" },                  -- Royal Seal (Paladin)
         { "Trinket", 11832, "Blackrock Depths: Ambassador Flamelash" },                            -- Burst of Knowledge
         { "Main Hand", 276404, "Stratholme: Crimson Hammersmith" },                                -- Masterwork Crimson Hammer
         { "Off Hand", 15805, "Quest: Kirtonos the Herald (Scholomance)" },                         -- Penelope's Rose
@@ -1014,7 +1014,7 @@ local REALISTIC = {
         { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Main Hand", 13984, "Quest: The Lich, Ras Frostwhisper (Scholomance)" },                 -- Darrowspike
         { "Off Hand", 18392, "Dire Maul West: Prince Tortheldrin" },                               -- Distracting Dagger
-        { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
+        { "Ranged", 18323, "Dire Maul East: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
     },
     ["ROGUE:Combat"] = {
         { "Head", 226829, D2_HEAD },                                                               -- Darkmantle Cap
@@ -1033,7 +1033,7 @@ local REALISTIC = {
         { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Main Hand", 12940, "Upper Blackrock Spire: Warchief Rend Blackhand" },                  -- Dal'Rend's Sacred Charge
         { "Off Hand", 12939, "Upper Blackrock Spire: Warchief Rend Blackhand" },                   -- Dal'Rend's Tribal Guardian
-        { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
+        { "Ranged", 18323, "Dire Maul East: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
     },
     ["ROGUE:Subtlety"] = {
         { "Head", 226829, D2_HEAD },                                                               -- Darkmantle Cap
@@ -1052,7 +1052,7 @@ local REALISTIC = {
         { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Main Hand", 18758, "Scholomance: Death Knight Darkreaver (summoned)" },                 -- Specter's Blade
         { "Off Hand", 18392, "Dire Maul West: Prince Tortheldrin" },                               -- Distracting Dagger
-        { "Ranged", 18323, "Dire Maul: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
+        { "Ranged", 18323, "Dire Maul East: Zevrim Thornhoof", note = "1% hit" },                       -- Satyr's Bow
     },
     ["PRIEST:Discipline"] = {
         { "Head", 226947, D2_HEAD },                                                               -- Virtuous Crown
@@ -1067,7 +1067,7 @@ local REALISTIC = {
         { "Feet", 226952, D2_LEGS },                                                               -- Virtuous Sandals
         { "Finger", 16058, "Quest: In Dreams (Western Plaguelands)" },                             -- Fordring's Seal
         { "Finger", 13178, "Lower Blackrock Spire: Urok Doomhowl" },                               -- Rosewine Circle
-        { "Trinket", 18469, "Quest: Holy Bologna: What the Light Won't Tell You (Dire Maul)" },    -- Royal Seal (Priest)
+        { "Trinket", 18469, "Quest: Holy Bologna: What the Light Won't Tell You (Dire Maul West)" },    -- Royal Seal (Priest)
         { "Trinket", 11832, "Blackrock Depths: Ambassador Flamelash" },                            -- Burst of Knowledge
         { "Main Hand", 13360, "Stratholme: Balnazzar" },                                           -- Gift of the Elven Magi
         { "Off Hand", 15805, "Quest: Kirtonos the Herald (Scholomance)" },                         -- Penelope's Rose
@@ -1086,7 +1086,7 @@ local REALISTIC = {
         { "Feet", 226952, D2_LEGS },                                                               -- Virtuous Sandals
         { "Finger", 16058, "Quest: In Dreams (Western Plaguelands)" },                             -- Fordring's Seal
         { "Finger", 13178, "Lower Blackrock Spire: Urok Doomhowl" },                               -- Rosewine Circle
-        { "Trinket", 18469, "Quest: Holy Bologna: What the Light Won't Tell You (Dire Maul)" },    -- Royal Seal (Priest)
+        { "Trinket", 18469, "Quest: Holy Bologna: What the Light Won't Tell You (Dire Maul West)" },    -- Royal Seal (Priest)
         { "Trinket", 11832, "Blackrock Depths: Ambassador Flamelash" },                            -- Burst of Knowledge
         { "Main Hand", 13360, "Stratholme: Balnazzar" },                                           -- Gift of the Elven Magi
         { "Off Hand", 15805, "Quest: Kirtonos the Herald (Scholomance)" },                         -- Penelope's Rose
@@ -1125,7 +1125,7 @@ local REALISTIC = {
         { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
         { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
         { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
-        { "Trinket", 18471, "Quest: Frost Shock and You (Dire Maul)" },                            -- Royal Seal (Shaman)
+        { "Trinket", 18471, "Quest: Frost Shock and You (Dire Maul West)" },                            -- Royal Seal (Shaman)
         { "Main Hand", 13964, "Scholomance: Darkmaster Gandling" },                                -- Witchblade
         { "Off Hand", 22336, "Upper Blackrock Spire: Lord Valthalak" },                            -- Draconian Aegis of the Legion
         { "Relic", 228176, "Pix Xizzix (Booty Bay): 15 Tarnished Undermine Real" },                -- Totem of Thunder
@@ -1161,7 +1161,7 @@ local REALISTIC = {
         { "Feet", 227015, D2_LEGS },                                                               -- Greaves of The Five Thunders
         { "Finger", 16058, "Quest: In Dreams (Western Plaguelands)" },                             -- Fordring's Seal
         { "Finger", 13178, "Lower Blackrock Spire: Urok Doomhowl" },                               -- Rosewine Circle
-        { "Trinket", 18471, "Quest: Frost Shock and You (Dire Maul)" },                            -- Royal Seal (Shaman)
+        { "Trinket", 18471, "Quest: Frost Shock and You (Dire Maul West)" },                            -- Royal Seal (Shaman)
         { "Trinket", 11832, "Blackrock Depths: Ambassador Flamelash" },                            -- Burst of Knowledge
         { "Main Hand", 13360, "Stratholme: Balnazzar" },                                           -- Gift of the Elven Magi
         { "Off Hand", 15805, "Quest: Kirtonos the Herald (Scholomance)" },                         -- Penelope's Rose
@@ -1181,7 +1181,7 @@ local REALISTIC = {
         { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
         { "Finger", 12543, "Quest: The Princess's Surprise (Blackrock Depths)", 12545, "Quest: The Princess Saved? (Blackrock Depths)" }, -- Songstone of Ironforge / Eye of Orgrimmar
         { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
-        { "Trinket", 18468, "Quest: The Arcanist's Cookbook (Dire Maul)" },                        -- Royal Seal (Mage)
+        { "Trinket", 18468, "Quest: The Arcanist's Cookbook (Dire Maul West)" },                        -- Royal Seal (Mage)
         { "Two Hand", 22335, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },           -- Lord Valthalak's Staff of Command
         { "Wand", 13938, "Scholomance: Darkmaster Gandling" },                                     -- Bonecreeper Stylus
     },
@@ -1237,7 +1237,7 @@ local REALISTIC = {
         { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
         { "Finger", 18314, "Dire Maul East: Alzzin the Wildshaper", note = "1% hit" },             -- Ring of Demonic Guile
         { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
-        { "Trinket", 18467, "Quest: Harnessing Shadows (Dire Maul)" },                             -- Royal Seal (Warlock)
+        { "Trinket", 18467, "Quest: Harnessing Shadows (Dire Maul West)" },                             -- Royal Seal (Warlock)
         { "Main Hand", 18372, "Dire Maul West: Immol'thar" },                                      -- Blade of the New Moon
         { "Off Hand", 18316, "Dire Maul East: Pusillin" },                                         -- Obsidian Bauble
         { "Wand", 13396, "Stratholme: Skul (rare)" },                                              -- Skul's Ghastly Touch
@@ -1256,7 +1256,7 @@ local REALISTIC = {
         { "Finger", 22339, "Upper Blackrock Spire: Lord Valthalak", note = "1% hit" },             -- Rune Band of Wizardry
         { "Finger", 18314, "Dire Maul East: Alzzin the Wildshaper", note = "1% hit" },             -- Ring of Demonic Guile
         { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
-        { "Trinket", 18467, "Quest: Harnessing Shadows (Dire Maul)" },                             -- Royal Seal (Warlock)
+        { "Trinket", 18467, "Quest: Harnessing Shadows (Dire Maul West)" },                             -- Royal Seal (Warlock)
         { "Main Hand", 18372, "Dire Maul West: Immol'thar" },                                      -- Blade of the New Moon
         { "Off Hand", 11904, "Quest: It's Dangerous to Go Alone (Un'Goro Crater)" },               -- Spirit of Aquementas
         { "Wand", 13938, "Scholomance: Darkmaster Gandling" },                                     -- Bonecreeper Stylus
@@ -1274,7 +1274,7 @@ local REALISTIC = {
         { "Feet", 11822, "Blackrock Depths: Golem Lord Argelmach" },                               -- Omnicast Boots
         { "Finger", 18314, "Dire Maul East: Alzzin the Wildshaper", note = "1% hit" },             -- Ring of Demonic Guile
         { "Finger", 22433, "Scholomance: Darkmaster Gandling" },                                   -- Don Mauricio's Band of Domination
-        { "Trinket", 18467, "Quest: Harnessing Shadows (Dire Maul)" },                             -- Royal Seal (Warlock)
+        { "Trinket", 18467, "Quest: Harnessing Shadows (Dire Maul West)" },                             -- Royal Seal (Warlock)
         { "Trinket", 13968, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Eye of the Beast
         { "Main Hand", 18396, "Dire Maul West: Prince Tortheldrin" },                              -- Mind Carver
         { "Off Hand", 18316, "Dire Maul East: Pusillin" },                                         -- Obsidian Bauble
@@ -1305,7 +1305,7 @@ local REALISTIC = {
         { "Shoulder", 12927, "Upper Blackrock Spire: Pyroguard Emberseer", note = "1.5% hit" },    -- Truestrike Shoulders
         { "Back", 13340, "Stratholme: Baron Rivendare" },                                          -- Cape of the Black Baron
         { "Chest", 226795, D2_HEAD },                                                              -- Feralheart Tunic
-        { "Wrist", 270124, "Quest: Lethtendris's Web (Dire Maul)" },                               -- Warpwood Bracers
+        { "Wrist", 270124, "Quest: Lethtendris's Web (Dire Maul East)" },                               -- Warpwood Bracers
         { "Hands", 226793, D2_HANDS },                                                             -- Feralheart Fists
         { "Waist", 226789, D2_HANDS, note = "0.7% hit" },                                          -- Feralheart Girdle
         { "Legs", 226791, D2_LEGS },                                                               -- Feralheart Trousers
@@ -1314,7 +1314,7 @@ local REALISTIC = {
         { "Finger", 22255, "Blackrock Depths: Secret Safe" },                                      -- Magma Forged Band
         { "Trinket", 13965, "Quest: For The Horde! / General Drakkisath's Demise (Blackrock Spire)" },               -- Blackhand's Breadth
         { "Trinket", 11815, "Blackrock Depths: Emperor Dagran Thaurissan" },                       -- Hand of Justice
-        { "Two Hand", 18420, "Quest: The Treasure of the Shen'dralar (Dire Maul)" },               -- Bonecrusher
+        { "Two Hand", 18420, "Quest: The Treasure of the Shen'dralar (Dire Maul West)" },               -- Bonecrusher
         { "Relic", 22397, "Blackrock Depths: Lord Roccor" },                                       -- Idol of Ferocity
     },
     ["DRUID:Feral Tank"] = {
@@ -1362,22 +1362,29 @@ local REALISTIC = {
 local AV_REP = "Alterac Valley: Revered with Stormpike Guard / Frostwolf Clan"
 local HUNTER_AMMO = {
     items = {
-        { "Quiver", 19319, AV_REP, note = "Best quiver (bows, crossbows), 15% ranged attack speed" },
-        { "Quiver", 19320, AV_REP, note = "Best ammo pouch (guns), 15% ranged attack speed" },
-        { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Best arrows (bows, crossbows), +20 dps" },
-        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Best bullets (guns), +20.5 dps" },
+        { "Quiver", 19319, AV_REP, note = "Best quiver (bows, crossbows), 15% ranged attack speed", ammo = "bow" },
+        { "Quiver", 19320, AV_REP, note = "Best ammo pouch (guns), 15% ranged attack speed", ammo = "gun" },
+        { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Best arrows (bows, crossbows), +20 dps", ammo = "bow" },
+        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Best bullets (guns), +20.5 dps", ammo = "gun" },
     },
     alts = {
-        { "Quiver", 2662,  "Blackrock Depths: Ribbly Screwspigot", note = "Quiver, 14% attack speed" },
-        { "Quiver", 2663,  "Blackrock Depths: Ribbly Screwspigot", note = "Ammo pouch for guns, 14% attack speed" },
+        { "Quiver", 2662, "Blackrock Depths: Ribbly Screwspigot", note = "Quiver, 14% attack speed", ammo = "bow" },
+        { "Quiver", 2663, "Blackrock Depths: Ribbly Screwspigot", note = "Ammo pouch for guns, 14% attack speed", ammo = "gun" },
     },
     realistic = {
-        { "Quiver", 19320, AV_REP, note = "Ammo pouch for guns, 15% attack speed" },
-        { "Quiver", 19319, AV_REP, note = "Quiver for bows, 15% attack speed" },
-        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Best bullets (guns), +20.5 dps" },
-        { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Best arrows (bows, crossbows), +20 dps" },
+        { "Quiver", 19320, AV_REP, note = "Ammo pouch for guns, 15% attack speed", ammo = "gun" },
+        { "Quiver", 19319, AV_REP, note = "Quiver for bows, 15% attack speed", ammo = "bow" },
+        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Best bullets (guns), +20.5 dps", ammo = "gun" },
+        { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Best arrows (bows, crossbows), +20 dps", ammo = "bow" },
     },
 }
+
+-- which ranged weapon each quiver / ammo item goes with (the Gear tab ranks
+-- only the ones that match the hunter's bow or gun)
+ns.AMMO_KIND = ns.AMMO_KIND or {}
+for _, list in pairs(HUNTER_AMMO) do
+    for _, row in ipairs(list) do ns.AMMO_KIND[row[2]] = row.ammo end
+end
 
 -- Tier 0.5 piece -> the Tier 0 piece its quest needs (kovarel.com)
 local TIER0 = {
@@ -1516,23 +1523,23 @@ local TIER0 = {
 -- kit item. "Weapon" becomes Two Hand or Main Hand to match the spec's weapon.
 local ENCHANTS = {
     ["WARLOCK:Affliction"] = {
-        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Neck", 273631, "Enchanting", note = "+6 spell power" },
         { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
         { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
-        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Weapon", 273629, "Enchanting", note = "Revelation" },
         { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
     },
     ["MAGE:Arcane"] = {
-        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Neck", 273631, "Enchanting", note = "+6 spell power" },
         { "Chest", 273560, "Enchanting", note = "Intellect +10" },
         { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
         { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
-        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Weapon", 273629, "Enchanting", note = "Revelation" },
         { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
@@ -1561,12 +1568,12 @@ local ENCHANTS = {
         { "Off Hand", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
     },
     ["DRUID:Balance"] = {
-        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Neck", 273631, "Enchanting", note = "+6 spell power" },
         { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
         { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
-        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Weapon", 273629, "Enchanting", note = "Revelation" },
         { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
@@ -1596,23 +1603,23 @@ local ENCHANTS = {
         { "Off Hand", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
     },
     ["WARLOCK:Demonology"] = {
-        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Neck", 273631, "Enchanting", note = "+6 spell power" },
         { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
         { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
-        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Weapon", 273629, "Enchanting", note = "Revelation" },
         { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
     },
     ["WARLOCK:Destruction"] = {
-        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Neck", 273631, "Enchanting", note = "+6 spell power" },
         { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
         { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
-        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Weapon", 273629, "Enchanting", note = "Revelation" },
         { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
@@ -1629,12 +1636,12 @@ local ENCHANTS = {
         { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
     },
     ["SHAMAN:Elemental"] = {
-        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Neck", 273631, "Enchanting", note = "+6 spell power" },
         { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
         { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
-        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Weapon", 273629, "Enchanting", note = "Revelation" },
         { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
@@ -1673,23 +1680,23 @@ local ENCHANTS = {
         { "Weapon", 273589, "Enchanting", note = "Agility +25" },
     },
     ["MAGE:Fire"] = {
-        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Neck", 273631, "Enchanting", note = "+6 spell power" },
         { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
         { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
-        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Weapon", 273629, "Enchanting", note = "Revelation" },
         { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
     },
     ["MAGE:Frost"] = {
-        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Neck", 273631, "Enchanting", note = "+6 spell power" },
         { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
         { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
-        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Weapon", 273629, "Enchanting", note = "Revelation" },
         { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
@@ -1742,7 +1749,7 @@ local ENCHANTS = {
         { "Ranged", 279272, "Crafted: Engineering", note = "+2% ranged crit" },
     },
     ["PALADIN:Protection"] = {
-        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Neck", 273631, "Enchanting", note = "+6 spell power" },
         { "Back", 273604, "Enchanting", note = "Agility +5" },
         { "Chest", 279258, "Crafted: Leatherworking", note = "Defense +4, stamina +10" },
@@ -1799,12 +1806,12 @@ local ENCHANTS = {
         { "Weapon", 273566, "Enchanting", note = "Crusader proc: heal and +100 Strength" },
     },
     ["PRIEST:Shadow"] = {
-        { "Head", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Head", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Neck", 273631, "Enchanting", note = "+6 spell power" },
         { "Chest", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Wrist", 273606, "Enchanting", note = "+16 spell power" },
         { "Hands", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
-        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul)", note = "+8 spell damage and healing" },
+        { "Legs", 18330, "Quest: Libram of Focus (Dire Maul West)", note = "+8 spell damage and healing" },
         { "Feet", 252487, "Crafted: Leatherworking", note = "Spell power +6, armor +40" },
         { "Weapon", 273629, "Enchanting", note = "Revelation" },
         { "Off Hand", 273600, "Enchanting", note = "+6 Intellect, +5 Spirit" },
