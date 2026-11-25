@@ -118,6 +118,33 @@ end
 
 -- Spec from talent points: the tab with the most points. Forever uses classic
 -- talents, where the retail spec call may not say which tree you're in.
+local function norm(text) return (text or ""):lower():gsub("[%s%-_]", "") end
+
+local function matchSpec(specs, name)
+    if type(name) ~= "string" then return nil end
+    local n = norm(name)
+    for _, sp in ipairs(specs) do
+        if norm(sp) == n then return sp end
+    end
+end
+
+-- One talent tab's name and points, whatever order this client returns them
+-- in: the name is the first text that is a spec name, the points the first
+-- whole number from 0 to 71 after it (tab IDs and icon IDs are larger).
+local function readTab(specs, ...)
+    local name, after
+    for i = 1, select("#", ...) do
+        local v = select(i, ...)
+        if not name then
+            name = matchSpec(specs, v)
+            if name then after = i end
+        elseif type(v) == "number" and v >= 0 and v <= 71 and v == math.floor(v) then
+            return name, v
+        end
+    end
+    return name, nil
+end
+
 local function specFromTalents(specs)
     if not GetNumTalentTabs or not GetTalentTabInfo then return nil end
     local okN, n = pcall(GetNumTalentTabs)
@@ -126,20 +153,31 @@ local function specFromTalents(specs)
     for tab = 1, n do
         local r = { pcall(GetTalentTabInfo, tab) }
         if r[1] then
-            local name, pts
-            if type(r[2]) == "number" and type(r[3]) == "string" then
-                name, pts = r[3], r[6]          -- id, name, description, icon, pointsSpent
-            elseif type(r[2]) == "string" then
-                name, pts = r[2], r[4]          -- name, icon, pointsSpent
-            end
-            if type(name) == "string" and type(pts) == "number" and pts > bestPts then
-                for _, sp in ipairs(specs) do
-                    if sp:lower() == name:lower() then best, bestPts = sp, pts end
-                end
-            end
+            local name, pts = readTab(specs, (unpack or table.unpack)(r, 2))
+            if name and pts and pts > bestPts then best, bestPts = name, pts end
         end
     end
     return best
+end
+
+-- /bis spec: what the game's talent and spec calls return (to fix detection)
+function ns.DebugSpec()
+    local _, cls = UnitClass("player")
+    local specs = ns.GetSpecsForClass(cls)
+    local out = {}
+    local function add(...) local t = {} for i = 1, select("#", ...) do t[i] = tostring((select(i, ...))) end table.insert(out, table.concat(t, ", ")) end
+    add("class", cls, "specs:", table.concat(specs, "/"))
+    add("GetNumTalentTabs", GetNumTalentTabs and select(2, pcall(GetNumTalentTabs)) or "missing")
+    if GetTalentTabInfo then
+        for tab = 1, 3 do add("tab " .. tab .. ":", select(2, pcall(GetTalentTabInfo, tab))) end
+    else add("GetTalentTabInfo missing") end
+    add("GetSpecialization", GetSpecialization and select(2, pcall(GetSpecialization)) or "missing")
+    if C_SpecializationInfo and C_SpecializationInfo.GetSpecialization then
+        add("C_SpecializationInfo.GetSpecialization", select(2, pcall(C_SpecializationInfo.GetSpecialization)))
+    end
+    if GetPrimaryTalentTree then add("GetPrimaryTalentTree", select(2, pcall(GetPrimaryTalentTree))) end
+    add("from talents:", tostring(specFromTalents(specs)), "picked:", tostring(ns.char and ns.char.mySpec), "result:", select(2, ns.GetActiveSpec()))
+    for _, line in ipairs(out) do ns.Print(line) end
 end
 
 -- The character's real class and active spec (ignores what the browser shows):
@@ -156,14 +194,19 @@ function ns.GetActiveSpec()
             if s == pick then return playerClass, s end
         end
     end
-    local ok, idx = pcall(GetSpecialization)
-    if ok and idx and GetSpecializationInfo then
-        local _, specName = GetSpecializationInfo(idx)
-        if specName then
-            for _, s in ipairs(specs) do
-                if s:lower() == specName:lower() then return playerClass, s end
-            end
+    if GetPrimaryTalentTree and GetTalentTabInfo then          -- Cataclysm-style clients
+        local ok, tree = pcall(GetPrimaryTalentTree)
+        if ok and type(tree) == "number" then
+            local name = readTab(specs, select(2, pcall(GetTalentTabInfo, tree)))
+            if name then return playerClass, name end
         end
+    end
+    local getSpec = GetSpecialization or (C_SpecializationInfo and C_SpecializationInfo.GetSpecialization)
+    local ok, idx = false, nil
+    if getSpec then ok, idx = pcall(getSpec) end
+    if ok and idx and GetSpecializationInfo then
+        local name = readTab(specs, select(2, pcall(GetSpecializationInfo, idx)))
+        if name then return playerClass, name end
     end
     return playerClass, specs[1]
 end

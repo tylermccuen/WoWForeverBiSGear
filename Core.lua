@@ -132,6 +132,8 @@ SlashCmdList["FOREVERBIS"] = function(msg)
         ns.ShowLinkPopupForItem(id)
     elseif cmd == "raid" or cmd == "check" then
         ns.ToggleRaidCheck()
+    elseif cmd == "spec" then
+        ns.DebugSpec()
     elseif cmd == "minimap" then
         ns.db.minimap.hide = not ns.db.minimap.hide
         ns.UpdateMinimap()

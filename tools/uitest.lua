@@ -390,10 +390,10 @@ check("your spec comes from talent points", function()
   GetNumTalentTabs = function() return 3 end
   local pts = { 5, 31, 15 }
   local names = { "Beast Mastery", "Marksmanship", "Survival" }
-  GetTalentTabInfo = function(i) return 100 + i, names[i], "", 0, pts[i] end
+  GetTalentTabInfo = function(i) return 360 + i, names[i], "", 132160 + i, pts[i] end
   local _, sp = ns.GetActiveSpec()
   if sp ~= "Marksmanship" then error("got " .. tostring(sp)) end
-  GetTalentTabInfo = function(i) return names[i], 0, pts[i] end   -- older return order
+  GetTalentTabInfo = function(i) return names[i], "Interface\\Icons\\Tab" .. i, pts[i] end   -- older return order
   _, sp = ns.GetActiveSpec()
   if sp ~= "Marksmanship" then error("old order got " .. tostring(sp)) end
   GetNumTalentTabs, GetTalentTabInfo = nil, nil
