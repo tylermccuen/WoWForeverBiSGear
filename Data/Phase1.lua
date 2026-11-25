@@ -1362,22 +1362,29 @@ local REALISTIC = {
 local AV_REP = "Alterac Valley: Revered with Stormpike Guard / Frostwolf Clan"
 local HUNTER_AMMO = {
     items = {
-        { "Quiver", 19319, AV_REP, note = "Best quiver (bows, crossbows), 15% ranged attack speed" },
-        { "Quiver", 19320, AV_REP, note = "Best ammo pouch (guns), 15% ranged attack speed" },
-        { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Best arrows (bows, crossbows), +20 dps" },
-        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Best bullets (guns), +20.5 dps" },
+        { "Quiver", 19319, AV_REP, note = "Best quiver (bows, crossbows), 15% ranged attack speed", ammo = "bow" },
+        { "Quiver", 19320, AV_REP, note = "Best ammo pouch (guns), 15% ranged attack speed", ammo = "gun" },
+        { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Best arrows (bows, crossbows), +20 dps", ammo = "bow" },
+        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Best bullets (guns), +20.5 dps", ammo = "gun" },
     },
     alts = {
-        { "Quiver", 2662,  "Blackrock Depths: Ribbly Screwspigot", note = "Quiver, 14% attack speed" },
-        { "Quiver", 2663,  "Blackrock Depths: Ribbly Screwspigot", note = "Ammo pouch for guns, 14% attack speed" },
+        { "Quiver", 2662, "Blackrock Depths: Ribbly Screwspigot", note = "Quiver, 14% attack speed", ammo = "bow" },
+        { "Quiver", 2663, "Blackrock Depths: Ribbly Screwspigot", note = "Ammo pouch for guns, 14% attack speed", ammo = "gun" },
     },
     realistic = {
-        { "Quiver", 19320, AV_REP, note = "Ammo pouch for guns, 15% attack speed" },
-        { "Quiver", 19319, AV_REP, note = "Quiver for bows, 15% attack speed" },
-        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Best bullets (guns), +20.5 dps" },
-        { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Best arrows (bows, crossbows), +20 dps" },
+        { "Quiver", 19320, AV_REP, note = "Ammo pouch for guns, 15% attack speed", ammo = "gun" },
+        { "Quiver", 19319, AV_REP, note = "Quiver for bows, 15% attack speed", ammo = "bow" },
+        { "Ammo",   13377, "Stratholme: Cannon Master Willey", note = "Best bullets (guns), +20.5 dps", ammo = "gun" },
+        { "Ammo",   12654, "Lower Blackrock Spire: Shadow Hunter Vosh'gajin", note = "Best arrows (bows, crossbows), +20 dps", ammo = "bow" },
     },
 }
+
+-- which ranged weapon each quiver / ammo item goes with (the Gear tab ranks
+-- only the ones that match the hunter's bow or gun)
+ns.AMMO_KIND = ns.AMMO_KIND or {}
+for _, list in pairs(HUNTER_AMMO) do
+    for _, row in ipairs(list) do ns.AMMO_KIND[row[2]] = row.ammo end
+end
 
 -- Tier 0.5 piece -> the Tier 0 piece its quest needs (kovarel.com)
 local TIER0 = {

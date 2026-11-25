@@ -589,6 +589,32 @@ check("holiday theme on / off", function()
   ns.RefreshBrowser()
   ns.db.holidayTheme = "auto"
 end)
+check("gear tab: quiver / ammo follow the bow or gun", function()
+  local function quiverPlaces(g)
+    local out = {}
+    for _, r in ipairs(ns.GetRankedRows(g)) do
+      if r.slot == "Quiver" or r.slot == "Ammo" then table.insert(out, r.slot .. r.place .. "=" .. r.id) end
+    end
+    return table.concat(out, " ")
+  end
+  local found
+  for _, ph in ipairs(ns.PhaseList) do
+    local g = ns.GetGuide("HUNTER", "Marksmanship", ph.id)
+    if g and quiverPlaces(g) ~= "" then found = g break end
+  end
+  if not found then error("no hunter guide with a quiver") end
+  local _GII, _GIL = GetItemInfoInstant, GetInventoryItemLink
+  GetItemInfoInstant = function() return 1, "Weapon", "Bows", "INVTYPE_RANGED", 1, 2, 2 end
+  local bow = quiverPlaces(found)
+  GetItemInfoInstant = function() return 1, "Weapon", "Guns", "INVTYPE_RANGEDRIGHT", 1, 2, 3 end
+  GetInventoryItemLink = function(_, inv) if inv == 18 then return "|Hitem:1|h" end end
+  local gun = quiverPlaces(found)
+  GetItemInfoInstant, GetInventoryItemLink = _GII, _GIL
+  print("   bow:", bow) print("   gun:", gun)
+  if bow ~= "Quiver1=19319 Quiver2=2662 Ammo1=12654" then error("bow quiver places wrong: " .. bow) end
+  if gun ~= "Quiver1=19320 Quiver2=2663 Ammo1=13377" then error("gun quiver places wrong: " .. gun) end
+end)
+
 check("gear tab: podium cards", function()
   if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end
   ns.char.selectedClass, ns.char.selectedSpec, ns.char.listMode = "WARRIOR", "Fury", "ranked"

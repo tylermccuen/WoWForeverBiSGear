@@ -426,10 +426,39 @@ local function copyRow(r)
 end
 
 -- Fresh rows every call (the browser writes its own fields onto them)
+-- "bow" or "gun": the hunter's equipped ranged weapon, else the guide's 1st
+-- place ranged weapon. Crossbows use arrows and quivers, like bows.
+local RANGED_KIND = { [2] = "bow", [18] = "bow", [3] = "gun" }
+local function rangedKind(item)
+    if not item or not GetItemInfoInstant then return nil end
+    local ok, _, _, _, _, _, classID, subclassID = pcall(GetItemInfoInstant, item)
+    if ok and classID == 2 then return RANGED_KIND[subclassID] end
+end
+
+function ns.RangedKind(guide)
+    local equipped = GetInventoryItemLink and GetInventoryItemLink("player", 18)
+    local kind = rangedKind(equipped)
+    if kind then return kind end
+    for _, row in ipairs(guide and guide.items or {}) do
+        if row[1] == "Ranged" then
+            kind = rangedKind(row[2])
+            if kind then return kind end
+        end
+    end
+    return "bow"
+end
+
 function ns.GetRankedRows(guide)
     local faction = UnitFactionGroup("player")
     local out, count, ids, last = {}, {}, {}, {}
+    -- quivers and ammo come in bow and gun versions: rank only the matching ones
+    local kind = ns.AMMO_KIND and next(ns.AMMO_KIND) and ns.RangedKind(guide)
+    local function fits(id)
+        local k = kind and ns.AMMO_KIND[id]
+        return not k or k == kind
+    end
     for _, r in ipairs(ns.GetGuideRows(guide, false, "bis")) do
+      if fits(r.id) then
         local c = copyRow(r)
         if not r.isAlt then
             count[r.slot] = (count[r.slot] or 0) + 1
@@ -439,6 +468,7 @@ function ns.GetRankedRows(guide)
         end
         table.insert(out, c)
         last[r.slot] = #out
+      end
     end
     local extra = {}
     for _, row in ipairs(guide.alts or {}) do table.insert(extra, row) end
@@ -452,7 +482,7 @@ function ns.GetRankedRows(guide)
             fac = (row[4] ~= row[2]) and "Horde" or nil
         end
         local n = count[slot]
-        if n and n < ns.MAX_PLACES and not ids[slot][id] then
+        if n and n < ns.MAX_PLACES and not ids[slot][id] and fits(id) then
             n = n + 1
             count[slot] = n
             ids[slot][id] = true
