@@ -2,6 +2,8 @@
 
 ## Unreleased (test build)
 - **1st, 2nd and 3rd place:** the BiS and Realistic tabs are now one **Gear** tab. Each slot shows its 1st place item with a gold trophy and a sparkle; click **+2 more** to see 2nd (silver) and 3rd (bronze) place under it, or tick **2nd & 3rd** to open every slot. 1st place comes from the BiS list (rings and trinkets have two, since you wear both), then the Alternatives, then the Realistic set. Some slots have fewer than three picks for now.
+- **Podium view:** the **View** button on the Gear tab switches to podium cards: one card per slot with 2nd, 1st and 3rd place standing on silver, gold and bronze steps. Hover an item for its dungeon, boss and drop chance; right-click to copy its link.
+- **Cleaner Gear list:** 1st place has a bold gold glow with slowly turning rays, 2nd and 3rd place hang off their slot with a branch line, the dungeon column is quieter, and the Enchant column moved off the Gear tab (it's still on the Enchants tab).
 - **Holiday theme:** during the Feast of Winter Veil (Dec 15 to Jan 2) the trophies become a Christmas tree, a snowman and a gingerbread man, with Christmas lights along the top of the window, holly by the title, and snowy trees and a moose in the footer. Settings has **Holiday theme: Auto / Always on / Off**, and `/bis holiday` switches between them.
 
 ## 1.7.4

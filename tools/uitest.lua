@@ -589,3 +589,15 @@ check("holiday theme on / off", function()
   ns.RefreshBrowser()
   ns.db.holidayTheme = "auto"
 end)
+check("gear tab: podium cards", function()
+  if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end
+  ns.char.selectedClass, ns.char.selectedSpec, ns.char.listMode = "WARRIOR", "Fury", "ranked"
+  ns.char.gearView = "podium"
+  ns.RefreshBrowser()
+  if not _G.ForeverBiSFrame.podiumOn then error("podium view not on") end
+  if visibleRows() ~= 0 then error("list rows still shown in podium view") end
+  ns.db.holidayTheme = "on"; ns.RefreshBrowser(); ns.db.holidayTheme = "auto"
+  ns.char.gearView = "list"
+  ns.RefreshBrowser()
+  if _G.ForeverBiSFrame.podiumOn or visibleRows() == 0 then error("list view didn't come back") end
+end)

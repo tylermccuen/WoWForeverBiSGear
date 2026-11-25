@@ -34,6 +34,7 @@ local charDefaults = {
     listMode      = "ranked",       -- "ranked" (Gear tab: 1st / 2nd / 3rd place), "enchants", "consumables" or "raid"
                                     -- ("bis" and "realistic" still work but have no tab)
     expandedSlots = {},             -- Gear list: slots opened to show their 2nd / 3rd place
+    gearView      = "list",         -- Gear tab: "list" rows or "podium" cards
     hideDone      = false,          -- hide slots where the BiS or Realistic item is owned
     savedSpecs    = {},             -- up to 5 "CLASS:Spec" picks for quick switching
     bankItems     = {},
