@@ -1333,7 +1333,7 @@ local function createFrame()
     frame = CreateFrame("Frame", "ForeverBiSFrame", UIParent, "BasicFrameTemplateWithInset")
     frame:SetSize(savedWidth(), ns.db.windowHeight or HEIGHT)
     frame:SetPoint("CENTER")
-    frame:SetFrameStrata("HIGH")
+    frame:SetFrameStrata("MEDIUM")   -- same layer as the game's windows: whichever you click comes to the front
     frame:SetToplevel(true)
     frame:EnableMouse(true)
     frame:SetMovable(true)
@@ -1569,7 +1569,7 @@ end
 
 function ns.ToggleBrowser()
     if not frame then createFrame() end
-    if frame:IsShown() then frame:Hide() else frame:Show() end
+    if frame:IsShown() then frame:Hide() else frame:Show(); frame:Raise() end
 end
 
 function ns.SetBrowserScale(scale)

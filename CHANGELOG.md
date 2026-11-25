@@ -1,6 +1,7 @@
 # Forever Best In Slot
 
 ## 1.7.4
+- **Plays nicer with other windows:** the browser, the raid check panel and the boss window now sit on the same layer as the game's own windows, so the guild window, quest log and others come to the front when you click them, and the browser comes back to the front when you click it.
 - **Open quests from the list:** click a quest you already have (the green "On quest" rows) to open it in your quest log. Shift-click still pins the quest giver on the map.
 - **Tidier source names:** "trash drop", "rare drop" and similar now read "Trash Drop", "Rare Drop", "World Drop" and so on.
 - **Says why a slot is done:** when a slot counts as done because of an item from the other list, the row now says so, for example "BiS equipped" on the Realistic tab or "Realistic in bags" on the BiS tab, instead of just "Done". Hovering the tick names the item.
