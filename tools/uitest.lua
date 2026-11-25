@@ -524,4 +524,18 @@ check("click a quest you have: opens the quest log", function()
   C_QuestLog.GetNumQuestLogEntries, C_QuestLog.GetInfo = saveN, saveI
   ns.ScanQuestLog()
 end)
+check("browser steps aside for the character window, then comes back", function()
+  local b = _G.ForeverBiSFrame
+  if not b:IsShown() then ns.ToggleBrowser() end
+  local saved, hooks, shown = CharacterFrame, {}, false
+  CharacterFrame = { IsShown = function() return shown end, GetRight = function() return 400 end,
+    HookScript = function(_, ev, f) hooks[ev] = f end, GetHeight = function() return 420 end,
+    GetEffectiveScale = function() return 1 end }
+  ns.FireEvent("PLAYER_LOGIN")
+  shown = true; hooks.OnShow()
+  if b:IsShown() then error("browser still open beside the character window") end
+  shown = false; hooks.OnHide()
+  if not b:IsShown() then error("browser didn't come back") end
+  CharacterFrame = saved
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

@@ -1576,6 +1576,7 @@ end
 
 function ns.ToggleBrowser()
     if not frame then createFrame() end
+    ns.browserSteppedAside = nil   -- you opened or closed it yourself
     if frame:IsShown() then frame:Hide() else frame:Show(); frame:Raise() end
 end
 
