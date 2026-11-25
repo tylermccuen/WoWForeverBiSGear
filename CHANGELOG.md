@@ -2,6 +2,7 @@
 
 ## 1.7.3
 - **Done ticks follow list updates:** a slot you ticked done is remembered together with the items the BiS and Realistic lists had for it (or the enchant). If a later update changes that slot's pick, the tick is cleared and a chat message says which slots changed, so you can check the new items. Slots you own the item for still tick themselves.
+- **Done ticks are easier to keep:** the browser opens on your real spec (from your talents), so it no longer sometimes opens on another spec that has its own, separate ticks. A tick also shows on your class's other specs when they list the same item for that slot.
 - **Up to 5 saved specs:** save up to 5 specs for quick switching (was 3); your own spec is still always first. The spec icons now sit in the title bar, so they no longer run into the checkboxes.
 - **Quest rows:** quest rewards no longer show "Quest" twice. The Dungeon column now names the place (for example Blackrock Spire for the Drakkisath quest trinkets), so they also sort with that dungeon. Reputation rewards (like Darkspear / Theramore Epaulets or The Watchers ring) say "Reputation", Alterac Valley rewards say "Alterac Valley", and world drops say "World drop", instead of leaving the column blank.
 - **Raid check next to the character window:** the panel (and the shrunk browser) now sits to the right of the character window's new side buttons instead of covering them, and the "things to fix" heading no longer runs under the Refresh button.

@@ -430,4 +430,14 @@ check("ticks clear when the lists change a slot", function()
   print("   " .. tostring(printed))
   ns.RefreshBrowser()
 end)
+check("ticks carry to another spec with the same items", function()
+  ns.char.done = {}
+  ns.SetDoneMark("HUNTER:Marksmanship", "Head#1", true, "1|2")
+  if ns.ResolveDoneMark("HUNTER:Survival", "Head#1", "1|2") ~= true then error("not shared") end
+  if ns.ResolveDoneMark("HUNTER:Survival", "Head#1", "9|2") ~= nil then error("shared across different items") end
+  if ns.ResolveDoneMark("MAGE:Fire", "Head#1", "1|2") ~= nil then error("shared across classes") end
+  ns.SetDoneMark("HUNTER:Survival", "Head#1", false, "1|2")   -- untick on the other spec sticks
+  if ns.ResolveDoneMark("HUNTER:Survival", "Head#1", "1|2") ~= false then error("untick lost") end
+  ns.char.done = {}
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)

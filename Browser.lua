@@ -233,18 +233,9 @@ local function ensureSelection()
     if ns.char.selectedClass and currentGuide() then return end
     local _, playerClass = UnitClass("player")
     ns.char.selectedClass = playerClass
-    local specs = ns.GetSpecsForClass(playerClass)
-    ns.char.selectedSpec = specs[1]
-
-    local ok, idx = pcall(GetSpecialization)
-    if ok and idx and GetSpecializationInfo then
-        local _, specName = GetSpecializationInfo(idx)
-        if specName then
-            for _, s in ipairs(specs) do
-                if s:lower() == specName:lower() then ns.char.selectedSpec = s end
-            end
-        end
-    end
+    -- open on your real spec (from talent points), like the gold-ringed icon
+    local _, mySpec = ns.GetActiveSpec()
+    ns.char.selectedSpec = mySpec or ns.GetSpecsForClass(playerClass)[1]
     if not currentGuide() then
         for _, cls in ipairs(ns.ClassOrder) do
             local s = ns.GetSpecsForClass(cls)[1]
@@ -622,7 +613,11 @@ local function createRow(i)
         if row.doneKey then
             local on = self:GetChecked() and true or false
             -- back to automatic when the tick matches what ownership says
-            if on == (row.autoDone or false) then on = nil end
+            -- (unless another spec's tick would then show through)
+            if on == (row.autoDone or false) then
+                local shared = ns.SharedDoneMark and ns.SharedDoneMark(row.specKey, row.doneKey, row.doneSig)
+                if shared == nil or shared == on then on = nil end
+            end
             ns.SetDoneMark(row.specKey, row.doneKey, on, row.doneSig)
             ns.RefreshBrowser()
         end

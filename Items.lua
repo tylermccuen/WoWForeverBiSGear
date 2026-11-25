@@ -481,10 +481,27 @@ end
 
 -- Returns true / false for a valid tick, nil for automatic. Second return:
 -- true when an outdated tick was just cleared.
+-- A tick made while viewing another spec of the same class counts too when
+-- that spec has the same items for the slot (hunter specs mostly share gear).
+local function sharedMark(specKey, key, sig)
+    if not sig or not ns.char.done then return nil end
+    local cls = specKey:match("^(%u+):")
+    if not cls then return nil end
+    for other, t in pairs(ns.char.done) do
+        if other ~= specKey and other:match("^(%u+):") == cls then
+            local m = t[key]
+            if type(m) == "table" and m.sig == sig then return m.on end
+        end
+    end
+    return nil
+end
+
+ns.SharedDoneMark = sharedMark
+
 function ns.ResolveDoneMark(specKey, key, sig)
     local t = ns.char.done and ns.char.done[specKey]
     local m = t and t[key]
-    if m == nil then return nil end
+    if m == nil then return sharedMark(specKey, key, sig) end
     if type(m) ~= "table" then          -- tick from before signatures: adopt the current lists
         t[key] = { on = m, sig = sig }
         return m
