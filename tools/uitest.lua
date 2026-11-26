@@ -56,7 +56,7 @@ CreateAtlasMarkup = function() return "" end
 
 local ns = {}
 local events = {}
-local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Phase2.lua","Data/Crafting.lua","Data/DropRates.lua","Data/Bosses.lua","Data/Pets.lua","Data/PlayerNotes.lua","Data/Quests.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Boss.lua","Quests.lua","Minimap.lua","Options.lua"}
+local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Phase2.lua","Data/Crafting.lua","Data/DropRates.lua","Data/Bosses.lua","Data/Pets.lua","Data/PlayerNotes.lua","Data/PatchNotes.lua","Data/Quests.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Boss.lua","Quests.lua","Minimap.lua","Options.lua"}
 for _,f in ipairs(files) do assert(loadfile(f))("ForeverBestInSlot", ns) end
 local function fire(ev, ...)
   for _, f in ipairs(ALLFRAMES) do
@@ -609,6 +609,19 @@ check("why-place tooltip talks about the item, not websites", function()
     if all:find(bad, 1, true) then error("mentions " .. bad .. ":\n" .. all) end
   end
   if not all:find("quest reward", 1, true) then error("no reason given:\n" .. all) end
+end)
+check("About tab with patch notes (and they match CHANGELOG.md)", function()
+  local first = io.open("CHANGELOG.md"):read("a"):match("\n## ([^\n]+)")
+  if not (ns.PatchNotes and ns.PatchNotes[1] and ns.PatchNotes[1].version == first) then
+    error("Data/PatchNotes.lua is out of date: run python3 tools/gen_patchnotes.py")
+  end
+  ns.char.listMode = "about"
+  local f = _G.ForeverBiSFrame
+  if not f:IsShown() then ns.ToggleBrowser() end
+  ns.RefreshBrowser()
+  local text = f.previewPane.text:GetText() or ""
+  if not (f.previewPane:IsShown() and text:find("Patch notes", 1, true) and text:find(first, 1, true)) then error("about page wrong") end
+  ns.char.listMode = "ranked"; ns.RefreshBrowser()
 end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()

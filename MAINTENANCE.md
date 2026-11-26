@@ -86,6 +86,7 @@ Run the generators from the repo root, e.g. `python3 tools/data/gen_crafting.py`
 - [ ] `texlua tools/uitest.lua` → no FAIL lines.
 - [ ] Build a test zip and try it in game (or send it to the player to test).
 - [ ] Add a section at the top of `CHANGELOG.md` (this becomes the CurseForge release notes).
+- [ ] Run `python3 tools/gen_patchnotes.py` so the in-game About tab shows the same notes (`tools/uitest.lua` fails if you forget).
 - [ ] **No mention of Claude / AI in the changelog or commit messages, and no Co-Authored-By trailers.**
 - [ ] Push to `main`, then publish a GitHub release with the version as the tag (https://github.com/tylermccuen/WoWForeverBiSGear/releases/new). The packager uploads to CurseForge automatically; check the release's Assets for `ForeverBestInSlot-<version>-forever.zip`.
 

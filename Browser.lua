@@ -1695,6 +1695,17 @@ function ns.RefreshBrowser()
         return
     end
     frame.previewPane:Hide()
+    -- About tab: version, links, patch notes
+    if ns.char.listMode == "about" then
+        ns.UpdateListTabs("about", guide)
+        frame.listScroll:Hide()
+        frame.raidPane:Hide()
+        for _, h in pairs(frame.headers or {}) do h:Hide() end
+        countText:SetText("")
+        ns.ShowAboutPage(frame.previewPane)
+        frame.previewPane:Show()
+        return
+    end
     -- Pet tab (hunters): the pet page replaces the item list
     if ns.char.listMode == "pet" and ns.char.selectedClass ~= "HUNTER" then ns.char.listMode = "ranked" end
     if ns.char.listMode == "pet" then
@@ -2092,6 +2103,7 @@ local LIST_TABS = {
     { mode = "consumables", text = "Consumables", tip = "Raid shopping list: flask, elixirs, food, weapon oil or stone and potions." },
     { mode = "raid",        text = "Raid Check",  tip = "Is your character ready to raid? Hit, defense, empty slots, enchants and your gear's stats against the BiS set." },
     { mode = "pet",         text = "Pet",         tip = "Hunters: which pet to bring to raids for your spec, and whether your current pet is the one.", hunter = true },
+    { mode = "about",       text = "About",       tip = "Version, links and patch notes: what's new in each update." },
 }
 
 local function createListTabs()
@@ -2135,11 +2147,18 @@ function ns.UpdateListTabs(mode, guide)
     if not listTabs then return end
     local have = { ranked = true, bis = true, realistic = guide and guide.realistic ~= nil,
                    enchants = guide and guide.enchants ~= nil, consumables = guide and guide.consumables ~= nil,
-                   raid = true, pet = true }
+                   raid = true, pet = true, about = true }
     for i, info in ipairs(LIST_TABS) do
         local tab = listTabs[i]
-        -- the Pet tab is only there for hunters
+        -- the Pet tab is only there for hunters; the shown tabs close up
         if info.hunter then tab:SetShown(ns.char.selectedClass == "HUNTER") end
+        if i > 1 then
+            local prev
+            for j = i - 1, 1, -1 do if listTabs[j]:IsShown() then prev = listTabs[j] break end end
+            tab:ClearAllPoints()
+            if prev then tab:SetPoint("LEFT", prev, "RIGHT", 3, 0)
+            else tab:SetPoint("TOPLEFT", frame, "BOTTOMLEFT", 12, 2) end
+        end
         if tab.skinBg then
             local c = info.mode == mode and SLEEK.tabOn or SLEEK.tab
             tab.skinBg:SetColorTexture(c[1], c[2], c[3], c[4])
@@ -2688,6 +2707,51 @@ function ns.ShowPreview(pane, p)
     if p.sources then add(" "); add(D .. p.sources .. "|r") end
     pane.text:SetText(table.concat(out, "\n"))
     pane.child:SetHeight((pane.text:GetStringHeight() or 400) + 20)
+end
+
+-- About tab: what the addon is, version, links and the patch notes
+local function mdToGame(s)
+    -- **bold** -> white, `code` -> gold
+    s = s:gsub("%*%*(.-)%*%*", "|cffffffff%1|r")
+    s = s:gsub("`(.-)`", "|cffffd100%1|r")
+    return s
+end
+
+function ns.ShowAboutPage(pane)
+    local w = math.max(300, (pane:GetWidth() or 640) - 60)
+    pane.child:SetWidth(w)
+    pane.text:SetWidth(w)
+    local G, W, D = "|cffffd100", "|cffffffff", "|cffaaaaaa"
+    local meta = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
+    local version = meta and meta(ns.name, "Version") or "?"
+    if version == "@project-version@" then version = "development build" end
+    local out = {}
+    local function add(s) table.insert(out, s) end
+    add(G .. "Forever Best In Slot|r  " .. D .. "version " .. version .. "|r")
+    add("Pre-raid best-in-slot gear, enchants, consumables and a raid check for every spec in WoW Forever.")
+    add(" ")
+    add(D .. "Made by|r " .. W .. "tylermccuen|r")
+    add(D .. "Download and comments:|r CurseForge, \"WoW Forever BiS Gear\"")
+    add(D .. "Report a wrong item:|r github.com/tylermccuen/WoWForeverBiSGear/issues")
+    add(D .. "Commands:|r " .. G .. "/bis|r opens this window,  " .. G .. "/bis raid|r the raid check,  "
+        .. G .. "/bis spec|r what the game says your spec is,  " .. G .. "/bis holiday|r the holiday theme")
+    add(" ")
+    add(G .. "Patch notes|r")
+    local shown = 0
+    for _, v in ipairs(ns.PatchNotes or {}) do
+        shown = shown + 1
+        if shown > 8 then
+            add(" ")
+            add(D .. "Older versions: see the changelog on CurseForge or GitHub.|r")
+            break
+        end
+        add(" ")
+        add(G .. v.version .. "|r")
+        for _, n in ipairs(v.notes) do add("|cffaaaaaa-|r  " .. mdToGame(n)) end
+    end
+    pane.text:SetText(table.concat(out, "\n"))
+    pane.child:SetHeight((pane.text:GetStringHeight() or 400) + 20)
+    if pane.scroll and pane.scroll.SetVerticalScroll then pane.scroll:SetVerticalScroll(0) end
 end
 
 -- Pet tab: the raid pet for a hunter spec, and whether yours matches
