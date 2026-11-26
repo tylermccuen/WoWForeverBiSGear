@@ -3,6 +3,7 @@ local _, ns = ...
 -- Made by tools/gen_patchnotes.py from CHANGELOG.md. Don't edit by hand.
 ns.PatchNotes = {
     { version = [=[1.10.0]=], notes = {
+        [=[**Drop chance on the podium:** each podium step shows the item's drop chance, and hovering the item adds a word on your odds, from "practically yours" down to "pray to RNG".]=],
         [=[**Materials you can read:** on the Enchants and Consumables tabs each material gets its own line, with its icon, the amount needed and how many you have (green when you have enough). Rows grow to fit, so nothing is cut off.]=],
         [=[**Pet training (hunters):** the Pet tab has a raid training plan for your pet's 300 training points: Bite rank 8 (25) and Claw rank 8 (25), Great Stamina rank 10 (185), then its family skill, a resistance or Natural Armor rank 6. It checks the pet you have out against that plan: level, loyalty, happiness, unspent points, each skill's rank (for example "Claw rank 6 of 8"), missing Bite, Claw or Great Stamina, and too much Natural Armor before Great Stamina. The Raid Check's Pet tile says how many training tips there are.]=],
         [=[**Hunters: two-handers and one-handers:** hunters can fight with either, so the Gear tab now shows both. Marksmanship (best with Main Hand + Off Hand) gets a Two Hand group, "instead of one-handers": 1st Barkskin Burrow's two-hander, 2nd Beastslayer's Trident from The Shaper's Terrace. Survival gets Main Hand and Off Hand groups next to its two-hander.]=],

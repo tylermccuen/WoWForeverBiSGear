@@ -1272,7 +1272,7 @@ local function podiumItemEnter(self)
     if dungeon ~= "" then GameTooltip:AddDoubleLine("Dungeon", dungeon, 0.8, 0.8, 0.8, 1, 1, 1) end
     if boss ~= "" then GameTooltip:AddDoubleLine("Boss / source", boss, 0.8, 0.8, 0.8, 1, 1, 1) end
     local rate = ns.DropChance(d.id, d.source)
-    if rate then GameTooltip:AddDoubleLine("Drop", ns.FormatChance(rate), 0.8, 0.8, 0.8, 1, 1, 1) end
+    if rate then GameTooltip:AddDoubleLine("Drop", ns.FormatChance(rate) .. "  |cffaaaaaa" .. ns.DropMood(rate) .. "|r", 0.8, 0.8, 0.8, 1, 1, 1) end
     if d.note then GameTooltip:AddLine(d.note, 0.67, 0.67, 0.67, true) end
     local where = ({ equipped = "You have it equipped", bag = "It's in your bags", bank = "It's in your bank" })[ns.Owned[d.id]]
     if where then GameTooltip:AddLine(where, 0.2, 1, 0.2) end
@@ -1413,6 +1413,17 @@ local function cleanWhy(text)
     return text
 end
 
+-- A word on the odds, for fun
+function ns.DropMood(rate)
+    if not rate then return "" end
+    if rate >= 50 then return "practically yours"
+    elseif rate >= 25 then return "decent odds"
+    elseif rate >= 10 then return "bring snacks"
+    elseif rate >= 3 then return "clear your weekend"
+    elseif rate >= 1 then return "good luck"
+    else return "pray to RNG" end
+end
+
 local function podiumWhyEnter(self)
     local card, place = self.card, self.place
     local e = card.entry
@@ -1488,6 +1499,10 @@ local function createCard(i)
         st.num:SetPoint("CENTER", st.block, "CENTER", 0, 0)
         st.num:SetText(place)
         st.num:SetTextColor(0.15, 0.1, 0.05)
+        -- drop chance on the step itself
+        st.rateTag = card:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        st.rateTag:SetPoint("RIGHT", st.block, "RIGHT", -5, 0)
+        st.rateTag:SetTextColor(0.15, 0.1, 0.05)
         -- boss / quest: brighter, up to two lines, click for details
         st.src = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         st.src:SetPoint("BOTTOM", st.block, "TOP", 0, 3)
@@ -1602,6 +1617,7 @@ local function fillStep(card, st, place, d, holiday, d2)
         if not two then st.btn2.data = nil end
     end
     if st.sparkle then ns.ShowSparkle(st.sparkle, on, two and 32 or 36) end
+    if not on or two then st.rateTag:SetText("") end
     if not on then st.btn.data = nil; st.srcHit:Hide() return end
     st.trophy:ClearAllPoints()
     st.trophy:SetPoint("BOTTOM", st.btn, "TOP", two and 19 or 0, 3)
@@ -1629,7 +1645,7 @@ local function fillStep(card, st, place, d, holiday, d2)
         if isQuest then text = text:sub(8) end
         if isQuest or st.quests or st.questInLog then text = "|cffffd100Quest:|r " .. text end
         if st.boss then text = ns.BOSS_ICON .. text end
-        if rate then text = text .. " |cffaaaaaa" .. ns.FormatChance(rate) .. "|r" end
+        st.rateTag:SetText(rate and ns.FormatChance(rate) or "")
         st.src:SetText(text)
     end
     local clickable = not two and (st.boss or st.quests or st.questInLog) ~= nil
