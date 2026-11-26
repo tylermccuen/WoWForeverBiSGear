@@ -1714,7 +1714,8 @@ local function makeTwinkle(parent, delay)
 end
 
 local function setTwinkles(card, e)
-    local place = e.ownedPlace
+    -- only 1st place sparkles: it's the reward for getting the best item
+    local place = e.ownedPlace == 1 and 1 or nil
     if not card.twinkles then
         card.twinkles = {}
         for k = 1, 9 do card.twinkles[k] = makeTwinkle(card, 0.4 + (k % 5) * 0.55) end
