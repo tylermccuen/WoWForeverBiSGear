@@ -107,7 +107,7 @@ local PICKS = {
         { "Chest", 15050, "Crafted: Leatherworking", why = "50 AP; Black Dragon Mail set." },  -- Black Dragonscale Breastplate
         { "Feet", 13967, "Scholomance: Kirtonos the Herald", why = "1% hit; 20 Agility." },  -- Windreaver Greaves
         { "Finger", 17713, "Maraudon: Princess Theradras", why = "1% hit; 20 AP." },  -- Blackstone Ring
-        { "Head", 13404, "Stratholme: The Unforgiven", why = "2% hit; 1% crit; no Agility." },  -- Mask of the Unforgiven
+        { "Head", 18421, "Quest: The Treasure of the Shen'dralar (Dire Maul)", why = "Agility, Stamina, Intellect, 1% crit; Dire Maul library quest." },  -- Backwood Helm (Mask of the Unforgiven has Defense: a tank helm)
         { "Legs", 22748, "Warsong Gulch: Silverwing Sentinels (Exalted)", 22673, "Warsong Gulch: Warsong Outriders (Exalted)", why = "35 Agility, 1% crit." },  -- Alliance / Horde
         { "Neck", 22340, "Upper Blackrock Spire: Lord Valthalak", why = "1% hit; 10 Agility." },  -- Pendant of Celerity
         { "Neck", 22150, "Quest: Falrin's Vendetta (Dire Maul West)", why = "1% hit; 24 AP." },  -- Beads of Ogre Might
@@ -123,7 +123,7 @@ local PICKS = {
         { "Feet", 16675, "Stratholme: Nerub'enkan" },  -- Beaststalker's Boots
         { "Finger", 275981, "The Watchers (Exalted)", why = "1% hit; 34 Attack Power." },  -- Warden's Signet of Ferocity
         { "Hands", 271948, "Theramore Expeditionary Force (Exalted)", 272099, "Darkspear Raiders (Exalted)", why = "Same as Theramore Gloves." },  -- Alliance / Horde
-        { "Head", 13404, "Stratholme: The Unforgiven", why = "2% hit." },  -- Mask of the Unforgiven
+        { "Head", 18421, "Quest: The Treasure of the Shen'dralar (Dire Maul)", why = "Agility, Stamina, Intellect, 1% crit; Dire Maul library quest." },  -- Backwood Helm (Mask of the Unforgiven has Defense: a tank helm)
         { "Legs", 22748, "Warsong Gulch: Silverwing Sentinels (Exalted)", 22673, "Warsong Gulch: Warsong Outriders (Exalted)", why = "1% hit." },  -- Alliance / Horde
         { "Neck", 22150, "Quest: Falrin's Vendetta (Dire Maul West)", why = "1% hit." },  -- Beads of Ogre Might
         { "Waist", 272397, "Pix Xizzix (Booty Bay): 100 Tarnished Undermine Real", why = "Hunter only; 24 Agility, 14 Intellect." },  -- Ranger's Belt
