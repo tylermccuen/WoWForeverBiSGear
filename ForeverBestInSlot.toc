@@ -1,7 +1,7 @@
 ## Interface: 16001
 ## Title: Forever Best In Slot
 ## Notes: Pre-raid Best-in-Slot browser and tooltips for World of Warcraft: Forever, with copy-paste item links.
-## Author: tylermccuen
+## Author: Zaibrax
 ## Version: @project-version@
 ## SavedVariables: ForeverBiSDB
 ## SavedVariablesPerCharacter: ForeverBiSCharDB
