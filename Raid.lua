@@ -413,6 +413,18 @@ function ns.RunRaidCheck(cb)
         table.insert(report.tiles, { label = "Mana", value = tostring(st.mana), note = "Live from your character" })
     end
     table.insert(report.tiles, report.emptyTile)
+    -- hunters: is the pet out the one to raid with? (advice only, not a fail)
+    if class == "HUNTER" and ns.PetVerdict then
+        local rec, family, status = ns.PetVerdict(spec)
+        if rec then
+            local value = family or (status == "lone" and "Lone Wolf" or "No pet out")
+            local note = (status == "best" or status == "good") and "Good raid pet"
+                or ("Raid pick: " .. table.concat(rec.picks, " or "))
+            table.insert(report.tiles, { label = "Pet", value = value, note = note,
+                ok = status == "best" or status == "good" or status == "lone" })
+            line("info", "Pet: " .. value .. "  |cff999999(" .. note .. ")|r")
+        end
+    end
 
     -- Gear stats vs the BiS set (async: BiS item data may need loading)
     local bisIds = {}

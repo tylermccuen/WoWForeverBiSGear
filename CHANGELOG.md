@@ -1,6 +1,7 @@
 # Forever Best In Slot
 
 ## 1.10.0
+- **Hunter Pet tab:** hunters get a **Pet** tab with the raid pet for their spec (Beast Mastery: Cat or Raptor; Marksmanship: Lone Wolf, or a Wolf or Tallstrider; Survival: Wolf or Raptor), why, whether the pet you have out is a good pick, what each pet family brings, and where to tame a Wolf with the raid rank of Furious Howl. The Raid Check shows a Pet tile too.
 - **Phase 1 planning page:** the Phase menu has a new "Coming up" entry, **Phase 1 - raids open Dec 9, 2026**. It shows a countdown, the three raids (Barrow Deeps, Hyjal Summit, Onyxia's Lair), your class's tier set, the WoW Forever timeline through summer 2027, and how to get ready (Onyxia attunement, Guardians of Hyjal reputation, crafted tier professions). The real Phase 1 lists replace it once the raids are out. Pick Pre-raid or a bottom tab to go back to the lists.
 
 ## 1.9.0

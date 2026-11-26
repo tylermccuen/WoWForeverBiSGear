@@ -1614,6 +1614,18 @@ function ns.RefreshBrowser()
         return
     end
     frame.previewPane:Hide()
+    -- Pet tab (hunters): the pet page replaces the item list
+    if ns.char.listMode == "pet" and ns.char.selectedClass ~= "HUNTER" then ns.char.listMode = "ranked" end
+    if ns.char.listMode == "pet" then
+        ns.UpdateListTabs("pet", guide)
+        frame.listScroll:Hide()
+        frame.raidPane:Hide()
+        for _, h in pairs(frame.headers or {}) do h:Hide() end
+        countText:SetText("")
+        ns.ShowPetPage(frame.previewPane, ns.char.selectedSpec)
+        frame.previewPane:Show()
+        return
+    end
     -- Raid Check tab: the report replaces the item list
     if ns.char.listMode == "raid" then
         ns.UpdateListTabs("raid", guide)
@@ -1998,6 +2010,7 @@ local LIST_TABS = {
     { mode = "enchants",    text = "Enchants",    tip = "The enchant, arcanum or armor kit for each slot." },
     { mode = "consumables", text = "Consumables", tip = "Raid shopping list: flask, elixirs, food, weapon oil or stone and potions." },
     { mode = "raid",        text = "Raid Check",  tip = "Is your character ready to raid? Hit, defense, empty slots, enchants and your gear's stats against the BiS set." },
+    { mode = "pet",         text = "Pet",         tip = "Hunters: which pet to bring to raids for your spec, and whether your current pet is the one.", hunter = true },
 }
 
 local function createListTabs()
@@ -2041,9 +2054,11 @@ function ns.UpdateListTabs(mode, guide)
     if not listTabs then return end
     local have = { ranked = true, bis = true, realistic = guide and guide.realistic ~= nil,
                    enchants = guide and guide.enchants ~= nil, consumables = guide and guide.consumables ~= nil,
-                   raid = true }
+                   raid = true, pet = true }
     for i, info in ipairs(LIST_TABS) do
         local tab = listTabs[i]
+        -- the Pet tab is only there for hunters
+        if info.hunter then tab:SetShown(ns.char.selectedClass == "HUNTER") end
         if tab.skinBg then
             local c = info.mode == mode and SLEEK.tabOn or SLEEK.tab
             tab.skinBg:SetColorTexture(c[1], c[2], c[3], c[4])
@@ -2590,6 +2605,69 @@ function ns.ShowPreview(pane, p)
         add(D .. p.unknown .. "|r")
     end
     if p.sources then add(" "); add(D .. p.sources .. "|r") end
+    pane.text:SetText(table.concat(out, "\n"))
+    pane.child:SetHeight((pane.text:GetStringHeight() or 400) + 20)
+end
+
+-- Pet tab: the raid pet for a hunter spec, and whether yours matches
+function ns.PetVerdict(spec)
+    local rec = ns.HunterPets and ns.HunterPets[spec]
+    if not rec then return nil end
+    local family = UnitCreatureFamily and UnitCreatureFamily("pet")
+    local status
+    if not family then status = rec.lone and "lone" or "none"
+    else
+        status = "other"
+        for i, f in ipairs(rec.picks) do
+            if f == family then status = (i == 1) and "best" or "good" end
+        end
+    end
+    return rec, family, status
+end
+
+function ns.ShowPetPage(pane, spec)
+    local w = math.max(300, (pane:GetWidth() or 640) - 60)
+    pane.child:SetWidth(w)
+    pane.text:SetWidth(w)
+    local G, W, D, OK, BAD = "|cffffd100", "|cffffffff", "|cffaaaaaa", "|cff33ff33", "|cffffaa33"
+    local out = {}
+    local function add(s) table.insert(out, s) end
+    local rec, family, status = ns.PetVerdict(spec)
+    if not rec then pane.text:SetText("") return end
+    add(G .. "Raid pet for " .. (spec or "") .. " Hunter|r")
+    add(W .. "Bring: " .. table.concat(rec.picks, " or ") .. "|r" .. (rec.lone and (D .. "   (or no pet, with the Lone Wolf talent)|r") or ""))
+    add(rec.why)
+    if rec.also then add(D .. "Also: " .. rec.also .. "|r") end
+    add(" ")
+    -- your pet right now
+    local name = UnitName and UnitName("pet")
+    if status == "best" then add(OK .. "Your pet: " .. (name or family) .. " (" .. family .. ") - the top pick.|r")
+    elseif status == "good" then add(OK .. "Your pet: " .. (name or family) .. " (" .. family .. ") - a good pick.|r")
+    elseif status == "other" then add(BAD .. "Your pet: " .. (name or family) .. " (" .. family .. "). For raids, a " .. rec.picks[1] .. " is better.|r")
+    elseif status == "lone" then add(D .. "No pet out. Fine with Lone Wolf; otherwise call your " .. rec.picks[1] .. ".|r")
+    else add(D .. "No pet out. Call your pet to check it here.|r") end
+    add(" ")
+    add(G .. "What each family brings|r")
+    local shown = {}
+    local order = {}
+    for _, f in ipairs(rec.picks) do table.insert(order, f) end
+    for _, f in ipairs({ "Cat", "Wolf", "Raptor", "Bear", "Tallstrider", "Spider", "Carrion Bird", "Crocolisk", "Wind Serpent" }) do table.insert(order, f) end
+    for _, f in ipairs(order) do
+        local info = ns.PetFamilies[f]
+        if info and not shown[f] then
+            shown[f] = true
+            add(W .. f .. "|r  " .. D .. "(" .. info[1] .. " tier)|r  " .. G .. info[2] .. "|r: " .. info[3])
+        end
+    end
+    if ns.PetTames and #ns.PetTames > 0 then
+        add(" ")
+        add(G .. "Worth taming|r")
+        for _, t in ipairs(ns.PetTames) do
+            add(W .. t.name .. "|r  " .. D .. "(" .. t.family .. ", level " .. t.level .. ", " .. t.zone .. ")|r  " .. t.note)
+        end
+    end
+    add(" ")
+    add(D .. "Guides don't agree on every pick yet; there's been little level 60 raid testing. Sources: playhub.com, warcrafttavern.com, exitlag.com.|r")
     pane.text:SetText(table.concat(out, "\n"))
     pane.child:SetHeight((pane.text:GetStringHeight() or 400) + 20)
 end

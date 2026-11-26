@@ -56,7 +56,7 @@ CreateAtlasMarkup = function() return "" end
 
 local ns = {}
 local events = {}
-local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Phase2.lua","Data/Crafting.lua","Data/DropRates.lua","Data/Bosses.lua","Data/Quests.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Boss.lua","Quests.lua","Minimap.lua","Options.lua"}
+local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Phase2.lua","Data/Crafting.lua","Data/DropRates.lua","Data/Bosses.lua","Data/Pets.lua","Data/Quests.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Boss.lua","Quests.lua","Minimap.lua","Options.lua"}
 for _,f in ipairs(files) do assert(loadfile(f))("ForeverBestInSlot", ns) end
 local function fire(ev, ...)
   for _, f in ipairs(ALLFRAMES) do
@@ -573,6 +573,25 @@ check("Phase 1 planning page from the Phase menu", function()
   ns.char.previewPhase = nil
   ns.RefreshBrowser()
   if f.previewPane:IsShown() then error("planning page still up") end
+end)
+check("hunter Pet tab and raid check pet tile", function()
+  UnitCreatureFamily = function() return "Boar" end
+  UnitName = function(u) return u == "pet" and "Grunt" or "Me" end
+  local rec, fam, status = ns.PetVerdict("Survival")
+  if status ~= "other" or rec.picks[1] ~= "Wolf" then error("verdict " .. tostring(status)) end
+  UnitCreatureFamily = function() return "Cat" end
+  local _, _, st2 = ns.PetVerdict("Beast Mastery")
+  if st2 ~= "best" then error("cat for BM should be best") end
+  ns.char.selectedClass, ns.char.selectedSpec, ns.char.listMode = "HUNTER", "Beast Mastery", "pet"
+  local f = _G.ForeverBiSFrame
+  if not f:IsShown() then ns.ToggleBrowser() end
+  ns.RefreshBrowser()
+  local text = f.previewPane.text:GetText() or ""
+  if not (f.previewPane:IsShown() and text:find("Cat or Raptor", 1, true) and text:find("the top pick", 1, true)) then error("pet page wrong") end
+  ns.char.selectedClass, ns.char.selectedSpec = "MAGE", "Fire"
+  ns.RefreshBrowser()
+  if ns.char.listMode ~= "ranked" then error("pet tab stayed for a mage") end
+  UnitCreatureFamily = nil
 end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()
