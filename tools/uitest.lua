@@ -582,15 +582,22 @@ check("hunter Pet tab and raid check pet tile", function()
   UnitCreatureFamily = function() return "Cat" end
   local _, _, st2 = ns.PetVerdict("Beast Mastery")
   if st2 ~= "best" then error("cat for BM should be best") end
-  ns.char.selectedClass, ns.char.selectedSpec, ns.char.listMode = "HUNTER", "Beast Mastery", "pet"
+  -- the page follows your own spec, even while the browser shows another class
+  local saveActive = ns.GetActiveSpec
+  ns.GetActiveSpec = function() return "HUNTER", "Beast Mastery" end
+  ns.char.selectedClass, ns.char.selectedSpec, ns.char.listMode = "MAGE", "Fire", "pet"
   local f = _G.ForeverBiSFrame
   if not f:IsShown() then ns.ToggleBrowser() end
   ns.RefreshBrowser()
   local text = f.previewPane.text:GetText() or ""
+  ns.GetActiveSpec = saveActive
   if not (f.previewPane:IsShown() and text:find("Cat or Raptor", 1, true) and text:find("the top pick", 1, true)) then error("pet page wrong") end
-  ns.char.selectedClass, ns.char.selectedSpec = "MAGE", "Fire"
+  local saveUC = UnitClass
+  UnitClass = function() return "Mage", "MAGE" end   -- playing a mage
+  ns.char.listMode = "pet"
   ns.RefreshBrowser()
-  if ns.char.listMode ~= "ranked" then error("pet tab stayed for a mage") end
+  if ns.char.listMode ~= "ranked" then error("pet tab stayed for a mage player") end
+  UnitClass = saveUC
   UnitCreatureFamily = nil
 end)
 check("why-place tooltip talks about the item, not websites", function()

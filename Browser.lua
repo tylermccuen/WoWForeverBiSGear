@@ -1988,14 +1988,17 @@ function ns.RefreshBrowser()
         return
     end
     -- Pet tab (hunters): the pet page replaces the item list
-    if ns.char.listMode == "pet" and ns.char.selectedClass ~= "HUNTER" then ns.char.listMode = "ranked" end
+    -- the Pet tab is for your own hunter (whatever class the browser shows)
+    local function playerIsHunter() local _, c = UnitClass("player"); return c == "HUNTER" end
+    if ns.char.listMode == "pet" and not playerIsHunter() then ns.char.listMode = "ranked" end
     if ns.char.listMode == "pet" then
         ns.UpdateListTabs("pet", guide)
         frame.listScroll:Hide()
         frame.raidPane:Hide()
         for _, h in pairs(frame.headers or {}) do h:Hide() end
         countText:SetText("")
-        ns.ShowPetPage(frame.previewPane, ns.char.selectedSpec)
+        local _, mySpec = ns.GetActiveSpec()
+        ns.ShowPetPage(frame.previewPane, mySpec)
         frame.previewPane:Show()
         return
     end
@@ -2464,7 +2467,7 @@ function ns.UpdateListTabs(mode, guide)
     for i, info in ipairs(LIST_TABS) do
         local tab = listTabs[i]
         -- the Pet tab is only there for hunters; the shown tabs close up
-        if info.hunter then tab:SetShown(ns.char.selectedClass == "HUNTER") end
+        if info.hunter then tab:SetShown(select(2, UnitClass("player")) == "HUNTER") end
         if i > 1 then
             local prev
             for j = i - 1, 1, -1 do if listTabs[j]:IsShown() then prev = listTabs[j] break end end
