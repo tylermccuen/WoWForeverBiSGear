@@ -48,3 +48,25 @@ ns.PetTames = {
     { family = "Wolf", name = "Bloodaxe Worg", level = "56-57", zone = "Lower Blackrock Spire",
       note = "Teaches Furious Howl rank 4 (the raid rank)." },
 }
+
+-- Highest rank of each pet skill a level 60 pet can learn (Classic ranks,
+-- with Forever's Furious Howl at levels 10 / 24 / 40 / 56 and Dust Cloud at
+-- 12 / 24 / 36 / 48 / 60).
+ns.PetMaxRank = {
+    ["Bite"] = 8, ["Claw"] = 8, ["Growl"] = 7, ["Cower"] = 6,
+    ["Great Stamina"] = 10, ["Natural Armor"] = 10,
+    ["Arcane Resistance"] = 4, ["Fire Resistance"] = 4, ["Frost Resistance"] = 4,
+    ["Nature Resistance"] = 4, ["Shadow Resistance"] = 4,
+    ["Dash"] = 3, ["Dive"] = 3, ["Charge"] = 6, ["Prowl"] = 3,
+    ["Furious Howl"] = 4, ["Dust Cloud"] = 5, ["Lightning Breath"] = 6,
+    ["Scorpid Poison"] = 4, ["Screech"] = 4, ["Thunderstomp"] = 3,
+}
+
+-- What a raid pet should have (shown on the Pet tab)
+ns.PetRaidTraining = {
+    "Bite and Claw at their highest ranks (Bite 8, Claw 8): most of your pet's damage.",
+    "Its family skill maxed, e.g. Furious Howl rank 4 for a Wolf.",
+    "Growl: keep it, but turn off auto-cast in raids so your pet doesn't pull threat from the tank.",
+    "Spend the rest on Great Stamina and Natural Armor so it survives raid damage; add resistances for fights that need them.",
+    "Keep it Happy (fed): you can't feed it in combat, and an unhappy pet does less damage.",
+}

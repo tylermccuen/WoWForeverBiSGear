@@ -637,6 +637,26 @@ check("hunters: a Two Hand group next to one-handers (and the reverse)", functio
   local mage = ns.GetRankedRows(ns.GetGuide("MAGE", "Fire", 1))
   for _, r in ipairs(mage) do if r.weaponChoice then error("non-hunters get weapon groups") end end
 end)
+check("pet training check", function()
+  UnitExists = function(u) return u == "pet" end
+  local saveLevel = UnitLevel
+  UnitLevel = function(u) return u == "pet" and 58 or 60 end
+  GetPetLoyalty = function() return "Loyalty Level 5 (Faithful)" end
+  GetPetHappiness = function() return 3 end
+  GetPetTrainingPoints = function() return 250, 230 end
+  local spells = { { "Bite", "Rank 8" }, { "Claw", "Rank 6" }, { "Furious Howl", "Rank 4" }, { "Growl", "Rank 7" } }
+  HasPetSpells = function() return #spells end
+  BOOKTYPE_PET = "pet"
+  GetSpellBookItemName = function(i) return spells[i][1], spells[i][2] end
+  local c = ns.PetTrainingCheck()
+  local all = table.concat(c.lines, "\n")
+  for _, want in ipairs({ "level it to 60", "Faithful", "20 training points unspent", "Claw rank 6 of 8", "Bite rank 8 (highest)" }) do
+    if not all:find(want, 1, true) then error("missing: " .. want .. "\n" .. all) end
+  end
+  if c.issues ~= 4 then error("issues " .. c.issues) end
+  UnitExists, GetPetLoyalty, GetPetHappiness, GetPetTrainingPoints, HasPetSpells, GetSpellBookItemName = nil, nil, nil, nil, nil, nil
+  UnitLevel = saveLevel
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()
   if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end

@@ -3,6 +3,7 @@ local _, ns = ...
 -- Made by tools/gen_patchnotes.py from CHANGELOG.md. Don't edit by hand.
 ns.PatchNotes = {
     { version = [=[1.10.0]=], notes = {
+        [=[**Pet training check (hunters):** the Pet tab checks the pet you have out: its level, loyalty, happiness, unspent training points, and each skill's rank against the highest rank (for example "Claw rank 6 of 8"), with what to do about each. It also lists how to train a raid pet. The Raid Check's Pet tile says how many training tips there are.]=],
         [=[**Hunters: two-handers and one-handers:** hunters can fight with either, so the Gear tab now shows both. Marksmanship (best with Main Hand + Off Hand) gets a Two Hand group, "instead of one-handers": 1st Barkskin Burrow's two-hander, 2nd Beastslayer's Trident from The Shaper's Terrace. Survival gets Main Hand and Off Hand groups next to its two-hander.]=],
         [=[**About tab:** a new tab at the end with the addon's version, links, slash commands and the patch notes for recent updates.]=],
         [=[**"Why this place?" explains the item:** hovering a place on the podium now says what the item gives your spec (for example "21 Agility, 38 Intellect, 1% crit") and, for 2nd and 3rd place, why you might take it over 1st (a guaranteed quest reward, craftable, drops more often, and so on), instead of which website ranked it. A new "What players say" section shows feedback from players who've used the item.]=],

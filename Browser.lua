@@ -2759,6 +2759,82 @@ function ns.ShowAboutPage(pane)
     if pane.scroll and pane.scroll.SetVerticalScroll then pane.scroll:SetVerticalScroll(0) end
 end
 
+-- The pet you have out: level, loyalty, happiness, training points and its
+-- skills' ranks against the highest ranks. Each part is read only if this
+-- client has the call for it. Returns { lines = {...}, issues = n } or nil.
+local function petSkills()
+    local skills = {}
+    local bank = (Enum and Enum.SpellBookSpellBank and Enum.SpellBookSpellBank.Pet) or BOOKTYPE_PET or "pet"
+    local okN, n = pcall(function()
+        if HasPetSpells then return (HasPetSpells()) end
+        if C_SpellBook and C_SpellBook.HasPetSpells then return (C_SpellBook.HasPetSpells()) end
+    end)
+    n = okN and tonumber(n) or 0
+    for i = 1, n do
+        local ok, name, sub = pcall(function()
+            if C_SpellBook and C_SpellBook.GetSpellBookItemName then return C_SpellBook.GetSpellBookItemName(i, bank) end
+            return GetSpellBookItemName(i, bank)
+        end)
+        if ok and name then
+            local rank = tonumber(tostring(sub or ""):match("(%d+)"))
+            if not skills[name] or (rank and rank > (skills[name] or 0)) then skills[name] = rank or 0 end
+        end
+    end
+    return skills
+end
+
+function ns.PetTrainingCheck()
+    if not (UnitExists and UnitExists("pet")) then return nil end
+    local out, issues = {}, 0
+    local function good(t) table.insert(out, "|cff33ff33" .. t .. "|r") end
+    local function fix(t) table.insert(out, "|cffffaa33" .. t .. "|r"); issues = issues + 1 end
+    local pl, me = UnitLevel("pet"), UnitLevel("player")
+    if pl and me and pl > 0 then
+        if pl < me then fix("Level " .. pl .. ": level it to " .. me .. " to keep up with raid bosses.") else good("Level " .. pl .. ".") end
+    end
+    if GetPetLoyalty then
+        local ok, loyalty = pcall(GetPetLoyalty)
+        if ok and type(loyalty) == "string" and loyalty ~= "" then
+            if loyalty:find("Best Friend") then good("Loyalty: Best Friend (full training points).")
+            else fix("Loyalty: " .. loyalty .. ". Keep feeding it and fighting with it; Best Friend gives 300 training points at level 60.") end
+        end
+    end
+    if GetPetHappiness then
+        local ok, happy = pcall(GetPetHappiness)
+        if ok and happy then
+            if happy >= 3 then good("Happy.") else fix((happy == 2 and "Content" or "Unhappy") .. ": feed it before the pull (you can't feed in combat).") end
+        end
+    end
+    if GetPetTrainingPoints then
+        local ok, total, spent = pcall(GetPetTrainingPoints)
+        if ok and total then
+            local free = (total or 0) - (spent or 0)
+            if free > 0 then fix(free .. " training points unspent: put them into Great Stamina or Natural Armor.")
+            elseif free < 0 then fix("Training points " .. free .. ": its loyalty will catch up as it levels.")
+            else good("All training points spent.") end
+        end
+    end
+    local skills = petSkills()
+    local any = false
+    local names = {}
+    for name in pairs(skills) do table.insert(names, name) end
+    table.sort(names)
+    for _, name in ipairs(names) do
+        local max = ns.PetMaxRank and ns.PetMaxRank[name]
+        local rank = skills[name]
+        if max and rank and rank > 0 then
+            any = true
+            if rank < max then fix(name .. " rank " .. rank .. " of " .. max .. ": learn the top rank from a tamed beast that has it (or a Pet Trainer).")
+            else good(name .. " rank " .. rank .. " (highest).") end
+        end
+    end
+    if not skills["Bite"] and not skills["Claw"] and next(skills) then
+        fix("No Bite or Claw: these are most of a raid pet's damage.")
+    end
+    if not any and not next(skills) then table.insert(out, "|cffaaaaaaCan't read your pet's skills here; open its spellbook to check ranks.|r") end
+    return { lines = out, issues = issues }
+end
+
 -- Pet tab: the raid pet for a hunter spec, and whether yours matches
 function ns.PetVerdict(spec)
     local rec = ns.HunterPets and ns.HunterPets[spec]
@@ -2796,6 +2872,16 @@ function ns.ShowPetPage(pane, spec)
     elseif status == "other" then add(BAD .. "Your pet: " .. (name or family) .. " (" .. family .. "). For raids, a " .. rec.picks[1] .. " is better.|r")
     elseif status == "lone" then add(D .. "No pet out. Fine with Lone Wolf; otherwise call your " .. rec.picks[1] .. ".|r")
     else add(D .. "No pet out. Call your pet to check it here.|r") end
+    -- the pet you have out: training and upkeep
+    local check = ns.PetTrainingCheck()
+    if check then
+        add(" ")
+        add(G .. "Your pet's training|r" .. (check.issues > 0 and ("  |cffffaa33" .. check.issues .. " to improve|r") or "  |cff33ff33ready|r"))
+        for _, l in ipairs(check.lines) do add("-  " .. l) end
+    end
+    add(" ")
+    add(G .. "Raid pet training|r")
+    for _, t in ipairs(ns.PetRaidTraining or {}) do add("-  " .. t) end
     add(" ")
     add(G .. "What each family brings|r")
     local shown = {}

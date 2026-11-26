@@ -418,8 +418,10 @@ function ns.RunRaidCheck(cb)
         local rec, family, status = ns.PetVerdict(spec)
         if rec then
             local value = family or (status == "lone" and "Lone Wolf" or "No pet out")
+            local check = ns.PetTrainingCheck and ns.PetTrainingCheck()
             local note = (status == "best" or status == "good") and "Good raid pet"
                 or ("Raid pick: " .. table.concat(rec.picks, " or "))
+            if check and check.issues > 0 then note = note .. "; " .. check.issues .. " training tip" .. (check.issues == 1 and "" or "s") .. " (Pet tab)" end
             table.insert(report.tiles, { label = "Pet", value = value, note = note,
                 ok = status == "best" or status == "good" or status == "lone" })
             line("info", "Pet: " .. value .. "  |cff999999(" .. note .. ")|r")
