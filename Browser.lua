@@ -317,10 +317,25 @@ local function materialsText(craft, withIcons)
     return table.concat(parts, withIcons and "\n" or ", ")
 end
 
--- Enchants / Consumables rows grow to fit one material per line
+-- "Vendor: Beneris / Alynsia (120 Merchant's Favor)" -> two lines: who, then
+-- the part in brackets (cost, zone, reputation) on its own line
+function ns.SourceLines(src)
+    if type(src) ~= "string" then return src end
+    local main, extra = src:match("^(.-)%s*%((.+)%)%s*$")
+    if main and main ~= "" and not main:find("%(") then
+        return main .. "\n|cffd0d0d0" .. extra .. "|r"
+    end
+    return src
+end
+
+-- Enchants / Consumables rows grow to fit one material per line, and the
+-- where-to-get-it lines
 local function craftRowHeight(data)
     local n = data.craft and data.craft.mats and #data.craft.mats or 0
-    return math.max(ROW_HEIGHT, n * 15 + 10)
+    local from = (data.craft and data.craft.from) or data.source or ""
+    local srcLines = 1 + (from:find("%(.+%)%s*$") and 1 or 0) + (data.note and 1 or 0)
+    if #from > 46 then srcLines = srcLines + 1 end   -- a long first line wraps
+    return math.max(ROW_HEIGHT, n * 15 + 10, srcLines * 14 + 10)
 end
 
 local function enchantCell(row, data)
@@ -1285,7 +1300,16 @@ local function fillRow(row, data)
     -- (stat notes like "1% hit" or "Agility +8" are dropped there)
     local note = data.note
     if note and not data.craftTab then note = ns.NoteWithoutStats(note) end
-    if note and not data.isPre then src = src .. "  |cffaaaaaa(" .. note .. ")|r" end
+    local tallCell = data.craftTab and not frame.compact
+    if tallCell then
+        -- Enchants / Consumables: one fact per line, like the materials
+        -- ("Vendor: Beneris / Alynsia" / "120 Merchant's Favor" / "Agility +5")
+        src = ns.SourceLines(src)
+        if note then src = src .. "\n|cffaaaaaa" .. note .. "|r" end
+    elseif note and not data.isPre then
+        src = src .. "  |cffaaaaaa(" .. note .. ")|r"
+    end
+    if row.source.SetMaxLines then row.source:SetMaxLines(tallCell and 6 or 2) end
     row.source:SetText(ns.AnnotateCost(src))
     row.enchantID = data.enchantID
     row.enchantNote, row.enchantSource = data.enchantNote, data.enchantSource

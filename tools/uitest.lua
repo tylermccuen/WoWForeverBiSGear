@@ -711,6 +711,14 @@ check("patch notes TL;DR", function()
   local b = ns.PatchTLDR("Tooltips now show the drop chance. More text here.")
   if b ~= "Tooltips now show the drop chance." then error(b) end
 end)
+check("where to get it: one fact per line on Enchants / Consumables", function()
+  local a = ns.SourceLines("Vendor: Beneris / Alynsia (120 Merchant's Favor)")
+  if not a:find("Alynsia\n", 1, true) or not a:find("120 Merchant's Favor", 1, true) then error(a) end
+  local b = ns.SourceLines("Quest: Libram of Voracity (Burning Steppes)")
+  if not b:find("Voracity\n", 1, true) then error(b) end
+  if ns.SourceLines("Leatherworking") ~= "Leatherworking" then error("plain changed") end
+  ns.char.listMode = "enchants"; ns.RefreshBrowser(); ns.char.listMode = "ranked"; ns.RefreshBrowser()
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()
   if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end
