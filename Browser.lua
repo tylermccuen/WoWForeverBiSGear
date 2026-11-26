@@ -1524,6 +1524,11 @@ local function fillStep(card, st, place, d, holiday, d2)
         st.questInLog = (not st.boss) and ns.QuestInLog and ns.QuestInLog(from) or nil
         st.dungeonName, st.dropRate = dungeon, rate and ns.FormatChance(rate) or nil
         local text = bossText ~= "" and bossText or dungeon
+        -- not a boss: say where (e.g. "Dire Maul East: Trash Drop (satyrs)")
+        local general = { Crafted = true, Reputation = true, ["World Drop"] = true, Quest = true, [""] = true }
+        if not st.boss and bossText ~= "" and not general[dungeon] and not bossText:find("^Quest: ") then
+            text = dungeon .. ": " .. bossText
+        end
         local isQuest = text:find("^Quest: ") ~= nil
         if isQuest then text = text:sub(8) end
         if isQuest or st.quests or st.questInLog then text = "|cffffd100Quest:|r " .. text end
