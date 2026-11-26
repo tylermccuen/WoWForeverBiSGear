@@ -49,18 +49,44 @@ ns.PetTames = {
       note = "Teaches Furious Howl rank 4 (the raid rank)." },
 }
 
--- Highest rank of each pet skill a level 60 pet can learn (Classic ranks,
--- with Forever's Furious Howl at levels 10 / 24 / 40 / 56 and Dust Cloud at
--- 12 / 24 / 36 / 48 / 60).
-ns.PetMaxRank = {
-    ["Bite"] = 8, ["Claw"] = 8, ["Growl"] = 7, ["Cower"] = 6,
-    ["Great Stamina"] = 10, ["Natural Armor"] = 10,
-    ["Arcane Resistance"] = 4, ["Fire Resistance"] = 4, ["Frost Resistance"] = 4,
-    ["Nature Resistance"] = 4, ["Shadow Resistance"] = 4,
-    ["Dash"] = 3, ["Dive"] = 3, ["Charge"] = 6, ["Prowl"] = 3,
-    ["Furious Howl"] = 4, ["Dust Cloud"] = 5, ["Lightning Breath"] = 6,
-    ["Scorpid Poison"] = 4, ["Screech"] = 4, ["Thunderstomp"] = 3,
+-- Best rank of each pet skill known in WoW Forever, and where to learn it.
+-- Wild beasts teach Bite, Claw, Dash, Dive and family skills (tame one, let it
+-- teach you, then use Beast Training on your pet); a Pet Trainer sells the
+-- rest. Forever changed the beasts, so these are the highest ranks players
+-- have documented so far (guided.news, conquestcapped.com, playhub.com,
+-- checked 2026-11-25); higher ranks may turn up on level 56+ beasts.
+-- from = { name, level, zone, "x, y" or nil }
+ns.PetBestRank = {
+    ["Bite"]  = { rank = 7, from = { { "Uhk'loc", "52-53 gorilla", "Un'Goro Crater", "68.4, 14.4" },
+                                     { "Sewer Beast", "50 crocolisk", "Stormwind City", "48.8, 50.2" },
+                                     { "Ironback", "51 turtle", "The Hinterlands" } } },
+    ["Claw"]  = { rank = 7, from = { { "Mongress", "50 bear", "Felwood", "43.4, 77.6" },
+                                     { "Olm the Wise", "52 bird of prey", "Felwood", "58.4, 18.4" },
+                                     { "Clack the Reaver", "53 scorpid", "Blasted Lands", "53.2, 36.0" } } },
+    ["Dash"]  = { rank = 3, from = { { "Rak'shiri", "57 cat", "Winterspring", "52.0, 14.0" },
+                                     { "Grunter", "50 boar", "Blasted Lands", "57.8, 28.0" } } },
+    ["Dive"]  = { rank = 3, from = { { "Zaricotl", "55-56 carrion bird", "Badlands", "39.8, 55.8" },
+                                     { "Spiteflayer", "52 carrion bird", "Blasted Lands", "59.4, 39.4" } } },
+    ["Furious Howl"]     = { rank = 4, from = { { "Bloodaxe Worg", "56-57 wolf", "Lower Blackrock Spire" } } },
+    ["Lightning Breath"] = { rank = 5, from = { { "Arash-ethis", "49 wind serpent", "Feralas" } } },
+    ["Scorpid Poison"]   = { rank = 4, from = { { "Krellack", "56 scorpid", "Silithus" } } },
+    ["Charge"]           = { rank = 5, from = { { "Grunter", "50 boar", "Blasted Lands", "57.8, 28.0" } } },
+    -- bought from a Pet Trainer (next to the hunter trainer in each capital)
+    ["Growl"]             = { rank = 7, trainer = true },
+    ["Great Stamina"]     = { rank = 10, trainer = true },
+    ["Natural Armor"]     = { rank = 10, trainer = true },
+    ["Arcane Resistance"] = { rank = 4, trainer = true },
+    ["Fire Resistance"]   = { rank = 4, trainer = true },
+    ["Frost Resistance"]  = { rank = 4, trainer = true },
+    ["Nature Resistance"] = { rank = 4, trainer = true },
+    ["Shadow Resistance"] = { rank = 4, trainer = true },
 }
+
+-- Families that learn Claw (every other family learns Bite instead)
+ns.ClawFamilies = { Bear = true, ["Bird of Prey"] = true, ["Carrion Bird"] = true, Cat = true, Crab = true, Raptor = true, Scorpid = true }
+ns.BiteFamilies = { Bat = true, Bear = true, Boar = true, ["Carrion Bird"] = true, Cat = true, Crocolisk = true, Fox = true,
+                    Gorilla = true, Hyena = true, Raptor = true, Spider = true, Tallstrider = true, Turtle = true,
+                    ["Wind Serpent"] = true, Wolf = true }
 
 -- Training point costs (Classic, which Forever kept: 300 points at level 60
 -- with Best Friend loyalty). Growl costs nothing.
@@ -71,14 +97,12 @@ ns.PetTrainCost = {
     ["Resistance"] = { [3] = 45, [4] = 90 },
 }
 
--- Families that can learn Claw (every DPS family can learn Bite)
-ns.ClawFamilies = { Bear = true, ["Carrion Bird"] = true, Cat = true, Crab = true, Owl = true, Raptor = true, Scorpid = true }
 
 -- The raid training plan for 300 points (shown on the Pet tab)
 ns.PetRaidTraining = {
-    "Bite rank 8 (25 points) and, if its family can learn it, Claw rank 8 (25 points): most of your pet's damage.",
+    "Bite and/or Claw (whichever its family learns) at the best rank you can find: most of your pet's damage. Rank 7 is the best known in Forever so far (about 21 points each).",
     "Great Stamina rank 10 (185 points): raid damage hits pets hard, and more health keeps it attacking.",
-    "That's 235 of 300. Spend what's left on its family skill (e.g. Furious Howl rank 4 for a Wolf), then a resistance for fights that need one, or Natural Armor rank 6 (50 points).",
+    "That leaves about 70 of 300. Spend it on its family skill (e.g. Furious Howl rank 4 for a Wolf), then a resistance for fights that need one, or Natural Armor rank 6 (50 points).",
     "Natural Armor matters less in raids, where your pet isn't tanking; don't max it before Great Stamina.",
     "Growl is free: keep it, but turn off its auto-cast in raids so your pet doesn't pull threat from the tank.",
     "Wrong points spent? A Pet Trainer can unlearn your pet's skills for a small fee.",

@@ -2864,21 +2864,36 @@ function ns.PetTrainingCheck()
     for name in pairs(skills) do table.insert(names, name) end
     table.sort(names)
     for _, name in ipairs(names) do
-        local max = ns.PetMaxRank and ns.PetMaxRank[name]
+        local best = ns.PetBestRank and ns.PetBestRank[name]
         local rank = skills[name]
-        if max and rank and rank > 0 then
+        if best and rank and rank > 0 then
             any = true
-            if rank < max then fix(name .. " rank " .. rank .. " of " .. max .. ": learn the top rank from a tamed beast that has it (or a Pet Trainer).")
-            else good(name .. " rank " .. rank .. " (highest).") end
+            if rank >= best.rank then
+                good(name .. " rank " .. rank .. ": the best rank.")
+            elseif best.trainer then
+                fix(name .. " rank " .. rank .. ": buy rank " .. best.rank .. " from a Pet Trainer.")
+            else
+                local f = best.from and best.from[1]
+                local where = f and (f[1] .. " (level " .. f[2] .. ", " .. f[3] .. (f[4] and (" " .. f[4]) or "") .. ")") or "a level 50+ beast"
+                local more = best.from and #best.from > 1 and ("; also " .. best.from[2][1] .. " in " .. best.from[2][3]) or ""
+                fix(name .. " rank " .. rank .. ": rank " .. best.rank .. " from " .. where .. more .. ".")
+            end
         end
     end
     if next(skills) then
         local family = UnitCreatureFamily and UnitCreatureFamily("pet")
-        if not skills["Bite"] then fix("No Bite: teach it Bite rank 8 (25 points), most of a raid pet's damage.") end
-        if family and ns.ClawFamilies and ns.ClawFamilies[family] and not skills["Claw"] then
-            fix("No Claw: a " .. family .. " can learn it; rank 8 costs 25 points.")
+        local function teach(skill)
+            local best = ns.PetBestRank[skill]
+            local f = best and best.from and best.from[1]
+            return f and (" Rank " .. best.rank .. " from " .. f[1] .. " (" .. f[3] .. ").") or ""
         end
-        if not skills["Great Stamina"] then fix("No Great Stamina: rank 10 (185 points) is the best use of a raid pet's points.") end
+        if family and ns.BiteFamilies and ns.BiteFamilies[family] and not skills["Bite"] then
+            fix("No Bite: a " .. family .. " can learn it, and it's most of a raid pet's damage." .. teach("Bite"))
+        end
+        if family and ns.ClawFamilies and ns.ClawFamilies[family] and not skills["Claw"] then
+            fix("No Claw: a " .. family .. " can learn it." .. teach("Claw"))
+        end
+        if not skills["Great Stamina"] then fix("No Great Stamina: buy it from a Pet Trainer; rank 10 (185 points) is the best use of a raid pet's points.") end
         local gs, na = skills["Great Stamina"] or 0, skills["Natural Armor"] or 0
         if na > 6 and gs < 10 then
             fix("Natural Armor rank " .. na .. " but Great Stamina only " .. gs .. ": for raids, unlearn some armor at a Pet Trainer and put the points into Great Stamina.")
@@ -2935,6 +2950,19 @@ function ns.ShowPetPage(pane, spec)
     add(" ")
     add(G .. "Raid pet training|r")
     for _, t in ipairs(ns.PetRaidTraining or {}) do add("-  " .. t) end
+    add(" ")
+    add(G .. "Where to learn the best ranks|r  " .. D .. "(tame the beast, let it teach you, then Beast Training)|r")
+    for _, skill in ipairs({ "Bite", "Claw", "Dash", "Dive", "Furious Howl", "Charge", "Lightning Breath", "Scorpid Poison" }) do
+        local best = ns.PetBestRank and ns.PetBestRank[skill]
+        if best and best.from then
+            local spots = {}
+            for _, f in ipairs(best.from) do
+                table.insert(spots, f[1] .. " " .. D .. "(" .. f[2] .. ", " .. f[3] .. (f[4] and (" " .. f[4]) or "") .. ")|r")
+            end
+            add(W .. skill .. " " .. best.rank .. "|r:  " .. table.concat(spots, ";  "))
+        end
+    end
+    add(D .. "Growl 7, Great Stamina 10, Natural Armor 10 and resistances 4: bought from a Pet Trainer. These are the best ranks found in Forever so far; level 56+ beasts may teach higher ones.|r")
     add(" ")
     add(G .. "What each family brings|r")
     local shown = {}
