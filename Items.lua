@@ -536,15 +536,23 @@ function ns.GetRankedRows(guide)
     return out
 end
 
--- Holiday theme: on during the Feast of Winter Veil (Dec 15 - Jan 2) when set
+-- Holiday theme: on from the day before (US) Thanksgiving to Jan 2 when set
 -- to "auto", or always / never with "on" / "off"
+-- day of November the holiday season starts: the Wednesday before the 4th Thursday
+function ns.HolidayStartDay(year)
+    local ok, first = pcall(function() return date("*t", time({ year = year, month = 11, day = 1, hour = 12 })) end)
+    if not ok or type(first) ~= "table" then return 25 end
+    local firstThursday = 1 + (5 - first.wday) % 7   -- wday: 1 = Sunday, 5 = Thursday
+    return firstThursday + 21 - 1
+end
 function ns.HolidayOn()
     local mode = ns.db and ns.db.holidayTheme or "auto"
     if mode == "on" then return true end
     if mode == "off" then return false end
     local ok, t = pcall(date, "*t")
     if not ok or type(t) ~= "table" then return false end
-    return (t.month == 12 and t.day >= 15) or (t.month == 1 and t.day <= 2)
+    return t.month == 12 or (t.month == 1 and t.day <= 2)
+        or (t.month == 11 and t.day >= ns.HolidayStartDay(t.year))
 end
 
 ns.TEXTURES = "Interface\\AddOns\\" .. ns.name .. "\\Textures\\"

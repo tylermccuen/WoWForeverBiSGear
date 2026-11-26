@@ -30,6 +30,7 @@ wipe = function(t) for k in pairs(t) do t[k]=nil end end
 tinsert = table.insert
 UnitFactionGroup = function() return "Alliance" end
 UnitClass = function() return "Hunter","HUNTER" end
+date = date or os.date; time = time or os.time   -- WoW has these as globals
 InCombatLockdown = function() return false end
 GetSpecialization = function() return 1 end
 GetSpecializationInfo = function() return 253, "Beast Mastery" end
@@ -725,6 +726,11 @@ check("where to get it: one fact per line on Enchants / Consumables", function()
   if not b:find("Voracity\n", 1, true) then error(b) end
   if ns.SourceLines("Leatherworking") ~= "Leatherworking" then error("plain changed") end
   ns.char.listMode = "enchants"; ns.RefreshBrowser(); ns.char.listMode = "ranked"; ns.RefreshBrowser()
+end)
+check("holiday season starts the day before Thanksgiving", function()
+  if ns.HolidayStartDay(2026) ~= 25 then error("2026: " .. ns.HolidayStartDay(2026)) end   -- Thanksgiving Nov 26
+  if ns.HolidayStartDay(2027) ~= 24 then error("2027: " .. ns.HolidayStartDay(2027)) end   -- Thanksgiving Nov 25
+  if ns.HolidayStartDay(2028) ~= 22 then error("2028: " .. ns.HolidayStartDay(2028)) end   -- Thanksgiving Nov 23
 end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()

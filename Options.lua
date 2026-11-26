@@ -82,7 +82,7 @@ local function buildPanel()
         function(v) ns.db.windowStyle = v and "sleek" or "classic" end, c5b)
 
     -- Holiday theme
-    local HOLIDAY_LABELS = { auto = "Auto (Winter Veil, Dec 15 - Jan 2)", on = "Always on", off = "Off" }
+    local HOLIDAY_LABELS = { auto = "Auto (day before Thanksgiving - Jan 2)", on = "Always on", off = "Off" }
     local holidayHeader = panel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     holidayHeader:SetPoint("TOPLEFT", c5c, "BOTTOMLEFT", 0, -18)
     holidayHeader:SetText("Holiday theme (Christmas lights, trees, snowman and gingerbread places)")

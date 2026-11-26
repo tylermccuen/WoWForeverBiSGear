@@ -62,7 +62,7 @@ ns.RegisterPreview({
     timeline = {
         { "Nov 4, 2026", "Launch: level 60 and dungeons (Pre-raid lists)", done = true },
         { "Dec 9, 2026", "Phase 1: Barrow Deeps, Hyjal Summit and Onyxia's Lair open" },
-        { "Dec 15 - Jan 2", "Feast of Winter Veil (the addon's holiday theme)" },
+        { "Dec 15 - Jan 2", "Feast of Winter Veil (the addon's holiday theme runs from the day before Thanksgiving)" },
         { "Winter 2026", "Hardcore servers" },
         { "Spring 2027", "2 new raids (10 and 20 players), 2 new dungeons, 2 new class / race combos, new zone and quests, PvP refresh" },
         { "Summer 2027", "A revamped iconic raid, a new raid, 2 new dungeons, profession and legacy updates, PvP refresh" },
