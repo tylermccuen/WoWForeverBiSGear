@@ -1181,7 +1181,11 @@ local function fillRow(row, data)
     row.questInLog = (not boss) and ns.QuestInLog(data.craft and data.craft.from or data.source) or nil
     row.srcHit:SetShown(boss ~= nil or row.quests ~= nil or row.questInLog ~= nil)
     if boss then src = ns.BOSS_ICON .. src end
-    if data.note and not data.isPre then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
+    -- notes: on the gear tabs, only what the item's own tooltip doesn't say
+    -- (stat notes like "1% hit" or "Agility +8" are dropped there)
+    local note = data.note
+    if note and not data.craftTab then note = ns.NoteWithoutStats(note) end
+    if note and not data.isPre then src = src .. "  |cffaaaaaa(" .. note .. ")|r" end
     row.source:SetText(ns.AnnotateCost(src))
     row.enchantID = data.enchantID
     row.enchantNote, row.enchantSource = data.enchantNote, data.enchantSource
@@ -1273,7 +1277,8 @@ local function podiumItemEnter(self)
     if boss ~= "" then GameTooltip:AddDoubleLine("Boss / source", boss, 0.8, 0.8, 0.8, 1, 1, 1) end
     local rate = ns.DropChance(d.id, d.source)
     if rate then GameTooltip:AddDoubleLine("Drop", ns.FormatChance(rate) .. "  |cffaaaaaa" .. ns.DropMood(rate) .. "|r", 0.8, 0.8, 0.8, 1, 1, 1) end
-    if d.note then GameTooltip:AddLine(d.note, 0.67, 0.67, 0.67, true) end
+    local dn = ns.NoteWithoutStats(d.note)
+    if dn then GameTooltip:AddLine(dn, 0.67, 0.67, 0.67, true) end
     local where = ({ equipped = "You have it equipped", bag = "It's in your bags", bank = "It's in your bank" })[ns.Owned[d.id]]
     if where then GameTooltip:AddLine(where, 0.2, 1, 0.2) end
     GameTooltip:AddLine(" ")
@@ -1476,6 +1481,38 @@ end
 ns.On("CURRENCY_DISPLAY_UPDATE", costChanged)
 ns.On("BAG_UPDATE_DELAYED", costChanged)
 
+-- Drop the stat parts of a note ("1% hit", "Agility +8", "15% ranged attack
+-- speed", "7 defense"): the item's tooltip already shows those. Keeps the
+-- rest ("Best quiver (bows, crossbows)", "tank version"). nil if nothing left.
+local function isStat(part)
+    part = part:gsub("^%s+", ""):gsub("%s+$", ""):gsub("%.$", "")
+    if part == "" then return true end
+    if part:match("^[%+%-]?%d+%.?%d*%%?%s+[%a%s]+$") then return true end   -- 1% hit, +8 Strength, 15% ranged attack speed
+    if part:match("^[%a%s]+%s[%+%-]%d+%.?%d*%%?$") then return true end    -- Agility +8, armor +40
+    if part:match("^[Nn]o %a+$") then return true end                        -- No hit
+    return false
+end
+
+function ns.NoteWithoutStats(note)
+    if type(note) ~= "string" then return note end
+    local parts, depth, cur = {}, 0, ""
+    for ch in note:gmatch(".") do
+        if ch == "(" then depth = depth + 1 elseif ch == ")" then depth = depth - 1 end
+        if (ch == "," or ch == ";") and depth == 0 then
+            table.insert(parts, cur); cur = ""
+        else
+            cur = cur .. ch
+        end
+    end
+    table.insert(parts, cur)
+    local keep = {}
+    for _, p in ipairs(parts) do
+        if not isStat(p) then table.insert(keep, (p:gsub("^%s+", ""):gsub("%s+$", ""))) end
+    end
+    if #keep == 0 then return nil end
+    return table.concat(keep, ", ")
+end
+
 local function podiumWhyEnter(self)
     local card, place = self.card, self.place
     local e = card.entry
@@ -1510,7 +1547,8 @@ local function podiumWhyEnter(self)
     GameTooltip:AddLine(" ")
     GameTooltip:AddLine("How to get it", 0.8, 0.8, 0.8)
     GameTooltip:AddLine(howToGet(d), 1, 1, 1, true)
-    if d.note then GameTooltip:AddLine(d.note, 0.67, 0.67, 0.67, true) end
+    local dn = ns.NoteWithoutStats(d.note)
+    if dn then GameTooltip:AddLine(dn, 0.67, 0.67, 0.67, true) end
     local notes = cleanWhy(d.why ~= d.note and d.why or nil)
     if notes then
         GameTooltip:AddLine(" ")

@@ -3,6 +3,7 @@ local _, ns = ...
 -- Made by tools/gen_patchnotes.py from CHANGELOG.md. Don't edit by hand.
 ns.PatchNotes = {
     { version = [=[1.10.0]=], notes = {
+        [=[**Shorter item notes:** on the gear lists and podium, notes no longer repeat stats the item's own tooltip shows ("1% hit", "Agility +8", "15% ranged attack speed"). Notes that add something stay, such as "Best quiver (bows, crossbows)" or "tank version". The Enchants and Consumables tabs still show each one's effect.]=],
         [=[**Currency you have:** sources that cost Tarnished Undermine Real or Merchant's Favor now show how many you have next to the price, for example "75 Tarnished Undermine Real (have 40)": green when you have enough, yellow when you don't. It updates as you earn more.]=],
         [=[**Drop chance on the podium:** each podium step shows the item's drop chance, and hovering the item adds a word on your odds, from "practically yours" down to "pray to RNG".]=],
         [=[**Materials you can read:** on the Enchants and Consumables tabs each material gets its own line, with its icon, the amount needed and how many you have (green when you have enough). Rows grow to fit, so nothing is cut off.]=],

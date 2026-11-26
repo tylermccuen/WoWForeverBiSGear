@@ -672,6 +672,19 @@ check("sources show how much currency you have", function()
   if not a:find("have 40", 1, true) or not a:find("ffd100", 1, true) then error("reals: " .. a) end
   if not b:find("have 130", 1, true) or not b:find("33ff33", 1, true) then error("favor: " .. b) end
 end)
+check("gear notes drop stats the tooltip already shows", function()
+  local cases = {
+    { "1% hit", nil }, { "Agility +8", nil }, { "1.5% hit", nil }, { "7 defense", nil },
+    { "Spell power +6, armor +40", nil }, { "+6 Intellect, +5 Spirit", nil },
+    { "Best quiver (bows, crossbows), 15% ranged attack speed", "Best quiver (bows, crossbows)" },
+    { "tank version", "tank version" }, { "Lasts through death", "Lasts through death" },
+    { "dual-wield option", "dual-wield option" }, { "Crusader proc: heal and +100 Strength", "Crusader proc: heal and +100 Strength" },
+  }
+  for _, c in ipairs(cases) do
+    local got = ns.NoteWithoutStats(c[1])
+    if got ~= c[2] then error(c[1] .. " -> " .. tostring(got)) end
+  end
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()
   if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end
