@@ -56,7 +56,7 @@ CreateAtlasMarkup = function() return "" end
 
 local ns = {}
 local events = {}
-local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Phase2.lua","Data/Crafting.lua","Data/DropRates.lua","Data/Bosses.lua","Data/Pets.lua","Data/Quests.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Boss.lua","Quests.lua","Minimap.lua","Options.lua"}
+local files = {"Core.lua","Data/Phases.lua","Data/Phase1.lua","Data/Phase2.lua","Data/Crafting.lua","Data/DropRates.lua","Data/Bosses.lua","Data/Pets.lua","Data/PlayerNotes.lua","Data/Quests.lua","Items.lua","LinkPopup.lua","Tooltip.lua","Browser.lua","Raid.lua","Boss.lua","Quests.lua","Minimap.lua","Options.lua"}
 for _,f in ipairs(files) do assert(loadfile(f))("ForeverBestInSlot", ns) end
 local function fire(ev, ...)
   for _, f in ipairs(ALLFRAMES) do
@@ -592,6 +592,23 @@ check("hunter Pet tab and raid check pet tile", function()
   ns.RefreshBrowser()
   if ns.char.listMode ~= "ranked" then error("pet tab stayed for a mage") end
   UnitCreatureFamily = nil
+end)
+check("why-place tooltip talks about the item, not websites", function()
+  local lines = {}
+  local saveAdd = GameTooltip.AddLine
+  GameTooltip.AddLine = function(_, t) table.insert(lines, tostring(t)) end
+  local first = { id = 252605, slot = "Head", source = "Crafted: Leatherworking", place = 1 }
+  local second = { id = 226887, slot = "Head", source = "Dungeon Set 2 quest: Saving the Best for Last", place = 2, isExtra = true,
+                   why = "1% hit. In the Realistic set, the easier-to-get gear." }
+  local fake = { card = { entry = { places = { first, second } } }, place = 2 }
+  if not ns.PodiumWhyEnter then error("no hook (podium not built)") end
+  ns.PodiumWhyEnter(fake)
+  GameTooltip.AddLine = saveAdd
+  local all = table.concat(lines, "\n")
+  for _, bad in ipairs({ "conquestcapped", "wowtbc", "guide", "Realistic set", "Ranked" }) do
+    if all:find(bad, 1, true) then error("mentions " .. bad .. ":\n" .. all) end
+  end
+  if not all:find("quest reward", 1, true) then error("no reason given:\n" .. all) end
 end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()

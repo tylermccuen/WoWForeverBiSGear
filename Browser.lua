@@ -1328,6 +1328,71 @@ local function statDiff(a, b, role)
     return out
 end
 
+-- The item's stats that matter for the role, e.g. "21 Agility, 1% crit"
+local function itemStatLine(d, role)
+    if not ns.ItemKeyStats then return "" end
+    local st = ns.ItemKeyStats(d.id)
+    local keys = {}
+    for _, k in ipairs((ns.ROLE_STATS and ns.ROLE_STATS[role]) or {}) do table.insert(keys, k) end
+    table.insert(keys, "hit"); table.insert(keys, "crit")
+    local parts = {}
+    for _, k in ipairs(keys) do
+        local v = st[k]
+        if v and v ~= 0 then
+            if k == "hit" or k == "crit" then table.insert(parts, v .. "% " .. k)
+            else table.insert(parts, v .. " " .. (ns.STAT_LABEL[k] or k)) end
+        end
+    end
+    return table.concat(parts, ", ")
+end
+
+local function kindOf(src)
+    src = src or ""
+    if src:find("[Qq]uest:") then return "quest" end
+    if src:find("Crafted") or src:find("working") or src:find("smithing") or src:find("Tailoring") or src:find("Engineering") then return "crafted" end
+    if src:find("Exalted") or src:find("Revered") or src:find("Honored") or src:find("Friendly%)") then return "rep" end
+    if src:find("[Vv]endor") or src:find("Tarnished Undermine Real") then return "vendor" end
+    return "drop"
+end
+
+-- One sentence on why the item holds its place
+local function placeReason(d, place, first)
+    if place == 1 then
+        return "The strongest item for your spec in this slot."
+    end
+    local why = {}
+    local k = kindOf(d.source)
+    local rate = ns.DropChance(d.id, d.source)
+    local firstRate = first and ns.DropChance(first.id, first.source)
+    local firstKind = first and kindOf(first.source)
+    if k == "quest" then table.insert(why, "it's a quest reward, so it's guaranteed")
+    elseif k == "crafted" then table.insert(why, "you can make it or buy it")
+    elseif k == "vendor" then table.insert(why, "you can buy it from a vendor")
+    elseif k == "rep" then table.insert(why, "it's a reputation reward, a steady grind")
+    elseif rate and firstRate and rate > firstRate * 1.3 then
+        table.insert(why, "it drops more often (" .. ns.FormatChance(rate) .. " against " .. ns.FormatChance(firstRate) .. ")")
+    elseif rate and firstKind == "crafted" then
+        table.insert(why, "it's a " .. ns.FormatChance(rate) .. " drop, so you can skip the crafting cost")
+    end
+    if d.isPre then table.insert(why, "you need it for the Tier 0.5 quest anyway") end
+    if #why == 0 then
+        return "A little weaker than 1st place; a solid pick until you get 1st place."
+    end
+    return "A little weaker than 1st place, but " .. table.concat(why, ", and ") .. "."
+end
+
+-- Notes without references to where the list came from
+local function cleanWhy(text)
+    if not text then return nil end
+    text = text:gsub("%s*In the best%-in%-slot set%.?", "")
+    text = text:gsub("%s*In the Realistic set, the easier%-to%-get gear%.?", " Easier to get.")
+    text = text:gsub("%s*In the Realistic set%.?", " Easier to get.")
+    text = text:gsub("%s*%(page prose%)", "")
+    text = text:gsub("^%s+", ""):gsub("%s+$", "")
+    if text == "" or text == "." then return nil end
+    return text
+end
+
 local function podiumWhyEnter(self)
     local card, place = self.card, self.place
     local e = card.entry
@@ -1338,10 +1403,11 @@ local function podiumWhyEnter(self)
     local role = ns.SpecRole and ns.SpecRole(ns.char.selectedClass, ns.char.selectedSpec)
     GameTooltip:SetOwner(self, "ANCHOR_TOP")
     GameTooltip:AddLine("Why " .. ns.PLACE_NAMES[place] .. " place?", 1, 0.82, 0)
-    local by = d.isExtra and ((guide and guide.altSource) or "conquestcapped.com")
-        or ((info.source or "the BiS guide"):gsub("%s*%b()", ""))
-    GameTooltip:AddLine(d.isExtra and ("Ranked " .. ns.PLACE_NAMES[place] .. " by " .. by .. " (alternatives, the Realistic set and Other Options)")
-        or ("Best in slot on " .. by), 1, 1, 1, true)
+    -- the reason, from the item itself: what it gives your spec, and (for
+    -- 2nd / 3rd) why you might take it over 1st
+    local keyStats = itemStatLine(d, role)
+    if keyStats ~= "" then GameTooltip:AddLine(keyStats, 1, 1, 1, true) end
+    GameTooltip:AddLine(placeReason(d, place, e.places[1]), 0.8, 0.8, 0.8, true)
     if place == 1 and e.second then
         GameTooltip:AddLine("You wear two, so both of these are 1st place.", 0.8, 0.8, 0.8, true)
     end
@@ -1362,13 +1428,23 @@ local function podiumWhyEnter(self)
     GameTooltip:AddLine("How to get it", 0.8, 0.8, 0.8)
     GameTooltip:AddLine(howToGet(d), 1, 1, 1, true)
     if d.note then GameTooltip:AddLine(d.note, 0.67, 0.67, 0.67, true) end
-    if d.why and d.why ~= d.note then
+    local notes = cleanWhy(d.why ~= d.note and d.why or nil)
+    if notes then
         GameTooltip:AddLine(" ")
-        GameTooltip:AddLine("What the guides say", 0.8, 0.8, 0.8)
-        GameTooltip:AddLine(d.why, 1, 1, 1, true)
+        GameTooltip:AddLine("Notes", 0.8, 0.8, 0.8)
+        GameTooltip:AddLine(notes, 1, 1, 1, true)
+    end
+    -- what players report about the item (filled in from community feedback)
+    local said = ns.PlayerNotes and ns.PlayerNotes[d.id]
+    if said then
+        GameTooltip:AddLine(" ")
+        GameTooltip:AddLine("What players say", 0.8, 0.8, 0.8)
+        GameTooltip:AddLine(said, 1, 1, 1, true)
     end
     GameTooltip:Show()
 end
+
+ns.PodiumWhyEnter = podiumWhyEnter   -- (tools/uitest.lua)
 
 local function createCard(i)
     local card = CreateFrame("Frame", nil, scrollChild)

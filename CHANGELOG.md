@@ -1,6 +1,7 @@
 # Forever Best In Slot
 
 ## 1.10.0
+- **"Why this place?" explains the item:** hovering a place on the podium now says what the item gives your spec (for example "21 Agility, 38 Intellect, 1% crit") and, for 2nd and 3rd place, why you might take it over 1st (a guaranteed quest reward, craftable, drops more often, and so on), instead of which website ranked it. A new "What players say" section shows feedback from players who've used the item.
 - **Hunter Head picks:** Mask of the Unforgiven is no longer 3rd place for Beast Mastery and Marksmanship hunters (in Forever it carries Defense, a tank stat). Backwood Helm from the Dire Maul library quest takes its place.
 - **Podium says where trash drops come from:** podium cards now name the dungeon for drops that aren't from a boss, for example "Dire Maul East: Trash Drop (satyrs)" for Marksman Bands, instead of just "Trash Drop (satyrs)".
 - **Hunter Pet tab:** hunters get a **Pet** tab with the raid pet for their spec (Beast Mastery: Cat or Raptor; Marksmanship: Lone Wolf, or a Wolf or Tallstrider; Survival: Wolf or Raptor), why, whether the pet you have out is a good pick, what each pet family brings, and where to tame a Wolf with the raid rank of Furious Howl. The Raid Check shows a Pet tile too.
