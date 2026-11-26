@@ -758,6 +758,84 @@ local function sourceEnter(self, row)
     end
 end
 
+----------------------------------------------------------------------
+-- Celebration: when a slot becomes done, gold sprinkles down over it
+-- (snow during the holiday theme)
+----------------------------------------------------------------------
+local fx, fxPool, fxLive = nil, {}, {}
+
+-- row / card background for the place you have: gold, silver, bronze
+local PLACE_TINT = { { 0.94, 0.71, 0.16, 0.16 }, { 0.76, 0.8, 0.84, 0.13 }, { 0.79, 0.48, 0.24, 0.15 } }
+
+local function fxUpdate(self, elapsed)
+    local any = false
+    for i = #fxLive, 1, -1 do
+        local p = fxLive[i]
+        p.t = p.t + elapsed
+        if p.t >= p.life then
+            p.tex:Hide()
+            table.remove(fxLive, i)
+            table.insert(fxPool, p)
+        else
+            any = true
+            local k = p.t / p.life
+            p.x = p.x + (p.vx + math.sin((p.t + p.phase) * p.wobble) * p.sway) * elapsed
+            p.y = p.y - p.vy * elapsed
+            p.tex:ClearAllPoints()
+            p.tex:SetPoint("CENTER", self, "BOTTOMLEFT", p.x, p.y)
+            p.tex:SetAlpha(p.alpha * (k < 0.15 and k / 0.15 or (k > 0.6 and (1 - k) / 0.4 or 1)))
+        end
+    end
+    if not any then self:SetScript("OnUpdate", nil) end
+end
+
+function ns.Celebrate(anchor)
+    if not (frame and anchor and anchor.GetLeft and frame:IsShown()) then return end
+    if not fx then
+        fx = CreateFrame("Frame", nil, frame)
+        fx:SetAllPoints(frame)
+        fx:SetFrameLevel(frame:GetFrameLevel() + 60)
+        fx:EnableMouse(false)
+    end
+    local left, top, w = anchor:GetLeft(), anchor:GetTop(), anchor:GetWidth()
+    local fl, fb = fx:GetLeft(), fx:GetBottom()
+    if not (left and top and w and fl and fb) then return end
+    local x0, y0 = left - fl, top - fb
+    local snow = ns.HolidayOn()
+    for _ = 1, (snow and 26 or 22) do
+        local p = table.remove(fxPool)
+        if not p then
+            p = { tex = fx:CreateTexture(nil, "OVERLAY") }
+            p.tex:SetTexture(ns.TEXTURES .. "sparkle")
+        end
+        p.tex:SetBlendMode(snow and "BLEND" or "ADD")
+        if snow then p.tex:SetVertexColor(0.92, 0.96, 1) else p.tex:SetVertexColor(1, 0.82, 0.25) end
+        local size = snow and math.random(5, 10) or math.random(6, 13)
+        p.tex:SetSize(size, size)
+        p.x = x0 + math.random() * math.min(w, 420)
+        p.y = y0 + math.random(0, 26)
+        p.vx = (math.random() - 0.5) * 16
+        p.vy = snow and math.random(28, 55) or math.random(55, 110)
+        p.sway = snow and math.random(10, 22) or math.random(3, 8)
+        p.wobble = snow and 2.2 or 5
+        p.phase = math.random() * 6
+        p.t, p.life = 0, snow and (1.8 + math.random() * 0.9) or (1.1 + math.random() * 0.6)
+        p.alpha = snow and 0.95 or 1
+        p.tex:Show()
+        table.insert(fxLive, p)
+    end
+    fx:SetScript("OnUpdate", fxUpdate)
+end
+
+-- remember each slot's done state so only a change celebrates
+local doneSeen = {}
+local function celebrateIfNewlyDone(key, isDone, anchor)
+    if not key then return end
+    if doneSeen[key] == false and isDone then ns.Celebrate(anchor) end
+    doneSeen[key] = isDone and true or false
+end
+ns._celebrateIfNewlyDone = celebrateIfNewlyDone   -- (tools/uitest.lua)
+
 local function createRow(i)
     local row = CreateFrame("Frame", nil, scrollChild)
     row:SetHeight(ROW_HEIGHT)
@@ -814,10 +892,25 @@ local function createRow(i)
     trophy.glow:SetPoint("CENTER")
     trophy.glow:SetSize(40, 40)
     trophy.glow:SetAlpha(0.8)   -- steady glow, no fading
+    -- 1st place: the trophy drawn again on top, added, so it reads brighter
+    trophy.bright = trophy:CreateTexture(nil, "OVERLAY")
+    trophy.bright:SetAllPoints(trophy.tex)
+    trophy.bright:SetBlendMode("ADD")
+    trophy.bright:SetAlpha(0.3)
+    trophy.bright:Hide()
+    -- holiday: a soft glow on the tree's star, and the twinkle on top of it
+    trophy.starGlow = trophy:CreateTexture(nil, "OVERLAY")
+    trophy.starGlow:SetTexture(ns.TEXTURES .. "halo")
+    trophy.starGlow:SetBlendMode("ADD")
+    trophy.starGlow:SetVertexColor(1, 0.9, 0.4)
+    trophy.starGlow:SetSize(18, 18)
+    trophy.starGlow:SetPoint("CENTER", trophy, "TOP", 0, -3)
+    trophy.starGlow:SetAlpha(0.7)
+    trophy.starGlow:Hide()
     trophy.star = trophy:CreateTexture(nil, "OVERLAY")
     trophy.star:SetTexture(ns.TEXTURES .. "sparkle")
     trophy.star:SetBlendMode("ADD")
-    trophy.star:SetSize(12, 12)
+    trophy.star:SetSize(16, 16)
     trophy.star:SetPoint("CENTER", trophy, "TOP", 0, -2)
     trophy.star:SetAlpha(0)
     trophy.starAnim = trophy.star:CreateAnimationGroup()
@@ -1084,8 +1177,11 @@ local function fillRow(row, data)
         local shine = data.place == 1 and not data.isAlt
         row.trophy.glow:SetSize(size * 1.7, size * 1.7)
         row.trophy.glow:SetShown(shine)
+        row.trophy.bright:SetTexture(placeIcon)
+        row.trophy.bright:SetShown(shine)
         local twinkle = shine and ns.HolidayOn() or false
         row.trophy.star:SetShown(twinkle)
+        row.trophy.starGlow:SetShown(twinkle)
         if twinkle then
             if not row.trophy.starAnim:IsPlaying() then row.trophy.starAnim:Play() end
         else
@@ -1113,6 +1209,10 @@ local function fillRow(row, data)
         row.bg:SetColorTexture(0, 0, 0, 0.22)
     elseif data.isAlt then
         row.bg:SetColorTexture(0.45, 0.6, 1, 0.07)
+    elseif data.ownedPlace and PLACE_TINT[data.ownedPlace] then
+        -- you have a 1st / 2nd / 3rd place item for this slot: gold / silver / bronze
+        local c = PLACE_TINT[data.ownedPlace]
+        row.bg:SetColorTexture(c[1], c[2], c[3], c[4])
     else
         row.bg:SetColorTexture(1, 1, 1, (row.index % 2 == 0) and 0.04 or 0)
     end
@@ -1235,7 +1335,10 @@ local function fillRow(row, data)
     else
         row.done:Hide()
     end
-    row:SetAlpha(data.isDone and 0.6 or 1)
+    row:SetAlpha(data.isDone and not data.ownedPlace and 0.6 or (data.isDone and 0.85) or 1)
+    if data.doneKey and not data.isAlt then
+        celebrateIfNewlyDone((data.specKey or "") .. "|" .. data.doneKey, data.isDone, row)
+    end
 
     ns.WithItem(data.id, function(item)
         if row.token ~= token then return end
@@ -1627,6 +1730,19 @@ local function createCard(i)
         st.trophy:SetSize(place == 1 and 28 or 22, place == 1 and 28 or 22)
         st.trophy:SetPoint("BOTTOM", btn, "TOP", 0, 3)
         if place == 1 then
+            st.trophyBright = card:CreateTexture(nil, "OVERLAY")
+            st.trophyBright:SetAllPoints(st.trophy)
+            st.trophyBright:SetBlendMode("ADD")
+            st.trophyBright:SetAlpha(0.3)
+            st.starGlow = card:CreateTexture(nil, "OVERLAY")
+            st.starGlow:SetTexture(ns.TEXTURES .. "halo")
+            st.starGlow:SetBlendMode("ADD")
+            st.starGlow:SetVertexColor(1, 0.9, 0.4)
+            st.starGlow:SetSize(22, 22)
+            st.starGlow:SetPoint("CENTER", st.trophy, "TOP", 0, -3)
+            st.starGlow:SetAlpha(0.75)
+        end
+        if place == 1 then
             st.sparkle = ns.CreateSparkle(card, btn)
         end
         -- hover the numbered step: why it is in this place
@@ -1697,6 +1813,7 @@ local function fillStep(card, st, place, d, holiday, d2)
     st.block:SetColorTexture(STEP_COLOR[place][1], STEP_COLOR[place][2], STEP_COLOR[place][3], on and 0.9 or 0.18)
     st.num:SetShown(on)
     st.src:SetShown(on); st.name:SetShown(on); st.btn:SetShown(on); st.trophy:SetShown(on)
+    if st.trophyBright and not on then st.trophyBright:Hide(); st.starGlow:Hide() end
     st.empty:SetShown(not on)
     local two = on and d2 ~= nil and st.btn2 ~= nil
     if st.btn2 then
@@ -1712,6 +1829,11 @@ local function fillStep(card, st, place, d, holiday, d2)
     st.trophy:ClearAllPoints()
     st.trophy:SetPoint("BOTTOM", st.btn, "TOP", two and 19 or 0, 3)
     st.trophy:SetTexture(ns.PlaceIcon(place))
+    if st.trophyBright then
+        st.trophyBright:SetTexture(ns.PlaceIcon(place))
+        st.trophyBright:Show()
+        st.starGlow:SetShown(ns.HolidayOn())
+    end
     st.token = (st.token or 0) + 1
     st.names2, st.n1, st.n2 = two, nil, nil
     if two then
@@ -1760,6 +1882,10 @@ local function fillPodium(slots)
             fillStep(card, card.steps[place], place, e.places[place], holiday, place == 1 and e.second or nil)
         end
         card:SetAlpha(1)   -- finished slots keep full color; the green tick shows they are done
+        local tint = e.ownedPlace and PLACE_TINT[e.ownedPlace]
+        if tint then card.bg:SetColorTexture(tint[1], tint[2], tint[3], tint[4] + 0.06)
+        else card.bg:SetColorTexture(0, 0, 0, 0.35) end
+        celebrateIfNewlyDone((ns.char.selectedClass or "") .. ":" .. (ns.char.selectedSpec or "") .. "|card|" .. e.slot, e.done, card)
         card:Show()
     end
     for i = #slots + 1, #podiumCards do
@@ -1907,6 +2033,16 @@ function ns.RefreshBrowser()
     local listRows
     if mode == "ranked" then
         listRows = ns.GetRankedRows(guide)
+        -- the best place you own in each slot (tints the slot gold / silver / bronze)
+        local best = {}
+        for _, r in ipairs(listRows) do
+            if r.place and not r.isPre and ns.Owned[r.id] then
+                best[r.slot] = math.min(best[r.slot] or 9, r.place)
+            end
+        end
+        for _, r in ipairs(listRows) do
+            r.ownedPlace = (not r.isAlt) and best[r.slot] or nil
+        end
     else
         listRows = ns.GetGuideRows(guide, mode == "bis" and ns.char.showAlts ~= false, mode)
     end
@@ -2073,7 +2209,7 @@ function ns.RefreshBrowser()
                 local e = bySlot[r.slot]
                 if not e then
                     e = { slot = r.slot, places = {}, done = slotDone[r.slot], allOwned = true,
-                          weaponChoice = r.weaponChoice }
+                          weaponChoice = r.weaponChoice, ownedPlace = r.ownedPlace }
                     bySlot[r.slot] = e
                     table.insert(slots, e)
                 end
@@ -2614,6 +2750,41 @@ local function createFrame()
         GameTooltip:Show()
     end)
     viewButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    -- holiday theme switch: click for on / off, right-click for automatic
+    local holidayButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+    holidayButton:SetSize(26, 22)
+    holidayButton:SetPoint("LEFT", viewButton, "RIGHT", 6, 0)
+    holidayButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    holidayButton.icon = holidayButton:CreateTexture(nil, "OVERLAY")
+    holidayButton.icon:SetTexture(ns.TEXTURES .. "holly")
+    holidayButton.icon:SetSize(18, 18)
+    holidayButton.icon:SetPoint("CENTER")
+    local function holidayLook()
+        local on = ns.HolidayOn()
+        holidayButton.icon:SetDesaturated(not on)
+        holidayButton.icon:SetAlpha(on and 1 or 0.5)
+    end
+    holidayButton:SetScript("OnClick", function(self, button)
+        if button == "RightButton" then ns.db.holidayTheme = "auto"
+        else ns.db.holidayTheme = ns.HolidayOn() and "off" or "on" end
+        holidayLook()
+        ns.RefreshBrowser()
+        if GameTooltip:IsOwned(self) then self:GetScript("OnEnter")(self) end
+    end)
+    holidayButton:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
+        local mode = ns.db.holidayTheme or "auto"
+        GameTooltip:AddLine("Holiday theme: " .. (mode == "auto" and "automatic" or mode))
+        GameTooltip:AddLine("Christmas lights, snow, a tree, snowman and gingerbread trophies, and Santa now and then.", 1, 1, 1, true)
+        GameTooltip:AddLine("Click: turn it " .. (ns.HolidayOn() and "off" or "on"), 0.2, 1, 0.2)
+        GameTooltip:AddLine("Right-click: automatic (on for Winter Veil, Dec 15 - Jan 2)", 0.2, 1, 0.2)
+        GameTooltip:Show()
+    end)
+    holidayButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    holidayButton:SetScript("OnShow", holidayLook)
+    holidayLook()
+    frame.holidayButton = holidayButton
     frame.wideOnly = { missingCheck, mcLabel, altCheck, altLabel, doneCheck, doneLabel }   -- "where to get it" stays
 
     countText = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -2787,7 +2958,7 @@ local function createFrame()
 
     if frame.sleek then
         title:SetFontObject("GameFontNormal")
-        for _, b in ipairs({ phaseButton, classButton, specButton, slotButton, viewButton, guideLink, settings }) do skinButton(b) end
+        for _, b in ipairs({ phaseButton, classButton, specButton, slotButton, viewButton, holidayButton, guideLink, settings }) do skinButton(b) end
         for _, tab in ipairs(listTabs or {}) do skinButton(tab, SLEEK.tab) end
     end
     frame:SetScript("OnShow", function() ns.RefreshOwned(); ns.RefreshBrowser() end)

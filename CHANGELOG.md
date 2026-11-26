@@ -1,6 +1,10 @@
 # Forever Best In Slot
 
 ## 1.10.0
+- **A little celebration:** when a slot becomes done (you get the item or tick it), gold sprinkles down over it; during the holiday theme it snows instead.
+- **Gold, silver and bronze slots:** on the Gear tab, a slot's row (and its podium card) takes the color of the best place you have for it: gold for 1st, silver for 2nd, bronze for 3rd.
+- **Brighter trophies:** the 1st place trophy is a little brighter, and in the holiday theme the Christmas tree's star glows.
+- **Holiday button:** a holly button next to View turns the holiday theme on or off; right-click sets it back to automatic (on for Winter Veil, Dec 15 - Jan 2).
 - **Shorter item notes:** on the gear lists and podium, notes no longer repeat stats the item's own tooltip shows ("1% hit", "Agility +8", "15% ranged attack speed"). Notes that add something stay, such as "Best quiver (bows, crossbows)" or "tank version". The Enchants and Consumables tabs still show each one's effect.
 - **Currency you have:** sources that cost Tarnished Undermine Real or Merchant's Favor now show how many you have next to the price, for example "75 Tarnished Undermine Real (have 40)": green when you have enough, yellow when you don't. It updates as you earn more.
 - **Drop chance on the podium:** each podium step shows the item's drop chance, and hovering the item adds a word on your odds, from "practically yours" down to "pray to RNG".

@@ -685,6 +685,26 @@ check("gear notes drop stats the tooltip already shows", function()
     if got ~= c[2] then error(c[1] .. " -> " .. tostring(got)) end
   end
 end)
+check("celebration when a slot becomes done; holiday button", function()
+  local f = _G.ForeverBiSFrame
+  if not f:IsShown() then ns.ToggleBrowser() end
+  local burst = 0
+  local save = ns.Celebrate
+  ns.Celebrate = function() burst = burst + 1 end
+  ns._celebrateIfNewlyDone("k1", false, f)
+  ns._celebrateIfNewlyDone("k1", true, f)    -- newly done: celebrate
+  ns._celebrateIfNewlyDone("k1", true, f)    -- still done: no repeat
+  ns._celebrateIfNewlyDone("k2", true, f)    -- first sight already done: no burst
+  ns.Celebrate = save
+  if burst ~= 1 then error("bursts " .. burst) end
+  if not f.holidayButton then error("no holiday button") end
+  local before = ns.db.holidayTheme
+  f.holidayButton:GetScript("OnClick")(f.holidayButton, "LeftButton")
+  if ns.db.holidayTheme == before then error("holiday button did nothing") end
+  f.holidayButton:GetScript("OnClick")(f.holidayButton, "RightButton")
+  if ns.db.holidayTheme ~= "auto" then error("right-click not auto") end
+  pcall(ns.Celebrate, f)   -- runs without errors in the mock
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()
   if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end
