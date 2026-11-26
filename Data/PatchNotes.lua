@@ -3,6 +3,7 @@ local _, ns = ...
 -- Made by tools/gen_patchnotes.py from CHANGELOG.md. Don't edit by hand.
 ns.PatchNotes = {
     { version = [=[1.10.0]=], notes = {
+        [=[**Currency you have:** sources that cost Tarnished Undermine Real or Merchant's Favor now show how many you have next to the price, for example "75 Tarnished Undermine Real (have 40)": green when you have enough, yellow when you don't. It updates as you earn more.]=],
         [=[**Drop chance on the podium:** each podium step shows the item's drop chance, and hovering the item adds a word on your odds, from "practically yours" down to "pray to RNG".]=],
         [=[**Materials you can read:** on the Enchants and Consumables tabs each material gets its own line, with its icon, the amount needed and how many you have (green when you have enough). Rows grow to fit, so nothing is cut off.]=],
         [=[**Pet training (hunters):** the Pet tab checks every skill on the pet you have out against the best rank known in Forever, and says where to get the next rank: the beast to tame (level, zone and map coordinates) or the Pet Trainer. For example "Claw rank 6: rank 7 from Mongress (level 50 bear, Felwood 43.4, 77.6)". It also flags a missing Bite, Claw (for families that learn it) or Great Stamina, checks level, loyalty, happiness and unspent training points, lists where to learn the best ranks, and gives a raid training plan for the 300 points. The Raid Check's Pet tile says how many training tips there are.]=],

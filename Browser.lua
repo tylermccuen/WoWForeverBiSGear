@@ -1182,7 +1182,7 @@ local function fillRow(row, data)
     row.srcHit:SetShown(boss ~= nil or row.quests ~= nil or row.questInLog ~= nil)
     if boss then src = ns.BOSS_ICON .. src end
     if data.note and not data.isPre then src = src .. "  |cffaaaaaa(" .. data.note .. ")|r" end
-    row.source:SetText(src)
+    row.source:SetText(ns.AnnotateCost(src))
     row.enchantID = data.enchantID
     row.enchantNote, row.enchantSource = data.enchantNote, data.enchantSource
     row.slotName, row.itemID = data.slot, data.id
@@ -1424,6 +1424,58 @@ function ns.DropMood(rate)
     else return "pray to RNG" end
 end
 
+-- Currencies in sources ("75 Tarnished Undermine Real", "120 Merchant's Favor"):
+-- how many you have, from the currency list or your bags and bank
+local COST_NAMES = { "Tarnished Undermine Real", "Merchant's Favor" }
+function ns.CurrencyHave(name)
+    if C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListSize and C_CurrencyInfo.GetCurrencyListInfo then
+        local ok, n = pcall(C_CurrencyInfo.GetCurrencyListSize)
+        for i = 1, (ok and n or 0) do
+            local okI, info = pcall(C_CurrencyInfo.GetCurrencyListInfo, i)
+            if okI and type(info) == "table" and info.name == name and not info.isHeader then
+                return info.quantity or 0
+            end
+        end
+    end
+    local count = (C_Item and C_Item.GetItemCount) or GetItemCount
+    if count then
+        local ok, n = pcall(count, name, true)
+        if ok and tonumber(n) then return tonumber(n) end
+    end
+    return nil
+end
+
+-- Add "(have N)" after each cost in a source line: green when you have enough
+function ns.AnnotateCost(text)
+    if type(text) ~= "string" then return text end
+    for _, name in ipairs(COST_NAMES) do
+        local plain = name:gsub("%p", "%%%0")
+        text = text:gsub("(%d+) (" .. plain .. ")", function(need, n)
+            local have = ns.CurrencyHave(name)
+            if not have then return need .. " " .. n end
+            local color = have >= tonumber(need) and "|cff33ff33" or "|cffffd100"
+            return need .. " " .. n .. " " .. color .. "(have " .. have .. ")|r"
+        end)
+    end
+    return text
+end
+
+-- redraw when the amount of a currency you're saving up for changes
+local lastCostKey
+local function costKey()
+    local parts = {}
+    for _, name in ipairs(COST_NAMES) do table.insert(parts, tostring(ns.CurrencyHave(name))) end
+    return table.concat(parts, ":")
+end
+local function costChanged()
+    if not frame or not frame:IsShown() then return end
+    local key = costKey()
+    if lastCostKey and key ~= lastCostKey then ns.RefreshBrowser() end
+    lastCostKey = key
+end
+ns.On("CURRENCY_DISPLAY_UPDATE", costChanged)
+ns.On("BAG_UPDATE_DELAYED", costChanged)
+
 local function podiumWhyEnter(self)
     local card, place = self.card, self.place
     local e = card.entry
@@ -1646,7 +1698,7 @@ local function fillStep(card, st, place, d, holiday, d2)
         if isQuest or st.quests or st.questInLog then text = "|cffffd100Quest:|r " .. text end
         if st.boss then text = ns.BOSS_ICON .. text end
         st.rateTag:SetText(rate and ns.FormatChance(rate) or "")
-        st.src:SetText(text)
+        st.src:SetText(ns.AnnotateCost(text))
     end
     local clickable = not two and (st.boss or st.quests or st.questInLog) ~= nil
     st.srcHit:SetShown(on and clickable)

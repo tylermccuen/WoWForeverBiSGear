@@ -661,6 +661,17 @@ check("pet training check", function()
   UnitExists, GetPetLoyalty, GetPetHappiness, GetPetTrainingPoints, HasPetSpells, GetSpellBookItemName = nil, nil, nil, nil, nil, nil
   UnitLevel = saveLevel
 end)
+check("sources show how much currency you have", function()
+  C_CurrencyInfo = { GetCurrencyListSize = function() return 1 end,
+    GetCurrencyListInfo = function() return { name = "Merchant's Favor", quantity = 130 } end }
+  local saveCount = C_Item.GetItemCount
+  C_Item.GetItemCount = function(what) if what == "Tarnished Undermine Real" then return 40 end return 0 end
+  local a = ns.AnnotateCost("Pix Xizzix (Booty Bay): 75 Tarnished Undermine Real")
+  local b = ns.AnnotateCost("Vendor: Beneris / Alynsia (120 Merchant's Favor)")
+  C_Item.GetItemCount = saveCount; C_CurrencyInfo = nil
+  if not a:find("have 40", 1, true) or not a:find("ffd100", 1, true) then error("reals: " .. a) end
+  if not b:find("have 130", 1, true) or not b:find("33ff33", 1, true) then error("favor: " .. b) end
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()
   if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end
