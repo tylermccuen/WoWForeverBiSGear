@@ -2169,6 +2169,7 @@ function ns.RefreshBrowser()
             elseif (canMark and r.isDone) or (not canMark and ns.Owned[r.id]) then have = have + 1 end
         end
     end
+    local hiddenSlots = {}   -- finished slots "Hide finished" is hiding
     for _, r in ipairs(listRows) do
         local owned = ns.Owned[r.id] ~= nil
         if mode == "consumables" then
@@ -2179,6 +2180,7 @@ function ns.RefreshBrowser()
         end
         local slotOk = ns.char.selectedSlot == "All" or r.slot == ns.char.selectedSlot or mode == "consumables"
         local hidden = ns.char.hideDone and canMark and (r.doneKey and r.isDone or (not r.doneKey and slotDone[r.slot]))
+        if hidden and not r.isAlt and slotOk then hiddenSlots[r.slot] = true end
         -- a Tier 0 piece you own stays visible under its missing Tier 0.5
         -- upgrade, so you can see you're ready to turn it in
         if r.isPre and owned and r.upgrade and not ns.Owned[r.upgrade] then owned = false end
@@ -2229,6 +2231,7 @@ function ns.RefreshBrowser()
         for _, e in ipairs(slots) do
             local slotOk = ns.char.selectedSlot == "All" or e.slot == ns.char.selectedSlot
             local hidden = ns.char.hideDone and e.done
+            if hidden and slotOk then hiddenSlots[e.slot] = true end
             if slotOk and not hidden and not (ns.char.missingOnly and e.allOwned) then
                 table.insert(shownSlots, e)
             end
@@ -2254,6 +2257,13 @@ function ns.RefreshBrowser()
     end
 
     countText:SetText(string.format(mode == "consumables" and "Stocked %d / %d" or "Done %d / %d", have, total))
+    -- say how many finished slots are tucked away, so nothing seems missing
+    local nHidden = 0
+    for _ in pairs(hiddenSlots) do nHidden = nHidden + 1 end
+    if doneLabel then
+        doneLabel:SetText(nHidden > 0 and ("Hide finished |cff33ff33(" .. nHidden .. " hidden)|r") or "Hide finished")
+    end
+    frame.hiddenCount = nHidden
     -- keep the raid check companion on the spec being viewed
     if specKey ~= lastRaidSpec then
         lastRaidSpec = specKey
@@ -2730,7 +2740,11 @@ local function createFrame()
     doneCheck:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_BOTTOM")
         GameTooltip:AddLine("Hide finished slots")
-        GameTooltip:AddLine("Hides a slot once it's done: you own its BiS or Realistic item, or you ticked it done.", 1, 1, 1, true)
+        GameTooltip:AddLine("Hides a slot once it's done: you own one of its picks, or you ticked it done.", 1, 1, 1, true)
+        if (frame.hiddenCount or 0) > 0 then
+            GameTooltip:AddLine(frame.hiddenCount .. " finished slot" .. (frame.hiddenCount == 1 and " is" or "s are")
+                .. " hidden right now. Untick to see " .. (frame.hiddenCount == 1 and "it" or "them") .. ".", 0.2, 1, 0.2, true)
+        end
         GameTooltip:Show()
     end)
     doneCheck:SetScript("OnLeave", function() GameTooltip:Hide() end)
