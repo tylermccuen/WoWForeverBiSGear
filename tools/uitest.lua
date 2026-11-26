@@ -705,6 +705,12 @@ check("celebration when a slot becomes done; holiday button", function()
   if ns.db.holidayTheme ~= "auto" then error("right-click not auto") end
   pcall(ns.Celebrate, f)   -- runs without errors in the mock
 end)
+check("patch notes TL;DR", function()
+  local a = ns.PatchTLDR('**Holiday button:** a holly button next to View turns it on.')
+  if a ~= "Holiday button" then error(a) end
+  local b = ns.PatchTLDR("Tooltips now show the drop chance. More text here.")
+  if b ~= "Tooltips now show the drop chance." then error(b) end
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()
   if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end

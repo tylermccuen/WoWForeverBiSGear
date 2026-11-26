@@ -3045,6 +3045,21 @@ local function mdToGame(s)
     return s
 end
 
+-- TL;DR of a patch note: its bold title ("**Holiday button:** a holly...")
+-- or, without one, its first sentence
+local function tldr(note)
+    local title = note:match("^%*%*(.-)%*%*")
+    if title then
+        title = title:gsub(":%s*$", "")
+    else
+        title = note:match("^(.-[%.!?])%s") or note
+        title = title:gsub("%*%*", ""):gsub("`", "")
+        if #title > 90 then title = title:sub(1, 87):gsub("%s+%S*$", "") .. "..." end
+    end
+    return title
+end
+ns.PatchTLDR = tldr   -- (tools/uitest.lua)
+
 function ns.ShowAboutPage(pane)
     local w = math.max(300, (pane:GetWidth() or 640) - 60)
     pane.child:SetWidth(w)
@@ -3064,18 +3079,18 @@ function ns.ShowAboutPage(pane)
     add(D .. "Commands:|r " .. G .. "/bis|r opens this window,  " .. G .. "/bis raid|r the raid check,  "
         .. G .. "/bis spec|r what the game says your spec is,  " .. G .. "/bis holiday|r the holiday theme")
     add(" ")
-    add(G .. "Patch notes|r")
+    add(G .. "Patch notes|r  " .. D .. "(the short version; full notes on CurseForge)|r")
     local shown = 0
     for _, v in ipairs(ns.PatchNotes or {}) do
         shown = shown + 1
-        if shown > 8 then
+        if shown > 12 then
             add(" ")
             add(D .. "Older versions: see the changelog on CurseForge or GitHub.|r")
             break
         end
         add(" ")
         add(G .. v.version .. "|r")
-        for _, n in ipairs(v.notes) do add("|cffaaaaaa-|r  " .. mdToGame(n)) end
+        for _, n in ipairs(v.notes) do add("|cffaaaaaa-|r  " .. W .. tldr(n) .. "|r") end
     end
     pane.text:SetText(table.concat(out, "\n"))
     pane.child:SetHeight((pane.text:GetStringHeight() or 400) + 20)
