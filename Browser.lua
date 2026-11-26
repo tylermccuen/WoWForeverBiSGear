@@ -1362,7 +1362,7 @@ end
 -- standing on podium steps
 ----------------------------------------------------------------------
 local CARD_W, CARD_H, CARD_GAP = 300, 198, 10
-local STEP_H = { 30, 20, 12 }                     -- block height by place
+local STEP_H = { 40, 32, 26 }                     -- block height by place (tall enough for the trophy)
 local STEP_COLOR = { { 1, 0.78, 0.2 }, { 0.78, 0.82, 0.86 }, { 0.8, 0.5, 0.26 } }
 local STEP_ORDER = { 2, 1, 3 }                    -- left to right
 local podiumCards = {}
@@ -1695,7 +1695,7 @@ local function createCard(i)
         -- drop chance on the step itself
         st.rateTag = card:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         st.rateTag:SetPoint("RIGHT", st.block, "RIGHT", -5, 0)
-        st.rateTag:SetTextColor(0.15, 0.1, 0.05)
+        st.rateTag:SetTextColor(1, 0.95, 0.85)
         -- boss / quest: brighter, up to two lines, click for details
         st.src = card:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
         st.src:SetPoint("BOTTOM", st.block, "TOP", 0, 3)
@@ -1726,9 +1726,11 @@ local function createCard(i)
             st.btn2:SetPoint("BOTTOM", st.name, "TOP", 19, 3)
             st.btn2:Hide()
         end
-        st.trophy = card:CreateTexture(nil, "ARTWORK")
-        st.trophy:SetSize(place == 1 and 28 or 22, place == 1 and 28 or 22)
-        st.trophy:SetPoint("BOTTOM", btn, "TOP", 0, 3)
+        -- the trophy stands on its step, in place of the number
+        st.trophy = card:CreateTexture(nil, "OVERLAY")
+        local tsz = ({ 32, 26, 22 })[place]
+        st.trophy:SetSize(tsz, tsz)
+        st.trophy:SetPoint("CENTER", st.block, "CENTER", 0, 0)
         if place == 1 then
             st.trophyBright = card:CreateTexture(nil, "OVERLAY")
             st.trophyBright:SetAllPoints(st.trophy)
@@ -1810,8 +1812,10 @@ end
 -- d2: the second 1st place pick for rings / trinkets (both are worn)
 local function fillStep(card, st, place, d, holiday, d2)
     local on = d ~= nil
-    st.block:SetColorTexture(STEP_COLOR[place][1], STEP_COLOR[place][2], STEP_COLOR[place][3], on and 0.9 or 0.18)
-    st.num:SetShown(on)
+    -- a deeper shade of gold / silver / bronze, so the trophy on it stands out
+    local c = STEP_COLOR[place]
+    st.block:SetColorTexture(c[1] * 0.55, c[2] * 0.55, c[3] * 0.55, on and 0.95 or 0.18)
+    st.num:SetShown(false)
     st.src:SetShown(on); st.name:SetShown(on); st.btn:SetShown(on); st.trophy:SetShown(on)
     if st.trophyBright and not on then st.trophyBright:Hide(); st.starGlow:Hide() end
     st.empty:SetShown(not on)
@@ -1827,7 +1831,7 @@ local function fillStep(card, st, place, d, holiday, d2)
     if not on or two then st.rateTag:SetText("") end
     if not on then st.btn.data = nil; st.srcHit:Hide() return end
     st.trophy:ClearAllPoints()
-    st.trophy:SetPoint("BOTTOM", st.btn, "TOP", two and 19 or 0, 3)
+    st.trophy:SetPoint("CENTER", st.block, "CENTER", 0, 0)
     st.trophy:SetTexture(ns.PlaceIcon(place))
     if st.trophyBright then
         st.trophyBright:SetTexture(ns.PlaceIcon(place))

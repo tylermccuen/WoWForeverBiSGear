@@ -1,6 +1,7 @@
 # Forever Best In Slot
 
 ## 1.10.0
+- **Trophies on the podium steps:** the podium steps are taller and show the gold, silver and bronze trophies (or the holiday tree, snowman and gingerbread man) in place of the 1, 2, 3, on a deeper shade so the trophy stands out. The drop chance stays in the step's corner.
 - **A little celebration:** when a slot becomes done (you get the item or tick it), gold sprinkles down over it; during the holiday theme it snows instead.
 - **Gold, silver and bronze slots:** on the Gear tab, a slot's row (and its podium card) takes the color of the best place you have for it: gold for 1st, silver for 2nd, bronze for 3rd.
 - **Brighter trophies:** the 1st place trophy is a little brighter, and in the holiday theme the Christmas tree's star glows.
