@@ -300,19 +300,36 @@ local function materialsText(craft, withIcons)
     for _, m in ipairs(craft.mats or {}) do
         local icon = withIcons and itemIcon(m[1])
         if icon then
-            table.insert(parts, "|T" .. icon .. ":14:14:0:0|t " .. m[2] .. " " .. m[3])
+            -- one material per line: icon, amount, name, and how many you have
+            local have = 0
+            local count = (C_Item and C_Item.GetItemCount) or GetItemCount
+            if count then
+                local ok, n = pcall(count, m[1], true)
+                have = ok and tonumber(n) or 0
+            end
+            local haveText = have >= m[2] and ("  |cff33ff33have " .. have .. "|r")
+                or (have > 0 and ("  |cffffd100have " .. have .. "|r") or "")
+            table.insert(parts, "|T" .. icon .. ":14:14:0:0|t |cffffffff" .. m[2] .. " " .. m[3] .. "|r" .. haveText)
         else
             table.insert(parts, m[2] .. " " .. m[3])
         end
     end
-    return table.concat(parts, withIcons and "   " or ", ")
+    return table.concat(parts, withIcons and "\n" or ", ")
+end
+
+-- Enchants / Consumables rows grow to fit one material per line
+local function craftRowHeight(data)
+    local n = data.craft and data.craft.mats and #data.craft.mats or 0
+    return math.max(ROW_HEIGHT, n * 15 + 10)
 end
 
 local function enchantCell(row, data)
     if data.craft then
-        row.avoid:SetText("|cffffffff" .. materialsText(data.craft, true) .. "|r")
+        if row.avoid.SetMaxLines then row.avoid:SetMaxLines(8) end
+        row.avoid:SetText(materialsText(data.craft, true))
         return
     end
+    if row.avoid.SetMaxLines then row.avoid:SetMaxLines(2) end
     local id = data.enchantID
     if not id then
         row.avoid:SetText(data.craftTab and "|cff666666-|r" or "")
@@ -1973,11 +1990,21 @@ function ns.RefreshBrowser()
         fillPodium(shownSlots)
     else
         hidePodium()
+        -- Enchants / Consumables (full width): taller rows, one material per line
+        local tall = (mode == "enchants" or mode == "consumables") and not frame.compact
+        local y = 0
         for i, data in ipairs(list) do
-            fillRow(rows[i] or createRow(i), data)
+            local row = rows[i] or createRow(i)
+            local h = tall and craftRowHeight(data) or ROW_HEIGHT
+            row:ClearAllPoints()
+            row:SetPoint("TOPLEFT", 0, -y)
+            row:SetPoint("RIGHT", scrollChild, "RIGHT", 0, 0)
+            row:SetHeight(h)
+            fillRow(row, data)
+            y = y + h
         end
         for i = #list + 1, #rows do rows[i]:Hide() end
-        scrollChild:SetHeight(math.max(1, #list * ROW_HEIGHT))
+        scrollChild:SetHeight(math.max(1, y))
     end
 
     countText:SetText(string.format(mode == "consumables" and "Stocked %d / %d" or "Done %d / %d", have, total))
@@ -2014,7 +2041,8 @@ ns.OnOwnedChanged = function() ns.RefreshBrowser() end
 -- buying more), so the Consumables tab redraws on bag changes itself.
 local stockPending = false
 ns.On("BAG_UPDATE_DELAYED", function()
-    if stockPending or not frame or not frame:IsShown() or ns.char.listMode ~= "consumables" then return end
+    if stockPending or not frame or not frame:IsShown()
+        or (ns.char.listMode ~= "consumables" and ns.char.listMode ~= "enchants") then return end
     stockPending = true
     C_Timer.After(0.5, function() stockPending = false; ns.RefreshBrowser() end)
 end)
