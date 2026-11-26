@@ -3,6 +3,7 @@ local _, ns = ...
 -- Made by tools/gen_patchnotes.py from CHANGELOG.md. Don't edit by hand.
 ns.PatchNotes = {
     { version = [=[1.10.0]=], notes = {
+        [=[**Bigger 1st place on the podium:** the 1st place item's icon is larger than 2nd and 3rd, so the best pick stands out.]=],
         [=[**Longer holiday season:** the holiday theme now turns on by itself the day before Thanksgiving (this year: November 25) and runs until January 2.]=],
         [=[**"Hide finished" says what it's hiding:** with it ticked, the label shows how many finished slots are hidden, for example "Hide finished (3 hidden)", so a slot you own (like your quiver or ammo pouch) doesn't seem to have gone missing.]=],
         [=[**Trophies on the podium steps:** the podium steps are taller and show the gold, silver and bronze trophies (or the holiday tree, snowman and gingerbread man) in place of the 1, 2, 3, on a deeper shade so the trophy stands out. The drop chance stays in the step's corner.]=],

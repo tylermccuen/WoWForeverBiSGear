@@ -1793,14 +1793,14 @@ local function createCard(i)
         st.name:SetJustifyH("CENTER")
         st.name:SetWordWrap(true)
         if st.name.SetMaxLines then st.name:SetMaxLines(2) end
-        local size = place == 1 and 36 or 30
+        local size = place == 1 and 44 or 30   -- 1st place stands out
         local btn = makeItemButton(card, size)
         btn:SetPoint("BOTTOM", st.name, "TOP", 0, 3)
         st.btn = btn
         if place == 1 then
             -- rings / trinkets: the second 1st place pick stands beside the first
-            st.btn2 = makeItemButton(card, 32)
-            st.btn2:SetPoint("BOTTOM", st.name, "TOP", 19, 3)
+            st.btn2 = makeItemButton(card, 38)
+            st.btn2:SetPoint("BOTTOM", st.name, "TOP", 21, 3)
             st.btn2:Hide()
         end
         -- the trophy stands on its step, in place of the number
@@ -1900,11 +1900,11 @@ local function fillStep(card, st, place, d, holiday, d2)
     if st.btn2 then
         st.btn2:SetShown(two)
         st.btn:ClearAllPoints()
-        st.btn:SetPoint("BOTTOM", st.name, "TOP", two and -19 or 0, 3)
-        st.btn:SetSize(two and 32 or 36, two and 32 or 36)
+        st.btn:SetPoint("BOTTOM", st.name, "TOP", two and -21 or 0, 3)
+        st.btn:SetSize(two and 38 or 44, two and 38 or 44)
         if not two then st.btn2.data = nil end
     end
-    if st.sparkle then ns.ShowSparkle(st.sparkle, on, two and 32 or 36) end
+    if st.sparkle then ns.ShowSparkle(st.sparkle, on, two and 38 or 44) end
     if not on or two then st.rateTag:SetText("") end
     if not on then st.btn.data = nil; st.srcHit:Hide() return end
     st.trophy:ClearAllPoints()
@@ -1943,7 +1943,7 @@ local function fillStep(card, st, place, d, holiday, d2)
     end
     local clickable = not two and (st.boss or st.quests or st.questInLog) ~= nil
     st.srcHit:SetShown(on and clickable)
-    if st.sparkle2 then ns.ShowSparkle(st.sparkle2, two, 32) end
+    if st.sparkle2 then ns.ShowSparkle(st.sparkle2, two, 38) end
     st.name:SetText("|cff888888...|r")
     fillItemButton(st, st.btn, d, "n1")
     if two then fillItemButton(st, st.btn2, d2, "n2") end
