@@ -25,6 +25,17 @@ function ns.RegisterPhase(p)
     table.sort(ns.PhaseList, function(a, b) return a.id < b.id end)
 end
 
+-- Upcoming phases with no lists yet: offered in the Phase menu as a planning
+-- page (timeline, what's known, how to get ready). They never become the
+-- "current" phase and never feed tooltips.
+ns.Previews = {}
+ns.PreviewList = {}
+function ns.RegisterPreview(p)
+    ns.Previews[p.id] = p
+    table.insert(ns.PreviewList, p)
+    table.sort(ns.PreviewList, function(a, b) return a.id < b.id end)
+end
+
 function ns.LatestPhase()
     local last = ns.PhaseList[#ns.PhaseList]
     return last and last.id or 1

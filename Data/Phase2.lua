@@ -48,6 +48,36 @@ local guides = {
     -- } },
 }
 
+-- Until the lists exist, "Phase 1" is a planning page in the Phase menu.
+ns.RegisterPreview({
+    id       = 2,
+    label    = "Phase 1",
+    subtitle = "raids open Dec 9, 2026",
+    opens    = { year = 2026, month = 12, day = 9 },
+    raids = {
+        { "Barrow Deeps", "10 players", "8 bosses, under Mount Hyjal (tunnels start in eastern Ashenvale). No attunement." },
+        { "Hyjal Summit", "20 players", "Tier set pieces and the first legendary." },
+        { "Onyxia's Lair", "40 players", "Needs the Onyxia attunement." },
+    },
+    timeline = {
+        { "Nov 4, 2026", "Launch: level 60 and dungeons (Pre-raid lists)", done = true },
+        { "Dec 9, 2026", "Phase 1: Barrow Deeps, Hyjal Summit and Onyxia's Lair open" },
+        { "Dec 15 - Jan 2", "Feast of Winter Veil (the addon's holiday theme)" },
+        { "Winter 2026", "Hardcore servers" },
+        { "Spring 2027", "2 new raids (10 and 20 players), 2 new dungeons, 2 new class / race combos, new zone and quests, PvP refresh" },
+        { "Summer 2027", "A revamped iconic raid, a new raid, 2 new dungeons, profession and legacy updates, PvP refresh" },
+    },
+    ready = {
+        "Do the Onyxia attunement before Dec 9.",
+        "Start Guardians of Hyjal reputation: Friendly (plus the quest Friendly Advice) unlocks the crafted tier Legs pattern; more slots need more reputation.",
+        "Crafted tier needs 300 Tailoring (cloth), Leatherworking (leather, mail) or Blacksmithing (plate), and a camp station (Blueprint, near a Campfire).",
+        "Patterns are sold by Aisarra Nightmeadow in Mount Hyjal for Malleable Essence of Nature, which comes from disenchanting Hyjal Summit and Barrow Deeps loot.",
+        "Stock up: Consumables tab. Enchant what you'll keep: Enchants tab. Check hit and enchants: Raid Check tab.",
+    },
+    unknown = "Blizzard hasn't published the raid loot tables, and Forever hides an item's stats until someone loots it, so no guide has raid BiS lists yet. The Phase 1 lists will be added to the addon in the days after the raids open.",
+    sources = "Dates: Blizzard's WoW Forever roadmap (via icy-veins.com). Raids and tier sets: conquestcapped.com, lfcarry.com.",
+})
+
 if #guides > 0 then
     ns.RegisterPhase({
         id       = 2,

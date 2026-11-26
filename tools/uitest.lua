@@ -557,6 +557,23 @@ check("character window: shrunk browser, raid panel only when the browser is clo
   if ns.RaidPanelShown() then error("raid panel left open") end
   CharacterFrame = saved
 end)
+check("Phase 1 planning page from the Phase menu", function()
+  if not (ns.Previews and ns.Previews[2]) then error("no Phase 1 preview") end
+  if ns.LatestPhase() ~= 1 then error("preview became the current phase") end
+  ns.char.selectedClass, ns.char.selectedSpec = "HUNTER", "Marksmanship"
+  ns.char.previewPhase = 2
+  local f = _G.ForeverBiSFrame
+  if not f:IsShown() then ns.ToggleBrowser() end
+  ns.RefreshBrowser()
+  if not f.previewPane:IsShown() then error("planning page not shown") end
+  local text = f.previewPane.text:GetText() or ""
+  for _, want in ipairs({ "Barrow Deeps", "Wildstalker Armor", "Dec 9, 2026", "Spring 2027", "Onyxia attunement" }) do
+    if not text:find(want, 1, true) then error("missing: " .. want) end
+  end
+  ns.char.previewPhase = nil
+  ns.RefreshBrowser()
+  if f.previewPane:IsShown() then error("planning page still up") end
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()
   if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end

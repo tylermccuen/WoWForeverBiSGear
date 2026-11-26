@@ -1,5 +1,8 @@
 # Forever Best In Slot
 
+## 1.10.0
+- **Phase 1 planning page:** the Phase menu has a new "Coming up" entry, **Phase 1 - raids open Dec 9, 2026**. It shows a countdown, the three raids (Barrow Deeps, Hyjal Summit, Onyxia's Lair), your class's tier set, the WoW Forever timeline through summer 2027, and how to get ready (Onyxia attunement, Guardians of Hyjal reputation, crafted tier professions). The real Phase 1 lists replace it once the raids are out. Pick Pre-raid or a bottom tab to go back to the lists.
+
 ## 1.9.0
 - **More 2nd and 3rd place picks:** every spec's slots were checked against the conquestcapped.com WoW Forever guides, and the easier-to-get options from their Realistic sets and ranked Other Options tables (dungeon blues, quest rewards, crafted and reputation items) now fill 2nd and 3rd place. 406 of 413 gear slots now have a 2nd place pick and 367 have a 3rd (before: 249 and 58).
 - **Why it ranks there:** hover a place in podium view to see what the guides say about that item, such as its hit or spell damage, whether it's in the Realistic set, and its drop chance.

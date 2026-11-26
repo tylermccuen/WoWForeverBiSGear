@@ -1599,6 +1599,21 @@ function ns.RefreshBrowser()
     classButton:SetText(classColorHex(ns.char.selectedClass) .. className(ns.char.selectedClass) .. "|r")
     specButton:SetText(ns.char.selectedSpec or "")
     slotButton:SetText("Slot: " .. (ns.char.selectedSlot or "All"))
+    -- An upcoming phase's planning page replaces the list
+    local preview = ns.char.previewPhase and ns.Previews and ns.Previews[ns.char.previewPhase]
+    if preview and ns.Phases[preview.id] then preview, ns.char.previewPhase = nil, nil end   -- its lists arrived
+    if preview then
+        phaseButton:SetText(preview.label)
+        ns.UpdateListTabs(nil, guide)
+        frame.listScroll:Hide()
+        frame.raidPane:Hide()
+        for _, h in pairs(frame.headers or {}) do h:Hide() end
+        countText:SetText("")
+        ns.ShowPreview(frame.previewPane, preview)
+        frame.previewPane:Show()
+        return
+    end
+    frame.previewPane:Hide()
     -- Raid Check tab: the report replaces the item list
     if ns.char.listMode == "raid" then
         ns.UpdateListTabs("raid", guide)
@@ -1956,12 +1971,23 @@ local function phaseMenu(owner)
             local label = p.label .. (p.subtitle and (" - " .. p.subtitle) or "")
             if p.id == ns.LatestPhase() then label = label .. " (current)" end
             root:CreateRadio(label,
-                function() return selectedPhase() == p.id end,
+                function() return not ns.char.previewPhase and selectedPhase() == p.id end,
                 function()
                     -- remember "latest" as nil so new phases are picked up automatically
                     ns.char.selectedPhase = (p.id ~= ns.LatestPhase()) and p.id or nil
+                    ns.char.previewPhase = nil
                     ns.RefreshBrowser()
                 end)
+        end
+        -- upcoming phases: planning page until their lists exist
+        local any = false
+        for _, p in ipairs(ns.PreviewList or {}) do
+            if not ns.Phases[p.id] then
+                if not any then root:CreateDivider(); root:CreateTitle("Coming up"); any = true end
+                root:CreateRadio(p.label .. " - " .. (p.subtitle or "coming soon") .. "  |cffaaaaaa(planning)|r",
+                    function() return ns.char.previewPhase == p.id end,
+                    function() ns.char.previewPhase = p.id; ns.RefreshBrowser() end)
+            end
         end
     end)
 end
@@ -1993,6 +2019,7 @@ local function createListTabs()
         end
         tab:SetScript("OnClick", function()
             ns.char.listMode = info.mode
+            ns.char.previewPhase = nil   -- leave the planning page
             if PlaySound and SOUNDKIT and SOUNDKIT.IG_CHARACTER_INFO_TAB then pcall(PlaySound, SOUNDKIT.IG_CHARACTER_INFO_TAB) end
             ns.RefreshBrowser()
         end)
@@ -2390,6 +2417,25 @@ local function createFrame()
     raidPane:Hide()
     raidPane.view = ns.CreateRaidView(raidPane, -12, 4, 600)
     frame.raidPane = raidPane
+
+    -- Upcoming phase planning page
+    local previewPane = CreateFrame("Frame", nil, frame)
+    previewPane:SetPoint("TOPLEFT", 0, -44)
+    previewPane:SetPoint("BOTTOMRIGHT", 0, 40)
+    previewPane:Hide()
+    local pScroll = CreateFrame("ScrollFrame", nil, previewPane, "UIPanelScrollFrameTemplate")
+    pScroll:SetPoint("TOPLEFT", 16, -24)
+    pScroll:SetPoint("BOTTOMRIGHT", -34, 6)
+    local pChild = CreateFrame("Frame", nil, pScroll)
+    pChild:SetSize(600, 400)
+    pScroll:SetScrollChild(pChild)
+    previewPane.text = pChild:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    previewPane.text:SetPoint("TOPLEFT", 0, 0)
+    previewPane.text:SetJustifyH("LEFT")
+    previewPane.text:SetJustifyV("TOP")
+    previewPane.text:SetSpacing(3)
+    previewPane.child, previewPane.scroll = pChild, pScroll
+    frame.previewPane = previewPane
     scrollChild = CreateFrame("Frame", nil, scroll)
     scrollChild:SetSize(savedWidth() - 46, 1)
 
@@ -2493,6 +2539,59 @@ local function createFrame()
     frame:SetScript("OnShow", function() ns.RefreshOwned(); ns.RefreshBrowser() end)
     -- apply the saved size to the columns once
     frame:GetScript("OnSizeChanged")(frame, frame:GetWidth(), frame:GetHeight())
+end
+
+-- Planning page for an upcoming phase: countdown, raids, your tier set,
+-- timeline, how to get ready, and what isn't known yet
+local function daysUntil(d)
+    if not (d and time) then return nil end
+    local ok, target = pcall(time, { year = d.year, month = d.month, day = d.day, hour = 12 })
+    local ok2, now = pcall(time)
+    if not (ok and ok2 and target and now) then return nil end
+    return math.ceil((target - now) / 86400)
+end
+
+function ns.ShowPreview(pane, p)
+    local w = math.max(300, (pane:GetWidth() or 640) - 60)
+    pane.child:SetWidth(w)
+    pane.text:SetWidth(w)
+    local G, W, D = "|cffffd100", "|cffffffff", "|cffaaaaaa"
+    local out = {}
+    local function add(s) table.insert(out, s) end
+    local days = daysUntil(p.opens)
+    add("|cffffd100" .. p.label .. "|r  " .. W .. (p.subtitle or "") .. "|r"
+        .. (days and days > 0 and ("   |cff33ff33" .. days .. " day" .. (days == 1 and "" or "s") .. " to go|r") or ""))
+    add(D .. "Planning page: the gear lists for this phase aren't out yet.|r")
+    add(" ")
+    add(G .. "Raids|r")
+    for _, r in ipairs(p.raids or {}) do
+        add(W .. r[1] .. "|r  " .. D .. "(" .. r[2] .. ")|r  " .. r[3])
+    end
+    -- your tier set
+    local cls, spec = ns.char.selectedClass, ns.char.selectedSpec
+    local set = ns.TierSets and (ns.TierSets[(cls or "") .. ":" .. (spec or "")] or ns.TierSets[(cls or "") .. ":*"])
+    if set then
+        add(" ")
+        add(G .. "Your tier set|r  " .. D .. "(" .. className(cls) .. ", " .. (spec or "") .. ")|r")
+        add(W .. set.name .. "|r: Head, Shoulder, Chest, Hands, Legs and Feet, bonuses at 2 / 3 / 4 / 5 pieces.")
+        add("Raid pieces are item level 65 (bind on pickup). Shoulder, Hands, Legs and Feet can also be crafted at item level 61 (bind on equip).")
+    end
+    add(" ")
+    add(G .. "Timeline|r")
+    for _, t in ipairs(p.timeline or {}) do
+        add((t.done and "|cff33ff33" or W) .. t[1] .. "|r   " .. (t.done and D or "") .. t[2] .. (t.done and "|r" or ""))
+    end
+    add(" ")
+    add(G .. "Get ready|r")
+    for _, r in ipairs(p.ready or {}) do add("-  " .. r) end
+    if p.unknown then
+        add(" ")
+        add(G .. "Not known yet|r")
+        add(D .. p.unknown .. "|r")
+    end
+    if p.sources then add(" "); add(D .. p.sources .. "|r") end
+    pane.text:SetText(table.concat(out, "\n"))
+    pane.child:SetHeight((pane.text:GetStringHeight() or 400) + 20)
 end
 
 function ns.ToggleBrowser()
