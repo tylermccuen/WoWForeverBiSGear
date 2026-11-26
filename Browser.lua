@@ -1696,7 +1696,8 @@ ns.PodiumWhyEnter = podiumWhyEnter   -- (tools/uitest.lua)
 
 -- Twinkles: little stars that fade in and out over a card you've earned a
 -- place on, and over that place's step. Animation groups, so no per-frame cost.
-local TWINKLE_COLOR = { { 1, 0.85, 0.35 }, { 0.85, 0.9, 1 }, { 1, 0.65, 0.35 } }
+-- bright enough to show on their own step: silver goes pure white, bronze a warm orange
+local TWINKLE_COLOR = { { 1, 0.85, 0.35 }, { 1, 1, 1 }, { 1, 0.55, 0.2 } }
 local function makeTwinkle(parent, delay)
     local t = parent:CreateTexture(nil, "OVERLAY")
     t:SetTexture(ns.TEXTURES .. "sparkle")
@@ -1705,9 +1706,9 @@ local function makeTwinkle(parent, delay)
     local g = t:CreateAnimationGroup()
     g:SetLooping("REPEAT")
     local wait = g:CreateAnimation("Alpha"); wait:SetFromAlpha(0); wait:SetToAlpha(0); wait:SetDuration(delay); wait:SetOrder(1)
-    local up = g:CreateAnimation("Alpha"); up:SetFromAlpha(0); up:SetToAlpha(0.9); up:SetDuration(0.5); up:SetOrder(2)
+    local up = g:CreateAnimation("Alpha"); up:SetFromAlpha(0); up:SetToAlpha(1); up:SetDuration(0.5); up:SetOrder(2)
     local spin = g:CreateAnimation("Rotation"); spin:SetDegrees(90); spin:SetDuration(1); spin:SetOrder(2)
-    local down = g:CreateAnimation("Alpha"); down:SetFromAlpha(0.9); down:SetToAlpha(0); down:SetDuration(0.5); down:SetOrder(3)
+    local down = g:CreateAnimation("Alpha"); down:SetFromAlpha(1); down:SetToAlpha(0); down:SetDuration(0.5); down:SetOrder(3)
     t.anim = g
     return t
 end
@@ -1722,7 +1723,10 @@ local function setTwinkles(card, e)
         if place then
             local c = TWINKLE_COLOR[place]
             if ns.HolidayOn() and k % 3 == 0 then t:SetVertexColor(1, 1, 1) else t:SetVertexColor(c[1], c[2], c[3]) end
-            local size = math.random(7, 13)
+            -- gold adds light; on silver / bronze a normal blend keeps the star visible
+            t:SetBlendMode(place == 1 and "ADD" or "BLEND")
+            -- silver and bronze stars are a touch bigger: they don't glow as much as gold
+            local size = place == 1 and math.random(7, 13) or math.random(10, 16)
             t:SetSize(size, size)
             t:ClearAllPoints()
             local st = card.steps[place]
@@ -1946,6 +1950,7 @@ end
 
 -- slots: { { slot =, places = { [1] = row, [2] = row, [3] = row }, done = bool }, ... }
 local function fillPodium(slots)
+    ns._podiumSlots = slots   -- (tools/uitest.lua)
     local holiday = ns.HolidayOn()
     for i, e in ipairs(slots) do
         local card = podiumCards[i] or createCard(i)
