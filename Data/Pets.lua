@@ -62,11 +62,25 @@ ns.PetMaxRank = {
     ["Scorpid Poison"] = 4, ["Screech"] = 4, ["Thunderstomp"] = 3,
 }
 
--- What a raid pet should have (shown on the Pet tab)
+-- Training point costs (Classic, which Forever kept: 300 points at level 60
+-- with Best Friend loyalty). Growl costs nothing.
+ns.PetTrainCost = {
+    ["Bite"] = { [8] = 25 }, ["Claw"] = { [8] = 25 },
+    ["Great Stamina"] = { [10] = 185 },
+    ["Natural Armor"] = { [6] = 50, [10] = 150 },
+    ["Resistance"] = { [3] = 45, [4] = 90 },
+}
+
+-- Families that can learn Claw (every DPS family can learn Bite)
+ns.ClawFamilies = { Bear = true, ["Carrion Bird"] = true, Cat = true, Crab = true, Owl = true, Raptor = true, Scorpid = true }
+
+-- The raid training plan for 300 points (shown on the Pet tab)
 ns.PetRaidTraining = {
-    "Bite and Claw at their highest ranks (Bite 8, Claw 8): most of your pet's damage.",
-    "Its family skill maxed, e.g. Furious Howl rank 4 for a Wolf.",
-    "Growl: keep it, but turn off auto-cast in raids so your pet doesn't pull threat from the tank.",
-    "Spend the rest on Great Stamina and Natural Armor so it survives raid damage; add resistances for fights that need them.",
+    "Bite rank 8 (25 points) and, if its family can learn it, Claw rank 8 (25 points): most of your pet's damage.",
+    "Great Stamina rank 10 (185 points): raid damage hits pets hard, and more health keeps it attacking.",
+    "That's 235 of 300. Spend what's left on its family skill (e.g. Furious Howl rank 4 for a Wolf), then a resistance for fights that need one, or Natural Armor rank 6 (50 points).",
+    "Natural Armor matters less in raids, where your pet isn't tanking; don't max it before Great Stamina.",
+    "Growl is free: keep it, but turn off its auto-cast in raids so your pet doesn't pull threat from the tank.",
+    "Wrong points spent? A Pet Trainer can unlearn your pet's skills for a small fee.",
     "Keep it Happy (fed): you can't feed it in combat, and an unhappy pet does less damage.",
 }

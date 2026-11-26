@@ -2809,7 +2809,7 @@ function ns.PetTrainingCheck()
         local ok, total, spent = pcall(GetPetTrainingPoints)
         if ok and total then
             local free = (total or 0) - (spent or 0)
-            if free > 0 then fix(free .. " training points unspent: put them into Great Stamina or Natural Armor.")
+            if free > 0 then fix(free .. " training points unspent: Great Stamina first, then its family skill.")
             elseif free < 0 then fix("Training points " .. free .. ": its loyalty will catch up as it levels.")
             else good("All training points spent.") end
         end
@@ -2828,8 +2828,17 @@ function ns.PetTrainingCheck()
             else good(name .. " rank " .. rank .. " (highest).") end
         end
     end
-    if not skills["Bite"] and not skills["Claw"] and next(skills) then
-        fix("No Bite or Claw: these are most of a raid pet's damage.")
+    if next(skills) then
+        local family = UnitCreatureFamily and UnitCreatureFamily("pet")
+        if not skills["Bite"] then fix("No Bite: teach it Bite rank 8 (25 points), most of a raid pet's damage.") end
+        if family and ns.ClawFamilies and ns.ClawFamilies[family] and not skills["Claw"] then
+            fix("No Claw: a " .. family .. " can learn it; rank 8 costs 25 points.")
+        end
+        if not skills["Great Stamina"] then fix("No Great Stamina: rank 10 (185 points) is the best use of a raid pet's points.") end
+        local gs, na = skills["Great Stamina"] or 0, skills["Natural Armor"] or 0
+        if na > 6 and gs < 10 then
+            fix("Natural Armor rank " .. na .. " but Great Stamina only " .. gs .. ": for raids, unlearn some armor at a Pet Trainer and put the points into Great Stamina.")
+        end
     end
     if not any and not next(skills) then table.insert(out, "|cffaaaaaaCan't read your pet's skills here; open its spellbook to check ranks.|r") end
     return { lines = out, issues = issues }

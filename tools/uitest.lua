@@ -644,16 +644,20 @@ check("pet training check", function()
   GetPetLoyalty = function() return "Loyalty Level 5 (Faithful)" end
   GetPetHappiness = function() return 3 end
   GetPetTrainingPoints = function() return 250, 230 end
-  local spells = { { "Bite", "Rank 8" }, { "Claw", "Rank 6" }, { "Furious Howl", "Rank 4" }, { "Growl", "Rank 7" } }
+  local spells = { { "Bite", "Rank 8" }, { "Claw", "Rank 6" }, { "Furious Howl", "Rank 4" }, { "Growl", "Rank 7" },
+                   { "Natural Armor", "Rank 10" }, { "Great Stamina", "Rank 4" } }
+  UnitCreatureFamily = function() return "Cat" end
   HasPetSpells = function() return #spells end
   BOOKTYPE_PET = "pet"
   GetSpellBookItemName = function(i) return spells[i][1], spells[i][2] end
   local c = ns.PetTrainingCheck()
   local all = table.concat(c.lines, "\n")
-  for _, want in ipairs({ "level it to 60", "Faithful", "20 training points unspent", "Claw rank 6 of 8", "Bite rank 8 (highest)" }) do
+  for _, want in ipairs({ "level it to 60", "Faithful", "20 training points unspent", "Claw rank 6 of 8", "Bite rank 8 (highest)",
+                          "unlearn some armor", "Great Stamina rank 4 of 10" }) do
     if not all:find(want, 1, true) then error("missing: " .. want .. "\n" .. all) end
   end
-  if c.issues ~= 4 then error("issues " .. c.issues) end
+  if c.issues ~= 6 then error("issues " .. c.issues .. "\n" .. all) end
+  UnitCreatureFamily = nil
   UnitExists, GetPetLoyalty, GetPetHappiness, GetPetTrainingPoints, HasPetSpells, GetSpellBookItemName = nil, nil, nil, nil, nil, nil
   UnitLevel = saveLevel
 end)
