@@ -1108,6 +1108,9 @@ local function fillRow(row, data)
     elseif data.isExtra then slotText = "|cffd0d0d0" .. (ns.PLACE_NAMES[data.place] or "") .. " place|r  " .. slotText
     elseif data.isAlt then slotText = "|cff8fb8ffAlternative|r  " .. slotText end
     if row.place and not data.isAlt and row.paired then slotText = slotText .. "  |cffffd100wear 2|r" end
+    if data.weaponChoice then
+        slotText = slotText .. (data.slot == "Two Hand" and "  |cffaaaaaa(instead of one-handers)|r" or "  |cffaaaaaa(instead of a two-hander)|r")
+    end
     if data.isNew then slotText = "|cff1eff00NEW|r  " .. slotText end
     if data.faction then slotText = slotText .. "  |cffffd100(" .. data.faction .. ")|r" end
     local onQuest = ns.OnSourceQuest(data.source)
@@ -1626,7 +1629,8 @@ local function fillPodium(slots)
     for i, e in ipairs(slots) do
         local card = podiumCards[i] or createCard(i)
         card:Show()
-        card.title:SetText(e.slot)
+        card.title:SetText(e.slot .. (e.weaponChoice and (e.slot == "Two Hand"
+            and "  |cffaaaaaa(instead of one-handers)|r" or "  |cffaaaaaa(instead of a two-hander)|r") or ""))
         card.entry = e
         card.wear:SetText(ns.PAIRED_SLOTS[e.slot] and "wear 2" or "")
         for place = 1, 3 do
@@ -1945,7 +1949,8 @@ function ns.RefreshBrowser()
             if r.place and not r.isPre then
                 local e = bySlot[r.slot]
                 if not e then
-                    e = { slot = r.slot, places = {}, done = slotDone[r.slot], allOwned = true }
+                    e = { slot = r.slot, places = {}, done = slotDone[r.slot], allOwned = true,
+                          weaponChoice = r.weaponChoice }
                     bySlot[r.slot] = e
                     table.insert(slots, e)
                 end

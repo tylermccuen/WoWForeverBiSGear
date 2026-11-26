@@ -64,7 +64,8 @@ for _, p in ipairs(ns.PhaseList) do
             if not validSlot[row[1]] then err(where .. ": unknown slot '" .. tostring(row[1]) .. "'") end
             if type(row[2]) ~= "number" or row[2] <= 0 then err(where .. ": item ID must be a positive number") end
             if type(row[3]) ~= "string" or row[3] == "" then err(where .. ": missing source text") end
-            local weaponSwap = (row[1] == "Main Hand" or row[1] == "Off Hand") and slotCount["Two Hand"]
+            local weaponSwap = ((row[1] == "Main Hand" or row[1] == "Off Hand") and slotCount["Two Hand"])
+                or (row[1] == "Two Hand" and slotCount["Main Hand"])   -- hunters: a two-hander instead of one-handers
             if not slotCount[row[1]] and not weaponSwap then warn(where .. ": no main pick for slot " .. row[1]) end
         end
         for i, row in ipairs(g.picks or {}) do

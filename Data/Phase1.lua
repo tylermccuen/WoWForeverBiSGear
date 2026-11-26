@@ -725,6 +725,8 @@ local ALTS = {
     ["HUNTER:Marksmanship"] = {
         EPAULETS,
         HOWLERS,
+        -- two-hander instead of Main Hand + Off Hand (Beast Mastery's BiS two-hander)
+        { "Two Hand", 274419, "Barkskin Burrow reputation (Revered)" },
         { "Wrist", 18375, "Dire Maul West: Prince Tortheldrin" },
         ELVEN_RING,
         { "Trinket", 280071, "Blackmaw Hold: Unbound Spirit" },

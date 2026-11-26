@@ -623,6 +623,20 @@ check("About tab with patch notes (and they match CHANGELOG.md)", function()
   if not (f.previewPane:IsShown() and text:find("Patch notes", 1, true) and text:find(first, 1, true)) then error("about page wrong") end
   ns.char.listMode = "ranked"; ns.RefreshBrowser()
 end)
+check("hunters: a Two Hand group next to one-handers (and the reverse)", function()
+  UnitFactionGroup = function() return "Alliance" end
+  local g = ns.GetGuide("HUNTER", "Marksmanship", 1)
+  local rows = ns.GetRankedRows(g)
+  local th
+  for _, r in ipairs(rows) do if r.slot == "Two Hand" and r.place == 1 then th = r end end
+  if not th or th.id ~= 274419 or not th.weaponChoice or th.isAlt then error("no Two Hand group for Marksmanship") end
+  -- it sits with the other weapons, before Ranged
+  local posTH, posR
+  for i, r in ipairs(rows) do if r == th then posTH = i end if r.slot == "Ranged" and not posR then posR = i end end
+  if not (posR and posTH < posR) then error("Two Hand group not before Ranged") end
+  local mage = ns.GetRankedRows(ns.GetGuide("MAGE", "Fire", 1))
+  for _, r in ipairs(mage) do if r.weaponChoice then error("non-hunters get weapon groups") end end
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()
   if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end

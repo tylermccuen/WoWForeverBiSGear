@@ -481,6 +481,22 @@ function ns.GetRankedRows(guide)
     for _, row in ipairs(guide.realistic or {}) do table.insert(extra, row) end
     -- then the extra picks from the guides' ranked Other Options tables
     for _, row in ipairs(guide.picks or {}) do table.insert(extra, row) end
+    -- Hunters can fight with a two-hander or with one-handers: a weapon slot
+    -- the BiS list doesn't use gets its own 1st / 2nd / 3rd group, placed
+    -- right after the BiS weapons (e.g. a Two Hand group for a hunter whose
+    -- BiS is Main Hand + Off Hand)
+    local WEAPON = { ["Two Hand"] = true, ["Main Hand"] = true, ["Off Hand"] = true }
+    local function startWeaponGroup(slot)
+        if guide.class ~= "HUNTER" or not WEAPON[slot] then return false end
+        local pos = 0
+        for i, r in ipairs(out) do if WEAPON[r.slot] then pos = i end end
+        if pos == 0 then
+            for i, r in ipairs(out) do if r.slot == "Ranged" then pos = i - 1 break end end
+            if pos <= 0 then pos = #out end
+        end
+        count[slot], ids[slot], last[slot] = 0, {}, pos
+        return true
+    end
     for _, row in ipairs(extra) do
         local slot = row[1]
         local id, source = row[2], row[3]
@@ -489,14 +505,18 @@ function ns.GetRankedRows(guide)
             id, source = row[4], row[5] or row[3]
             fac = (row[4] ~= row[2]) and "Horde" or nil
         end
+        local newGroup = false
+        if not count[slot] and fits(id) then newGroup = startWeaponGroup(slot) end
         local n = count[slot]
         if n and n < ns.MAX_PLACES and not ids[slot][id] and fits(id) then
             n = n + 1
             count[slot] = n
             ids[slot][id] = true
             local pos = last[slot] + 1
-            table.insert(out, pos, { slot = slot, id = id, source = source, faction = fac, isAlt = true,
-                                     isExtra = true, place = n, note = row.note,
+            -- the first item of a new weapon group is that group's main row
+            local main = newGroup and n == 1
+            table.insert(out, pos, { slot = slot, id = id, source = source, faction = fac, isAlt = not main or nil,
+                                     isExtra = true, place = n, note = row.note, weaponChoice = main or nil,
                                      why = row.why or (guide.why and guide.why[id]) })
             for s, i in pairs(last) do
                 if i >= pos then last[s] = i + 1 end

@@ -1,6 +1,7 @@
 # Forever Best In Slot
 
 ## 1.10.0
+- **Hunters: two-handers and one-handers:** hunters can fight with either, so the Gear tab now shows both. Marksmanship (best with Main Hand + Off Hand) gets a Two Hand group, "instead of one-handers": 1st Barkskin Burrow's two-hander, 2nd Beastslayer's Trident from The Shaper's Terrace. Survival gets Main Hand and Off Hand groups next to its two-hander.
 - **About tab:** a new tab at the end with the addon's version, links, slash commands and the patch notes for recent updates.
 - **"Why this place?" explains the item:** hovering a place on the podium now says what the item gives your spec (for example "21 Agility, 38 Intellect, 1% crit") and, for 2nd and 3rd place, why you might take it over 1st (a guaranteed quest reward, craftable, drops more often, and so on), instead of which website ranked it. A new "What players say" section shows feedback from players who've used the item.
 - **Hunter Head picks:** Mask of the Unforgiven is no longer 3rd place for Beast Mastery and Marksmanship hunters (in Forever it carries Defense, a tank stat). Backwood Helm from the Dire Maul library quest takes its place.
