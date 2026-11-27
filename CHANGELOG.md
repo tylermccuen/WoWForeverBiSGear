@@ -1,5 +1,9 @@
 # Forever Best In Slot
 
+## 1.10.1
+- **Resizing fixed:** dragging the resize corner now follows your mouse from where you grabbed it, stops at your screen's edge, and stops when you let go anywhere. The window can no longer grow off screen, and a size saved too big for your screen is shrunk to fit.
+- **`/bis reset`:** puts the window back to its normal size in the middle of the screen (right-clicking the resize corner does the same).
+
 ## 1.10.0
 - **Bigger 1st place on the podium:** the 1st place item's icon is larger than 2nd and 3rd, so the best pick stands out.
 - **Longer holiday season:** the holiday theme now turns on by itself the day before Thanksgiving (this year: November 25) and runs until January 2.

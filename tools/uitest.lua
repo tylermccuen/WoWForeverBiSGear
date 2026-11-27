@@ -732,6 +732,31 @@ check("holiday season starts the day before Thanksgiving", function()
   if ns.HolidayStartDay(2027) ~= 24 then error("2027: " .. ns.HolidayStartDay(2027)) end   -- Thanksgiving Nov 25
   if ns.HolidayStartDay(2028) ~= 22 then error("2028: " .. ns.HolidayStartDay(2028)) end   -- Thanksgiving Nov 23
 end)
+check("resize corner: follows the mouse, stays on screen; /bis reset", function()
+  local f = _G.ForeverBiSFrame
+  if not f:IsShown() then ns.ToggleBrowser() end
+  local grip = f.resizeGrip
+  if not grip then error("no resize grip") end
+  local sw, sh, sr = UIParent.GetWidth, UIParent.GetHeight, UIParent.GetRight
+  UIParent.GetWidth = function() return 1920 end
+  UIParent.GetHeight = function() return 1080 end
+  UIParent.GetRight = function() return 1920 end
+  local cx, cy, down = 1000, 300, true
+  GetCursorPosition = function() return cx, cy end
+  IsMouseButtonDown = function() return down end
+  grip:GetScript("OnMouseDown")(grip, "LeftButton")
+  cx, cy = 50000, -50000                       -- yank the mouse far off screen
+  grip:GetScript("OnUpdate")(grip, 0.02)
+  local w, h = f:GetWidth(), f:GetHeight()
+  down = false
+  grip:GetScript("OnUpdate")(grip, 0.02)        -- button released anywhere: sizing stops
+  if grip:GetScript("OnUpdate") then error("still sizing after release") end
+  local maxW = UIParent:GetWidth() - 20
+  if w > 1500 or w > maxW then error("grew past the screen: " .. w) end
+  ns.ResetWindow()
+  UIParent.GetWidth, UIParent.GetHeight, UIParent.GetRight = sw, sh, sr
+  if ns.db.windowWidth then error("reset kept the saved size") end
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()
   if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end

@@ -135,6 +135,9 @@ SlashCmdList["FOREVERBIS"] = function(msg)
             return
         end
         ns.ShowLinkPopupForItem(id)
+    elseif cmd == "reset" then
+        ns.ResetWindow()
+        if ns.ToggleBrowser and not (_G.ForeverBiSFrame and _G.ForeverBiSFrame:IsShown()) then ns.ToggleBrowser() end
     elseif cmd == "raid" or cmd == "check" then
         ns.ToggleRaidCheck()
     elseif cmd == "spec" then

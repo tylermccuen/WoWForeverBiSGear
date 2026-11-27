@@ -10,9 +10,23 @@ local WIDTH, HEIGHT = 1040, 540          -- default size
 local MIN_W, MIN_H, MAX_W, MAX_H = 920, 320, 1500, 1100
 local headerSource, headerAvoid        -- "WHERE TO GET IT" / "ENCHANT" headers
 
--- saved window width, never narrower than the controls need
+-- the most the window can be and still fit on screen (in the window's own scale)
+local function screenLimit()
+    local ui = (UIParent and UIParent:GetEffectiveScale()) or 1
+    local mine = (frame and frame:GetEffectiveScale()) or ui
+    local k = ui / mine
+    return math.floor(((UIParent and UIParent:GetWidth()) or 1920) * k) - 20,
+           math.floor(((UIParent and UIParent:GetHeight()) or 1080) * k) - 20
+end
+
+-- saved window width, never narrower than the controls need, never wider than the screen
 local function savedWidth()
-    return math.max(MIN_W, ns.db.windowWidth or WIDTH)
+    local maxW = screenLimit()
+    return math.max(MIN_W, math.min(ns.db.windowWidth or WIDTH, MAX_W, maxW))
+end
+local function savedHeight()
+    local _, maxH = screenLimit()
+    return math.max(MIN_H, math.min(ns.db.windowHeight or HEIGHT, MAX_H, maxH))
 end
 
 -- Column positions follow the window width
@@ -2730,7 +2744,8 @@ local function createFrame()
     frame = CreateFrame("Frame", "ForeverBiSFrame", UIParent, "BasicFrameTemplateWithInset")
     frame.sleek = ns.db.windowStyle ~= "classic"
     if frame.sleek then skinFrame(frame) end
-    frame:SetSize(savedWidth(), ns.db.windowHeight or HEIGHT)
+    frame:SetSize(savedWidth(), savedHeight())
+    frame:SetClampedToScreen(true)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("MEDIUM")   -- same layer as the game's windows: whichever you click comes to the front
     frame:SetToplevel(true)
@@ -2980,19 +2995,52 @@ local function createFrame()
             frame:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", left, top)
         end
     end
+    -- Our own sizing (not the game's StartSizing, which can jump when the
+    -- window is scaled): the size follows the mouse from where you grabbed it,
+    -- stays within the limits, and the bottom-right corner never leaves the screen.
+    local drag
+    local function stopDrag()
+        if not drag then return end
+        drag = nil
+        grip:SetScript("OnUpdate", nil)
+        if not frame.compact then
+            ns.db.windowWidth, ns.db.windowHeight = math.floor(frame:GetWidth()), math.floor(frame:GetHeight())
+        end
+        local onSize = frame:GetScript("OnSizeChanged")
+        if onSize then onSize(frame, frame:GetWidth(), frame:GetHeight()) end
+    end
+    local function dragUpdate()
+        if not drag then return end
+        if IsMouseButtonDown and not IsMouseButtonDown("LeftButton") then stopDrag() return end
+        local scale = frame:GetEffectiveScale() or 1
+        local cx, cy = GetCursorPosition()
+        cx, cy = cx / scale, cy / scale
+        local minW = frame.compact and (COMPACT_W - 60) or MIN_W
+        local maxW, maxH = screenLimit()
+        local left, top = frame:GetLeft() or 0, frame:GetTop() or 0
+        local screenR = (UIParent:GetRight() or UIParent:GetWidth() or 1920) * (UIParent:GetEffectiveScale() or 1) / scale
+        local w = drag.w + (cx - drag.x)
+        local h = drag.h - (cy - drag.y)
+        w = math.max(minW, math.min(w, MAX_W, maxW, screenR - left - 4))
+        h = math.max(MIN_H, math.min(h, MAX_H, maxH, top - 4))
+        if math.abs(w - frame:GetWidth()) >= 1 or math.abs(h - frame:GetHeight()) >= 1 then
+            frame:SetSize(w, h)
+        end
+    end
     grip:RegisterForClicks("LeftButtonUp", "RightButtonUp")
     grip:SetScript("OnMouseDown", function(_, button)
         if button ~= "LeftButton" then return end
         pinTopLeft()
-        frame:StartSizing("BOTTOMRIGHT")
+        local scale = frame:GetEffectiveScale() or 1
+        local cx, cy = GetCursorPosition()
+        drag = { x = cx / scale, y = cy / scale, w = frame:GetWidth(), h = frame:GetHeight() }
+        grip:SetScript("OnUpdate", dragUpdate)
     end)
     grip:SetScript("OnMouseUp", function(_, button)
-        if button ~= "LeftButton" then return end
-        frame:StopMovingOrSizing()
-        if not frame.compact then
-            ns.db.windowWidth, ns.db.windowHeight = math.floor(frame:GetWidth()), math.floor(frame:GetHeight())
-        end
+        if button == "LeftButton" then stopDrag() end
     end)
+    frame:HookScript("OnHide", stopDrag)
+    frame.resizeGrip = grip
     grip:SetScript("OnEnter", function(self)
         GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
         GameTooltip:AddLine("Drag to resize")
@@ -3002,13 +3050,17 @@ local function createFrame()
     grip:SetScript("OnLeave", function() GameTooltip:Hide() end)
     grip:SetScript("OnClick", function(_, button)
         if button ~= "RightButton" then return end
-        pinTopLeft()
-        frame:SetSize(WIDTH, HEIGHT)
-        ns.db.windowWidth, ns.db.windowHeight = nil, nil
+        ns.ResetWindow()
     end)
 
     frame:SetScript("OnSizeChanged", function(self, w)
         scrollChild:SetWidth(w - 46)
+        -- while dragging, re-lay out at most 20 times a second
+        if drag then
+            local now = GetTime and GetTime() or 0
+            if drag.lastLayout and now - drag.lastLayout < 0.05 then return end
+            drag.lastLayout = now
+        end
         if frame.raidPane then frame.raidPane.view.setWidth(math.max(300, w - 60)) end
         if self.sourceText then self.sourceText:SetWidth(w - 240) end
         ns.UpdateHolidayDecor()
@@ -3159,7 +3211,8 @@ function ns.ShowAboutPage(pane)
     add(D .. "Download and comments:|r CurseForge, \"WoW Forever BiS Gear\"")
     add(D .. "Report a wrong item:|r leave a comment on the CurseForge page")
     add(D .. "Commands:|r " .. G .. "/bis|r opens this window,  " .. G .. "/bis raid|r the raid check,  "
-        .. G .. "/bis spec|r what the game says your spec is,  " .. G .. "/bis holiday|r the holiday theme")
+        .. G .. "/bis spec|r what the game says your spec is,  " .. G .. "/bis holiday|r the holiday theme,  "
+        .. G .. "/bis reset|r window size and position")
     add(" ")
     add(G .. "Patch notes|r  " .. D .. "(the short version; full notes on CurseForge)|r")
     local shown = 0
@@ -3363,6 +3416,18 @@ function ns.ShowPetPage(pane, spec)
     add(D .. "Guides don't agree on every pick yet; there's been little level 60 raid testing. Sources: playhub.com, warcrafttavern.com, exitlag.com.|r")
     pane.text:SetText(table.concat(out, "\n"))
     pane.child:SetHeight((pane.text:GetStringHeight() or 400) + 20)
+end
+
+-- Default size, centred: right-click the resize corner or /bis reset
+function ns.ResetWindow()
+    ns.db.windowWidth, ns.db.windowHeight = nil, nil
+    if not frame then return end
+    frame:ClearAllPoints()
+    frame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    frame:SetSize(savedWidth(), savedHeight())
+    local onSize = frame:GetScript("OnSizeChanged")
+    if onSize then onSize(frame, frame:GetWidth(), frame:GetHeight()) end
+    ns.Print("Window size and position reset.")
 end
 
 function ns.ToggleBrowser()
