@@ -770,6 +770,16 @@ check("controller: key bindings and ConsolePort cursor", function()
   if got[1] ~= _G.ForeverBiSFrame then error("not registered with ConsolePort") end
   ns.RegisterGamepadFrame(_G.ForeverBiSFrame)   -- no ConsolePort: does nothing
 end)
+check("shift-click puts a fresh link in chat", function()
+  local sentLink
+  local saveInfo = C_Item.GetItemInfo
+  C_Item.GetItemInfo = function(id) return "Thing", "|cff0070dd|Hitem:" .. id .. "::::::::60:::::|h[Thing]|h|r" end
+  IsModifiedClick = function(what) return what == "CHATLINK" end
+  ChatEdit_InsertLink = function(l) sentLink = l; return true end
+  ns.ItemClick(18680, "|cff0070dd|Hitem:18680|h[Old]|h|r")
+  C_Item.GetItemInfo = saveInfo; IsModifiedClick = nil; ChatEdit_InsertLink = nil
+  if not sentLink or not sentLink:find("[Thing]", 1, true) then error("used the old link: " .. tostring(sentLink)) end
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()
   if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end

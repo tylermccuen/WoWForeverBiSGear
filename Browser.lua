@@ -890,7 +890,7 @@ local function createRow(i)
     icon:SetScript("OnLeave", function() GameTooltip:Hide() end)
     icon:SetScript("OnClick", function()
         -- Shift-click puts the item in chat, Ctrl-click opens the dressing room
-        if row.itemLink then HandleModifiedItemClick(row.itemLink) end
+        ns.ItemClick(row.itemID, row.itemLink)
     end)
     row.icon = icon
 
@@ -1451,7 +1451,7 @@ local function makeItemButton(card, size)
     btn:SetScript("OnClick", function(self, button)
         if not self.data then return end
         if button == "RightButton" then ns.ShowLinkPopupForItem(self.data.id) return end
-        if self.link then HandleModifiedItemClick(self.link) end
+        ns.ItemClick(self.data and self.data.id, self.link)
     end)
     return btn
 end
@@ -1652,6 +1652,25 @@ function ns.NoteWithoutStats(note)
     end
     if #keep == 0 then return nil end
     return table.concat(keep, ", ")
+end
+
+-- Shift-click / Ctrl-click on an item. The link is taken fresh from the game at
+-- click time (a link kept from earlier can be out of date, and chat then
+-- refuses to send the message), and put in chat with the game's own call.
+function ns.ItemClick(itemID, savedLink)
+    local link
+    if itemID then
+        local getInfo = (C_Item and C_Item.GetItemInfo) or GetItemInfo
+        local ok, _, fresh = pcall(getInfo, itemID)
+        if ok and type(fresh) == "string" then link = fresh end
+    end
+    link = link or savedLink
+    if not link then return end
+    if IsModifiedClick and IsModifiedClick("CHATLINK") and ChatEdit_InsertLink then
+        ChatEdit_InsertLink(link)
+    elseif HandleModifiedItemClick then
+        HandleModifiedItemClick(link)
+    end
 end
 
 local function podiumWhyEnter(self)

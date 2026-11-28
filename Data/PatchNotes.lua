@@ -3,6 +3,7 @@ local _, ns = ...
 -- Made by tools/gen_patchnotes.py from CHANGELOG.md. Don't edit by hand.
 ns.PatchNotes = {
     { version = [=[1.10.1]=], notes = {
+        [=[**Item links in chat:** Shift-clicking an item in the addon now puts a fresh link from the game into chat, so the message sends (a link kept from earlier could be out of date, and chat refused to send it).]=],
         [=[**Controller friendly:** the addon's windows work with the ConsolePort addon's cursor (move between buttons, checkboxes and rows with the controller). New key bindings (Options > Keybindings > AddOns > Forever Best In Slot) let you put opening the browser, the raid check and resetting the window on a controller button or key. Settings has a Reset window button, so nothing needs a right-click.]=],
         [=[**Resizing fixed:** dragging the resize corner now follows your mouse from where you grabbed it, stops at your screen's edge, and stops when you let go anywhere. The window can no longer grow off screen, and a size saved too big for your screen is shrunk to fit.]=],
         [=[**`/bis reset`:** puts the window back to its normal size in the middle of the screen (right-clicking the resize corner does the same).]=],
