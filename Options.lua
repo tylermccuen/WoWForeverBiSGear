@@ -175,6 +175,12 @@ local function buildPanel()
         end)
         prev = b
     end
+    -- same as /bis reset or right-clicking the resize corner (handy on a controller)
+    local resetBtn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    resetBtn:SetSize(120, 22)
+    resetBtn:SetPoint("LEFT", prev, "RIGHT", 14, 0)
+    resetBtn:SetText("Reset window")
+    resetBtn:SetScript("OnClick", function() if ns.ResetWindow then ns.ResetWindow() end end)
 
     panel:SetScript("OnShow", refresh)
     return panel

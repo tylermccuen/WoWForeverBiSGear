@@ -2764,6 +2764,7 @@ local function createFrame()
     end
     frame:Hide()
     tinsert(UISpecialFrames, "ForeverBiSFrame")
+    ns.RegisterGamepadFrame(frame)
 
     if type(frame.CloseButton) == "table" then
         frame.CloseButton:SetScript("OnClick", function() frame:Hide() end)   -- works in combat

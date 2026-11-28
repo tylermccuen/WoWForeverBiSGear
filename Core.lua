@@ -54,6 +54,27 @@ local function applyDefaults(dst, src)
     return dst
 end
 
+-- Key bindings (Esc > Options > Keybindings > AddOns): a controller button can
+-- be bound to these the same way as a key
+BINDING_HEADER_FOREVERBIS = "Forever Best In Slot"
+BINDING_NAME_FOREVERBIS_TOGGLE = "Open / close the browser"
+BINDING_NAME_FOREVERBIS_RAID = "Open the raid check"
+BINDING_NAME_FOREVERBIS_RESET = "Reset the window size and position"
+function ForeverBiS_Toggle() if ns.ToggleBrowser then ns.ToggleBrowser() end end
+function ForeverBiS_Raid() if ns.ToggleRaidCheck then ns.ToggleRaidCheck() end end
+function ForeverBiS_Reset() if ns.ResetWindow then ns.ResetWindow() end end
+
+-- Controller: when ConsolePort is installed, let its cursor move between the
+-- buttons, checkboxes and rows of our windows. (With the game's own gamepad
+-- cursor, the windows already work like with a mouse.)
+function ns.RegisterGamepadFrame(f)
+    if not f then return end
+    local cp = _G.ConsolePort
+    if cp and cp.AddInterfaceCursorFrame then
+        pcall(cp.AddInterfaceCursorFrame, cp, f)
+    end
+end
+
 function ns.Print(msg)
     print("|cff33ccffForever BiS:|r " .. tostring(msg))
 end

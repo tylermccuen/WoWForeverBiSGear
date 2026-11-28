@@ -797,6 +797,7 @@ end
 ----------------------------------------------------------------------
 local function createPanel()
     panel = CreateFrame("Frame", "ForeverBiSRaidFrame", UIParent, "BasicFrameTemplateWithInset")
+    ns.RegisterGamepadFrame(panel)
     panel:SetWidth(380)
     panel:SetFrameStrata("MEDIUM")
     panel:SetToplevel(true)

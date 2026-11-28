@@ -54,6 +54,7 @@ local function createWindow()
     win:SetScript("OnDragStart", win.StartMoving)
     win:SetScript("OnDragStop", win.StopMovingOrSizing)
     tinsert(UISpecialFrames, "ForeverBiSBossFrame")
+    ns.RegisterGamepadFrame(win)
     -- close with a plain Hide(): the template's close button goes through the
     -- protected panel manager, which can be blocked in combat
     if type(win.CloseButton) == "table" then

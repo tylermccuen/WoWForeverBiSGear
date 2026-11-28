@@ -757,6 +757,19 @@ check("resize corner: follows the mouse, stays on screen; /bis reset", function(
   UIParent.GetWidth, UIParent.GetHeight, UIParent.GetRight = sw, sh, sr
   if ns.db.windowWidth then error("reset kept the saved size") end
 end)
+check("controller: key bindings and ConsolePort cursor", function()
+  if not (BINDING_NAME_FOREVERBIS_TOGGLE and ForeverBiS_Toggle and ForeverBiS_Raid and ForeverBiS_Reset) then error("bindings missing") end
+  local xml = io.open("Bindings.xml"):read("a")
+  for _, n in ipairs({ "FOREVERBIS_TOGGLE", "FOREVERBIS_RAID", "FOREVERBIS_RESET" }) do
+    if not xml:find('name="' .. n .. '"', 1, true) then error("Bindings.xml lacks " .. n) end
+  end
+  local got = {}
+  _G.ConsolePort = { AddInterfaceCursorFrame = function(_, f) table.insert(got, f) end }
+  ns.RegisterGamepadFrame(_G.ForeverBiSFrame)
+  _G.ConsolePort = nil
+  if got[1] ~= _G.ForeverBiSFrame then error("not registered with ConsolePort") end
+  ns.RegisterGamepadFrame(_G.ForeverBiSFrame)   -- no ConsolePort: does nothing
+end)
 check("open settings + link popup", function() ns.OpenOptions(); ns.ShowLinkPopupForItem(15411) end)
 check("gear tab: 1st / 2nd / 3rd place", function()
   if not _G.ForeverBiSFrame:IsShown() then ns.ToggleBrowser() end

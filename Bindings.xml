@@ -1,0 +1,11 @@
+<Bindings>
+    <Binding name="FOREVERBIS_TOGGLE" header="FOREVERBIS" category="ADDONS">
+        if ForeverBiS_Toggle then ForeverBiS_Toggle() end
+    </Binding>
+    <Binding name="FOREVERBIS_RAID" category="ADDONS">
+        if ForeverBiS_Raid then ForeverBiS_Raid() end
+    </Binding>
+    <Binding name="FOREVERBIS_RESET" category="ADDONS">
+        if ForeverBiS_Reset then ForeverBiS_Reset() end
+    </Binding>
+</Bindings>
